@@ -1,0 +1,23 @@
+
+version: "3"
+
+interval: 200ms
+
+vars:
+  NAME: "natster"
+
+tasks:
+  ui:
+    dir: internal/ui
+    cmds:
+      - go run web/build/main.go ./web
+  
+  natster:
+    dir: natster
+    sources:
+      - "*.go"
+    cmds:
+      - go build -tags netgo -ldflags '-extldflags "-static"'  
+
+  build:
+    deps: [ui, natster]
