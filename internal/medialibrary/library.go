@@ -12,9 +12,9 @@ import (
 )
 
 type MediaLibrary struct {
-	name           string
-	rootDir        string
-	description    string
+	Name           string
+	RootDir        string
+	Description    string
 	nc             *nats.Conn
 	metadataBucket nats.KeyValue
 }
@@ -33,10 +33,10 @@ func New(nc *nats.Conn, rootDir string, name string, description string) (*Media
 	}
 
 	return &MediaLibrary{
-		name:           name,
+		Name:           name,
 		nc:             nc,
-		rootDir:        rootDir,
-		description:    description,
+		RootDir:        rootDir,
+		Description:    description,
 		metadataBucket: bucket,
 	}, nil
 }
@@ -46,7 +46,7 @@ func New(nc *nats.Conn, rootDir string, name string, description string) (*Media
 func (library *MediaLibrary) Ingest() error {
 	newCount := 0
 
-	err := filepath.Walk(library.rootDir,
+	err := filepath.Walk(library.RootDir,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -56,7 +56,7 @@ func (library *MediaLibrary) Ingest() error {
 					library.putEntry(MediaEntry{
 						Path:        path,
 						ByteSize:    info.Size(),
-						Description: "Auto-ingested library entry",
+						Description: "Auto-imported library entry",
 					})
 
 				if err != nil {
@@ -72,12 +72,39 @@ func (library *MediaLibrary) Ingest() error {
 
 	if err == nil {
 		log.Info(
-			"Ingested new library entries",
+			"Imported new library entries",
 			"count", newCount,
 		)
 	}
 
 	return err
+}
+
+// FIXME
+// TODO: this is a horrible N+1 example. We should probably store
+// a summary of the entire catalog in a single key with the details
+// in their own keys so we can grab a summary in one go
+func (library *MediaLibrary) GetCatalog() ([]MediaEntry, error) {
+	lister, err := library.metadataBucket.ListKeys()
+	if err != nil {
+		return nil, err
+	}
+
+	entries := make([]MediaEntry, 0)
+	for key := range lister.Keys() {
+		raw, err := library.metadataBucket.Get(key)
+		if err != nil {
+			continue
+		}
+		var entry MediaEntry
+		err = json.Unmarshal(raw.Value(), &entry)
+		if err != nil {
+			continue
+		}
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
 }
 
 func (library *MediaLibrary) putEntry(entry MediaEntry) (error, bool) {

@@ -8,9 +8,10 @@ vars:
 
 tasks:
   ui:
-    dir: internal/ui
+    dir: internal/ui/web
     cmds:
-      - go run web/build/main.go ./web
+      - pnpm install
+      - pnpm build
   
   natster:
     dir: natster
@@ -20,4 +21,4 @@ tasks:
       - go build -tags netgo -ldflags '-extldflags "-static"'  
 
   build:
-    deps: [ui, natster]
+    deps: [ui,natster]
