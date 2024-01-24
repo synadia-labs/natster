@@ -11,7 +11,6 @@ import (
 
 func HubUp(ctx *fisk.ParseContext) error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
 	slog.SetDefault(logger)
 
 	ctxx := context.Background()

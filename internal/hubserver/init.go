@@ -15,28 +15,28 @@ func CliStart(opts *models.Options, hubopts *models.HubOptions) {
 	if err != nil {
 		log.Error(
 			"Failed to connect to NATS",
-			"error", err,
+			log.String("error", err.Error()),
 		)
 		os.Exit(1)
 	}
 	log.Info(
 		"Established Natster Hub NATS connection",
-		"servers", opts.Servers,
+		log.String("servers", opts.Servers),
 	)
 
 	library, err := medialibrary.New(nc, hubopts.RootPath, hubopts.Name, hubopts.Description)
 	if err != nil {
 		log.Error(
 			"Failed to create media library",
-			"path", hubopts.RootPath,
-			"name", hubopts.Name,
+			log.String("path", hubopts.RootPath),
+			log.String("name", hubopts.Name),
 		)
 		os.Exit(1)
 	}
 	log.Info(
 		"Opened Media Library",
-		"path", hubopts.RootPath,
-		"name", hubopts.Name,
+		log.String("path", hubopts.RootPath),
+		log.String("name", hubopts.Name),
 	)
 
 	server := New(nc, library)
@@ -44,7 +44,7 @@ func CliStart(opts *models.Options, hubopts *models.HubOptions) {
 	if err != nil {
 		log.Error(
 			"Failed to start Natster Hub",
-			"error", err,
+			log.String("error", err.Error()),
 		)
 		os.Exit(1)
 	}
@@ -63,26 +63,26 @@ func setupSignalHandlers(hub *HubServer) {
 			case s == syscall.SIGTERM || s == os.Interrupt:
 				log.Info(
 					"Caught signal, requesting clean shutdown",
-					"signal", s.String(),
+					log.String("signal", s.String()),
 				)
 				err := hub.Stop()
 				if err != nil {
 					log.Error(
 						"Hub server failed to stop",
-						"error", err,
+						log.String("error", err.Error()),
 					)
 				}
 				os.Exit(0)
 			case s == syscall.SIGQUIT:
 				log.Info(
 					"Caught quit signal, still trying graceful shutdown",
-					"signal", s.String(),
+					log.String("signal", s.String()),
 				)
 				err := hub.Stop()
 				if err != nil {
 					log.Error(
 						"Hub server failed to stop",
-						"error", err,
+						log.String("error", err.Error()),
 					)
 				}
 				os.Exit(0)

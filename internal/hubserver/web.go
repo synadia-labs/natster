@@ -18,7 +18,7 @@ func (hub *HubServer) startWebServer(port int) error {
 	if err != nil {
 		log.Error(
 			"Failed to load embedded FS for UI",
-			"error", err,
+			log.String("error", err.Error()),
 		)
 		return err
 	}
@@ -33,13 +33,13 @@ func (hub *HubServer) startWebServer(port int) error {
 
 	log.Info(
 		"Starting HTTP Server",
-		"port", port,
+		log.Int("port", port),
 	)
 
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	log.Error(
 		"Web Server Terminated",
-		"error", err,
+		log.String("error", err.Error()),
 	)
 
 	return err

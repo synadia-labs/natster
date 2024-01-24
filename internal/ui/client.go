@@ -60,7 +60,7 @@ func (c *Client) readPump() {
 		if err != nil {
 			log.Error(
 				"Failed to set socket read deadline",
-				"error", err,
+				log.String("error", err.Error()),
 			)
 			return err
 		}
@@ -73,7 +73,7 @@ func (c *Client) readPump() {
 				// TODO: should this be the propogated log variable?
 				log.Error(
 					"Unexpected socket close",
-					"error", err,
+					log.String("error", err.Error()),
 				)
 			}
 			break
@@ -118,7 +118,7 @@ func ServeWs(hub *SocksHub, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(
 			"Failed to upgrade socket",
-			"error", err,
+			log.String("error", err.Error()),
 		)
 		return
 	}

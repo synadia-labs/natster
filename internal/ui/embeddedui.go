@@ -14,7 +14,7 @@ func GetEmbeddedUI() (fs.FS, error) {
 	if err != nil {
 		log.Error(
 			"Embedded filesystem error",
-			"error", err,
+			log.String("error", err.Error()),
 		)
 		return nil, err
 	}

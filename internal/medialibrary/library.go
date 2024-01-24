@@ -73,7 +73,7 @@ func (library *MediaLibrary) Ingest() error {
 	if err == nil {
 		log.Info(
 			"Imported new library entries",
-			"count", newCount,
+			log.Int("count", newCount),
 		)
 	}
 
@@ -120,8 +120,8 @@ func (library *MediaLibrary) putEntry(entry MediaEntry) (error, bool) {
 		if err != nil {
 			log.Error(
 				"Failed to write media library entry",
-				"key", key,
-				"error", err,
+				log.String("key", key),
+				log.String("error", err.Error()),
 			)
 			return err, false
 		}
@@ -152,7 +152,7 @@ func createOrLocateLibraryMetadata(nc *nats.Conn, name string) (nats.KeyValue, e
 
 	log.Info(
 		"Bound to library metadata KV store",
-		"name", bucketName,
+		log.String("name", bucketName),
 	)
 
 	return bucket, nil

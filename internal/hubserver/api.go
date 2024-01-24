@@ -25,7 +25,7 @@ func (hub *HubServer) startApiSubscriptions() error {
 	if err != nil {
 		log.Error(
 			"Failed to subscribe to catalog get",
-			"library", hub.library.Name,
+			log.String("library", hub.library.Name),
 		)
 		return err
 	}
@@ -39,11 +39,10 @@ func handleCatalogGet(hub *HubServer) func(m *nats.Msg) {
 		if err != nil {
 			log.Error(
 				"Failed to query the library catalog",
-				"error", err,
+				log.String("error", err.Error()),
 			)
 			return
 		}
-		fmt.Printf("%+v\n", catalog)
 		catalogSummary := models.CatalogSummary{
 			Name:    hub.library.Name,
 			Entries: convertEntries(catalog),
@@ -52,7 +51,7 @@ func handleCatalogGet(hub *HubServer) func(m *nats.Msg) {
 		if err != nil {
 			log.Error(
 				"Failed to serialize the catalog",
-				"error", err,
+				log.String("error", err.Error()),
 			)
 			return
 		}
