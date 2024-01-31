@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"path"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/choria-io/fisk"
@@ -124,8 +126,41 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return err
 	}
 
-	// TODO: instead of prompting for a creds file we should list users in this
-	// account and prompt them and we download that user's creds automatically
+	users, _, err := client.AccountAPI.ListUsers(ctxx, accountId).Execute()
+	if err != nil {
+		return err
+	}
+
+	usernames := make([]string, len(users.Items))
+	for i, u := range users.Items {
+		usernames[i] = u.Name
+	}
+
+	userPrompt := survey.Select{
+		Message: "Select a user for NATS authentication:",
+		Options: usernames,
+	}
+	var selectedUser int
+	err = survey.AskOne(&userPrompt, &selectedUser, survey.WithValidator(survey.Required))
+	if err != nil {
+		return err
+	}
+	userId := users.Items[selectedUser].Id
+
+	creds, _, err := client.NatsUserAPI.DownloadNatsUserCreds(ctxx, userId).Execute()
+	if err != nil {
+		return err
+	}
+
+	home, err := getNatsterHome()
+	if err != nil {
+		return err
+	}
+	credsFileName := path.Join(home, ".creds")
+	err = os.WriteFile(credsFileName, []byte(creds), 0655)
+	if err != nil {
+		return nil
+	}
 
 	newCtx := NatsterContext{
 		TeamID:           teamId,
@@ -134,7 +169,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		AccountName:      accountName,
 		AccountPublicKey: accountKey,
 		Token:            InitOpts.Token,
-		CredsPath:        Opts.Creds,
+		CredsPath:        credsFileName,
 	}
 	err = writeContext(newCtx)
 	if err != nil {

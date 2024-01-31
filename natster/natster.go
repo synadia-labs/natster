@@ -34,7 +34,7 @@ func main() {
 
 	initcli := ncli.Command("init", "Initialize and configure the Natster CLI")
 	initcli.Flag("token", "Synadia Cloud personal access token").Required().StringVar(&InitOpts.Token)
-	initcli.Flag("creds", "User credentials file (JWT authentication)").Envar("NATS_CREDS").PlaceHolder("FILE").Required().StringVar(&Opts.Creds)
+	//initcli.Flag("creds", "User credentials file (JWT authentication)").Envar("NATS_CREDS").PlaceHolder("FILE").Required().StringVar(&Opts.Creds)
 	initcli.Action(InitNatster)
 
 	catalog := ncli.Command("catalog", "Perform various activities related to a media catalog")
