@@ -1,4 +1,4 @@
-package hubserver
+package catalogserver
 
 import (
 	"encoding/json"
@@ -17,15 +17,15 @@ const (
 	APIPrefix = "natster"
 )
 
-func (hub *HubServer) startApiSubscriptions() error {
+func (srv *CatalogServer) startApiSubscriptions() error {
 
-	_, err := hub.nc.Subscribe(
-		fmt.Sprintf("%s.catalog.%s.get", APIPrefix, hub.library.Name),
-		handleCatalogGet(hub))
+	_, err := srv.nc.Subscribe(
+		fmt.Sprintf("%s.catalog.%s.get", APIPrefix, srv.library.Name),
+		handleCatalogGet(srv))
 	if err != nil {
 		log.Error(
 			"Failed to subscribe to catalog get",
-			log.String("library", hub.library.Name),
+			log.String("library", srv.library.Name),
 		)
 		return err
 	}
@@ -33,9 +33,9 @@ func (hub *HubServer) startApiSubscriptions() error {
 	return nil
 }
 
-func handleCatalogGet(hub *HubServer) func(m *nats.Msg) {
+func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
-		catalog, err := hub.library.GetCatalog()
+		catalog, err := srv.library.GetCatalog()
 		if err != nil {
 			log.Error(
 				"Failed to query the library catalog",
@@ -44,7 +44,7 @@ func handleCatalogGet(hub *HubServer) func(m *nats.Msg) {
 			return
 		}
 		catalogSummary := models.CatalogSummary{
-			Name:    hub.library.Name,
+			Name:    srv.library.Name,
 			Entries: convertEntries(catalog),
 		}
 		catalogRaw, err := json.Marshal(catalogSummary)

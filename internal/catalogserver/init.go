@@ -1,4 +1,4 @@
-package hubserver
+package catalogserver
 
 import (
 	log "log/slog"
@@ -20,22 +20,20 @@ func CliStart(opts *models.Options, hubopts *models.HubOptions) {
 		os.Exit(1)
 	}
 	log.Info(
-		"Established Natster Hub NATS connection",
-		log.String("servers", opts.Servers),
+		"Established Natster NATS connection",
+		log.String("servers", synadiaCloudServer),
 	)
 
-	library, err := medialibrary.New(nc, hubopts.RootPath, hubopts.Name, hubopts.Description)
+	library, err := medialibrary.Load(hubopts.Name)
 	if err != nil {
 		log.Error(
-			"Failed to create media library",
-			log.String("path", hubopts.RootPath),
+			"Failed to open media catalog",
 			log.String("name", hubopts.Name),
 		)
 		os.Exit(1)
 	}
 	log.Info(
-		"Opened Media Library",
-		log.String("path", hubopts.RootPath),
+		"Opened Media Catalog",
 		log.String("name", hubopts.Name),
 	)
 
@@ -52,7 +50,7 @@ func CliStart(opts *models.Options, hubopts *models.HubOptions) {
 	setupSignalHandlers(server)
 }
 
-func setupSignalHandlers(hub *HubServer) {
+func setupSignalHandlers(hub *CatalogServer) {
 	go func() {
 		signal.Reset(syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGHUP)
 		c := make(chan os.Signal, 1)

@@ -5,18 +5,15 @@ import (
 	"fmt"
 	log "log/slog"
 	"os"
+	"path"
 	"path/filepath"
-	"strings"
-
-	"github.com/nats-io/nats.go"
 )
 
 type MediaLibrary struct {
-	Name           string
-	RootDir        string
-	Description    string
-	nc             *nats.Conn
-	metadataBucket nats.KeyValue
+	Name        string       `json:"name"`
+	RootDir     string       `json:"root_dir"`
+	Description string       `json:"description"`
+	Entries     []MediaEntry `json:"entries"`
 }
 
 type MediaEntry struct {
@@ -26,19 +23,47 @@ type MediaEntry struct {
 	ByteSize    int64  `json:"byte_size"`
 }
 
-func New(nc *nats.Conn, rootDir string, name string, description string) (*MediaLibrary, error) {
-	bucket, err := createOrLocateLibraryMetadata(nc, name)
+func New(rootDir string, name string, description string) (*MediaLibrary, error) {
+	return &MediaLibrary{
+		Name:        name,
+		RootDir:     rootDir,
+		Description: description,
+	}, nil
+}
+
+func Load(name string) (*MediaLibrary, error) {
+	natsterHome, err := getNatsterHome()
 	if err != nil {
 		return nil, err
 	}
+	bytes, err := os.ReadFile(path.Join(natsterHome, fmt.Sprintf("%s.json", name)))
+	if err != nil {
+		return nil, err
+	}
+	var library MediaLibrary
+	err = json.Unmarshal(bytes, &library)
+	if err != nil {
+		return nil, err
+	}
+	return &library, nil
+}
 
-	return &MediaLibrary{
-		Name:           name,
-		nc:             nc,
-		RootDir:        rootDir,
-		Description:    description,
-		metadataBucket: bucket,
-	}, nil
+func (library *MediaLibrary) Save() error {
+	natsterHome, err := getNatsterHome()
+	if err != nil {
+		return err
+	}
+	bytes, err := json.Marshal(library)
+	if err != nil {
+		return err
+	}
+	dataFile := path.Join(natsterHome, fmt.Sprintf("%s.json", library.Name))
+	err = os.WriteFile(dataFile, bytes, 0660)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Recursively runs through the root directory and ensures that there's at least a
@@ -80,80 +105,29 @@ func (library *MediaLibrary) Ingest() error {
 	return err
 }
 
-// FIXME
-// TODO: this is a horrible N+1 example. We should probably store
-// a summary of the entire catalog in a single key with the details
-// in their own keys so we can grab a summary in one go
 func (library *MediaLibrary) GetCatalog() ([]MediaEntry, error) {
-	lister, err := library.metadataBucket.ListKeys()
-	if err != nil {
-		return nil, err
-	}
 
-	entries := make([]MediaEntry, 0)
-	for key := range lister.Keys() {
-		raw, err := library.metadataBucket.Get(key)
-		if err != nil {
-			continue
-		}
-		var entry MediaEntry
-		err = json.Unmarshal(raw.Value(), &entry)
-		if err != nil {
-			continue
-		}
-		entries = append(entries, entry)
-	}
-
-	return entries, nil
+	return library.Entries, nil
 }
 
 func (library *MediaLibrary) putEntry(entry MediaEntry) (error, bool) {
-	j, err := json.Marshal(entry)
-	if err != nil {
-		return err, false
-	}
-	key := strings.ReplaceAll(entry.Path, "/", "_")
-	_, err = library.metadataBucket.Get(key)
-	if err != nil {
-		// Key doesn't exist, so create it
-		_, err = library.metadataBucket.Put(key, j)
-		if err != nil {
-			log.Error(
-				"Failed to write media library entry",
-				log.String("key", key),
-				log.String("error", err.Error()),
-			)
-			return err, false
-		}
-		return nil, false
-	}
+	library.Entries = append(library.Entries, entry)
 
 	return nil, true
 }
 
-func createOrLocateLibraryMetadata(nc *nats.Conn, name string) (nats.KeyValue, error) {
-	opts := []nats.JSOpt{}
-	js, err := nc.JetStream(opts...)
+func getNatsterHome() (string, error) {
+	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	bucketName := fmt.Sprintf("%s_MD", strings.ToUpper(name))
-	bucket, err := js.KeyValue(bucketName)
+	natsterHome := path.Join(home, ".natster")
+	err = os.MkdirAll(natsterHome, 0750)
 	if err != nil {
-		bucket, err = js.CreateKeyValue(&nats.KeyValueConfig{
-			Bucket:      bucketName,
-			Description: fmt.Sprintf("Library metadata for %s", name),
-		})
-		if err != nil {
-			return nil, err
-		}
+		return "", err
 	}
 
-	log.Info(
-		"Bound to library metadata KV store",
-		log.String("name", bucketName),
-	)
+	return natsterHome, nil
 
-	return bucket, nil
 }

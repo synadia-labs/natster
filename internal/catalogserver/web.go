@@ -1,4 +1,4 @@
-package hubserver
+package catalogserver
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	natsterui "github.com/ConnectEverything/natster/internal/ui"
 )
 
-func (hub *HubServer) startWebServer(port int) error {
+func (hub *CatalogServer) startWebServer(port int) error {
 
 	sockshub := natsterui.NewHub()
 	go sockshub.Run()
@@ -45,6 +45,6 @@ func (hub *HubServer) startWebServer(port int) error {
 	return err
 }
 
-func serveApi(hub *HubServer, w http.ResponseWriter, r *http.Request) {
+func serveApi(hub *CatalogServer, w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Fill this in please!\n")
 }
