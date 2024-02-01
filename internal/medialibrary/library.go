@@ -14,6 +14,7 @@ type MediaLibrary struct {
 	RootDir     string       `json:"root_dir"`
 	Description string       `json:"description"`
 	Entries     []MediaEntry `json:"entries"`
+	Shares      []string     `json:"shares"`
 }
 
 type MediaEntry struct {
@@ -28,6 +29,8 @@ func New(rootDir string, name string, description string) (*MediaLibrary, error)
 		Name:        name,
 		RootDir:     rootDir,
 		Description: description,
+		Shares:      make([]string, 0),
+		Entries:     make([]MediaEntry, 0),
 	}, nil
 }
 
@@ -46,6 +49,10 @@ func Load(name string) (*MediaLibrary, error) {
 		return nil, err
 	}
 	return &library, nil
+}
+
+func (library *MediaLibrary) AddShare(accountKey string) {
+	library.Shares = append(library.Shares, accountKey)
 }
 
 func (library *MediaLibrary) Save() error {
@@ -69,7 +76,8 @@ func (library *MediaLibrary) Save() error {
 // Recursively runs through the root directory and ensures that there's at least a
 // key in the library metadata for that file
 func (library *MediaLibrary) Ingest() error {
-	newCount := 0
+
+	library.Entries = make([]MediaEntry, 0)
 
 	err := filepath.Walk(library.RootDir,
 		func(path string, info os.FileInfo, err error) error {
@@ -77,28 +85,19 @@ func (library *MediaLibrary) Ingest() error {
 				return err
 			}
 			if !info.IsDir() {
-				err, exists :=
-					library.putEntry(MediaEntry{
-						Path:        path,
-						ByteSize:    info.Size(),
-						Description: "Auto-imported library entry",
-					})
-
-				if err != nil {
-					return err
+				entry := MediaEntry{
+					Path:        path,
+					ByteSize:    info.Size(),
+					Description: "Auto-imported library entry",
 				}
-				if !exists {
-					newCount += 1
-				}
-
+				library.Entries = append(library.Entries, entry)
 			}
 			return nil
 		})
 
 	if err == nil {
 		log.Info(
-			"Imported new library entries",
-			log.Int("count", newCount),
+			"Imported library entries",
 		)
 	}
 
@@ -108,12 +107,6 @@ func (library *MediaLibrary) Ingest() error {
 func (library *MediaLibrary) GetCatalog() ([]MediaEntry, error) {
 
 	return library.Entries, nil
-}
-
-func (library *MediaLibrary) putEntry(entry MediaEntry) (error, bool) {
-	library.Entries = append(library.Entries, entry)
-
-	return nil, true
 }
 
 func getNatsterHome() (string, error) {

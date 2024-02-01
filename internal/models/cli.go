@@ -14,6 +14,11 @@ type HubOptions struct {
 	Port        int
 }
 
+type ShareOptions struct {
+	Name       string
+	AccountKey string
+}
+
 // Options configure the CLI
 type Options struct {
 	// Creds is nats credentials to authenticate with

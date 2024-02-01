@@ -14,9 +14,10 @@ var (
 	COMMIT    = ""
 	BUILDDATE = ""
 
-	Opts     = &models.Options{}
-	HubOpts  = &models.HubOptions{}
-	InitOpts = &models.InitOptions{}
+	Opts      = &models.Options{}
+	HubOpts   = &models.HubOptions{}
+	InitOpts  = &models.InitOptions{}
+	ShareOpts = &models.ShareOptions{}
 )
 
 func main() {
@@ -43,6 +44,11 @@ func main() {
 	newcat.Arg("description", "Description of the catalog").Required().StringVar(&HubOpts.Description)
 	newcat.Arg("path", "Path to the root directory containing the catalog's media").Required().ExistingDirVar(&HubOpts.RootPath)
 	newcat.Action(NewCatalog)
+
+	sharecat := catalog.Command("share", "Shares a catalog with a target account")
+	sharecat.Arg("name", "The name of the catalog to share").Required().StringVar(&ShareOpts.Name)
+	sharecat.Arg("account", "Public key of the target account").Required().StringVar(&ShareOpts.AccountKey)
+	sharecat.Action(ShareCatalog)
 
 	hub_up := catalog.Command("serve", "Starts the media catalog server")
 	hub_up.Arg("name", "The name of the catalog to serve").Required().StringVar(&HubOpts.Name)
