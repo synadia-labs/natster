@@ -11,7 +11,37 @@ import (
 	"github.com/ConnectEverything/natster/internal/catalogserver"
 	"github.com/ConnectEverything/natster/internal/medialibrary"
 	"github.com/choria-io/fisk"
+	"github.com/synadia-io/control-plane-sdk-go/syncp"
 )
+
+func ImportCatalog(ctx *fisk.ParseContext) error {
+	nctx, err := loadContext()
+	if err != nil {
+		return err
+	}
+	client := syncp.NewAPIClient(syncp.NewConfiguration())
+	ctxx := context.WithValue(context.Background(), syncp.ContextServerVariables, map[string]string{
+		"baseUrl": baseUrl,
+	})
+	ctxx = context.WithValue(ctxx, syncp.ContextAccessToken, nctx.Token)
+
+	importReq := syncp.SubjectImportCreateRequest{
+		JwtSettings: syncp.Import{
+			Account:      syncp.Ptr(ShareOpts.AccountKey),
+			Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.catalog.%s.>", nctx.AccountPublicKey, ShareOpts.Name)),
+			LocalSubject: syncp.Ptr(fmt.Sprintf("natster.catalog.%s.>", nctx.AccountPublicKey)),
+			Name:         syncp.Ptr(fmt.Sprintf("natster_%s", ShareOpts.Name)),
+			Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
+		},
+	}
+	_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, nctx.AccountID).SubjectImportCreateRequest(importReq).Execute()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Catalog '%s' imported from account '%s'. You can now query this catalog.\n", ShareOpts.Name, ShareOpts.AccountKey)
+	return nil
+}
 
 func ShareCatalog(ctx *fisk.ParseContext) error {
 	lib, err := medialibrary.Load(ShareOpts.Name)

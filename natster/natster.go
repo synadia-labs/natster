@@ -50,6 +50,11 @@ func main() {
 	sharecat.Arg("account", "Public key of the target account").Required().StringVar(&ShareOpts.AccountKey)
 	sharecat.Action(ShareCatalog)
 
+	catimport := catalog.Command("import", "Imports a shared catalog")
+	catimport.Arg("name", "Name of the catalog to import").Required().StringVar(&ShareOpts.Name)
+	catimport.Arg("account", "Public key of the account from which to import").Required().StringVar(&ShareOpts.AccountKey)
+	catimport.Action(ImportCatalog)
+
 	hub_up := catalog.Command("serve", "Starts the media catalog server")
 	hub_up.Arg("name", "The name of the catalog to serve").Required().StringVar(&HubOpts.Name)
 	hub_up.Flag("port", "HTTP port on which to run the UI/API").Default("8080").IntVar(&HubOpts.Port)
