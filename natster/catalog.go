@@ -29,7 +29,7 @@ func ImportCatalog(ctx *fisk.ParseContext) error {
 		JwtSettings: syncp.Import{
 			Account:      syncp.Ptr(ShareOpts.AccountKey),
 			Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.catalog.%s.>", nctx.AccountPublicKey, ShareOpts.Name)),
-			LocalSubject: syncp.Ptr(fmt.Sprintf("natster.catalog.%s.>", nctx.AccountPublicKey)),
+			LocalSubject: syncp.Ptr(fmt.Sprintf("natster.catalog.%s.>", ShareOpts.Name)),
 			Name:         syncp.Ptr(fmt.Sprintf("natster_%s", ShareOpts.Name)),
 			Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
 		},
