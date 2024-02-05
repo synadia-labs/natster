@@ -20,5 +20,12 @@ tasks:
     cmds:
       - go build -tags netgo -ldflags '-extldflags "-static"'  
 
+  natsterglobal:
+    dir: natster_global
+    sources:
+      - "*.go"
+    cmds:
+      - go build -tags netgo -ldflags '-extldflags "-static"'
+
   build:
-    deps: [ui,natster]
+    deps: [ui,natster,natsterglobal]
