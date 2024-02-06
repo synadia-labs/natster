@@ -1,7 +1,6 @@
 package catalogserver
 
 import (
-	"encoding/json"
 	"fmt"
 	log "log/slog"
 	"slices"
@@ -10,7 +9,6 @@ import (
 	"github.com/ConnectEverything/natster/internal/medialibrary"
 	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/nats-io/nats.go"
-	"github.com/synadia-io/control-plane-sdk-go/syncp"
 )
 
 // API functions exposed over NATS, topic import/export is used to allow
@@ -36,7 +34,7 @@ func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
 		tokens := strings.Split(m.Subject, ".")
 		if !slices.Contains(srv.library.Shares, tokens[0]) { // is this account on the sharing list?
-			_ = m.Respond(newApiResultFail("Forbidden", 403))
+			_ = m.Respond(models.NewApiResultFail("Forbidden", 403))
 			return
 		}
 
@@ -52,7 +50,7 @@ func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
 			Name:    srv.library.Name,
 			Entries: convertEntries(catalog),
 		}
-		catalogRaw := newApiResultPass(catalogSummary)
+		catalogRaw := models.NewApiResultPass(catalogSummary)
 		if err != nil {
 			log.Error(
 				"Failed to serialize the catalog",
@@ -77,28 +75,4 @@ func convertEntries(entries []medialibrary.MediaEntry) []models.CatalogEntry {
 		out[i] = outEntry
 	}
 	return out
-}
-
-type ApiResult struct {
-	Error *string     `json:"error,omitempty"`
-	Code  int         `json:"code"`
-	Data  interface{} `json:"data"`
-}
-
-func newApiResultPass(data interface{}) []byte {
-	res := ApiResult{
-		Data: data,
-		Code: 200,
-	}
-	bytes, _ := json.Marshal(res)
-	return bytes
-}
-
-func newApiResultFail(msg string, code int) []byte {
-	res := ApiResult{
-		Error: syncp.Ptr(msg),
-		Code:  code,
-	}
-	bytes, _ := json.Marshal(res)
-	return bytes
 }

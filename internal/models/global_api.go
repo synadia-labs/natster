@@ -2,6 +2,7 @@ package models
 
 const (
 	NatsterInitializedEventType = "natster_initialized"
+	CatalogSharedEventType      = "catalog_shared"
 )
 
 // Heartbeats are emitted to the global service periodically by running natster
@@ -28,4 +29,13 @@ type NatsterInitializedEvent struct {
 type CommunityStats struct {
 	TotalInitialized uint64 `json:"total_initialized"`
 	RunningCatalogs  uint64 `json:"running_catalogs"`
+	// Total number of catalogs shared with others
+	SharedCatalogs uint64 `json:"share_count"`
+}
+
+type CatalogShareSummary struct {
+	FromAccount string `json:"from_account"`
+	ToAccount   string `json:"to_account"`
+	Catalog     string `json:"catalog"`
+	// TODO: add a timestamp here
 }

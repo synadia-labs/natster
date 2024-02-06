@@ -1,5 +1,11 @@
 package models
 
+import (
+	"encoding/json"
+
+	"github.com/synadia-io/control-plane-sdk-go/syncp"
+)
+
 type CatalogSummary struct {
 	Name    string         `json:"name"`
 	Entries []CatalogEntry `json:"entries"`
@@ -13,4 +19,28 @@ type CatalogEntry struct {
 	Description string `json:"description"`
 	MimeType    string `json:"mime_type"`
 	ByteSize    int64  `json:"byte_size"`
+}
+
+type ApiResult struct {
+	Error *string     `json:"error,omitempty"`
+	Code  int         `json:"code"`
+	Data  interface{} `json:"data"`
+}
+
+func NewApiResultPass(data interface{}) []byte {
+	res := ApiResult{
+		Data: data,
+		Code: 200,
+	}
+	bytes, _ := json.Marshal(res)
+	return bytes
+}
+
+func NewApiResultFail(msg string, code int) []byte {
+	res := ApiResult{
+		Error: syncp.Ptr(msg),
+		Code:  code,
+	}
+	bytes, _ := json.Marshal(res)
+	return bytes
 }

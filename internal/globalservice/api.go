@@ -17,6 +17,10 @@ func (srv *GlobalService) startApiSubscriptions() error {
 		"*.natster.global.stats",
 		handleStats(srv))
 
+	_, _ = srv.nc.Subscribe(
+		"*.natster.global.my.shares",
+		handleMyShares(srv))
+
 	return nil
 }
 
