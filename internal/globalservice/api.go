@@ -2,8 +2,6 @@ package globalservice
 
 import (
 	"strings"
-
-	"github.com/nats-io/nats.go"
 )
 
 func (srv *GlobalService) startApiSubscriptions() error {
@@ -15,13 +13,11 @@ func (srv *GlobalService) startApiSubscriptions() error {
 		"*.natster.global.heartbeats.put",
 		handleHeartbeat(srv))
 
-	return nil
-}
+	_, _ = srv.nc.Subscribe(
+		"*.natster.global.stats",
+		handleStats(srv))
 
-func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
-	return func(m *nats.Msg) {
-		// NOOP
-	}
+	return nil
 }
 
 func extractAccountKey(subject string) string {

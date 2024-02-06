@@ -3,19 +3,22 @@ package catalogserver
 import (
 	log "log/slog"
 
+	"github.com/ConnectEverything/natster/internal/globalservice"
 	"github.com/ConnectEverything/natster/internal/medialibrary"
 	"github.com/nats-io/nats.go"
 )
 
 type CatalogServer struct {
-	nc      *nats.Conn
-	library *medialibrary.MediaLibrary
+	nc                  *nats.Conn
+	globalServiceClient *globalservice.Client
+	library             *medialibrary.MediaLibrary
 }
 
 func New(nc *nats.Conn, library *medialibrary.MediaLibrary) *CatalogServer {
 	return &CatalogServer{
-		nc:      nc,
-		library: library,
+		nc:                  nc,
+		globalServiceClient: globalservice.NewClient(nc),
+		library:             library,
 	}
 }
 

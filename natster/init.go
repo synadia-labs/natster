@@ -7,7 +7,10 @@ import (
 	"path"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/ConnectEverything/natster/internal/globalservice"
+	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/choria-io/fisk"
+	"github.com/nats-io/jsm.go/natscontext"
 	"github.com/synadia-io/control-plane-sdk-go/syncp"
 )
 
@@ -173,6 +176,33 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	}
 	err = writeContext(newCtx)
 	if err != nil {
+		return err
+	}
+
+	// Use the newly established context to publish an initialized event
+	// on the new natster global import
+	ctxOpts := []natscontext.Option{
+		natscontext.WithServerURL("tls://connect.ngs.global"),
+		natscontext.WithCreds(newCtx.CredsPath),
+	}
+	natsContext, err := natscontext.New("natster", false, ctxOpts...)
+	if err != nil {
+		return err
+	}
+	conn, err := natsContext.Connect()
+	if err != nil {
+		return err
+	}
+	globalClient := globalservice.NewClient(conn)
+	err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none",
+		models.NatsterInitializedEvent{
+			AccountId:   newCtx.AccountID,
+			AccountName: newCtx.AccountName,
+			AccountKey:  newCtx.AccountPublicKey,
+		},
+	)
+	if err != nil {
+		fmt.Printf("Failed to contact Natster global service to post initialization event: %s", err)
 		return err
 	}
 
