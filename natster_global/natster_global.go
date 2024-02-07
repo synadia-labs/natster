@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ConnectEverything/natster/internal/globalservice"
 	"github.com/nats-io/nats.go"
+	"github.com/synadia-labs/natster/internal/globalservice"
 )
 
 func main() {
@@ -16,7 +16,10 @@ func main() {
 	seed := os.Getenv("USER_SEED")
 	server := "tls://connect.ngs.global"
 
-	nc, err := nats.Connect(server, nats.UserJWTAndSeed(jwt, seed))
+	nc, err := nats.Connect(server,
+		nats.UserJWTAndSeed(jwt, seed),
+		nats.Name("natster_global"),
+	)
 	if err != nil {
 		panic(err)
 	}

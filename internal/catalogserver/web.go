@@ -6,7 +6,7 @@ import (
 	log "log/slog"
 	"net/http"
 
-	natsterui "github.com/ConnectEverything/natster/internal/ui"
+	natsterui "github.com/synadia-labs/natster/internal/ui"
 )
 
 func (hub *CatalogServer) startWebServer(port int) error {

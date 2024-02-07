@@ -4,19 +4,11 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+
+	"github.com/synadia-labs/natster/internal/models"
 )
 
-type NatsterContext struct {
-	TeamID           string `json:"team_id"`
-	SystemID         string `json:"system_id"`
-	AccountID        string `json:"account_id"`
-	AccountName      string `json:"account_name"`
-	AccountPublicKey string `json:"account_public_key"`
-	Token            string `json:"access_token"`
-	CredsPath        string `json:"creds"`
-}
-
-func loadContext() (*NatsterContext, error) {
+func loadContext() (*models.NatsterContext, error) {
 	home, err := getNatsterHome()
 	if err != nil {
 		return nil, err
@@ -26,7 +18,7 @@ func loadContext() (*NatsterContext, error) {
 	if err != nil {
 		return nil, err
 	}
-	var context NatsterContext
+	var context models.NatsterContext
 	err = json.Unmarshal(bytes, &context)
 	if err != nil {
 		return nil, err
@@ -34,7 +26,7 @@ func loadContext() (*NatsterContext, error) {
 	return &context, nil
 }
 
-func writeContext(ctx NatsterContext) error {
+func writeContext(ctx models.NatsterContext) error {
 
 	home, err := getNatsterHome()
 	if err != nil {

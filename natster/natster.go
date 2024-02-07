@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/choria-io/fisk"
 	"github.com/fatih/color"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
 var (
@@ -54,6 +54,9 @@ func main() {
 	catimport.Arg("name", "Name of the catalog to import").Required().StringVar(&ShareOpts.Name)
 	catimport.Arg("account", "Public key of the account from which to import").Required().StringVar(&ShareOpts.AccountKey)
 	catimport.Action(ImportCatalog)
+
+	catls := catalog.Command("list", "Lists my shared catalogs and catalogs shared with me").Alias("ls")
+	catls.Action(ListCatalogs)
 
 	hub_up := catalog.Command("serve", "Starts the media catalog server")
 	hub_up.Arg("name", "The name of the catalog to serve").Required().StringVar(&HubOpts.Name)

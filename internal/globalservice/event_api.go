@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
 // Returns the total number of accounts in which developers have run `natster init`

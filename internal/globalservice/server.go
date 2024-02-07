@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/nats-io/nats.go"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
 type GlobalService struct {

@@ -1,4 +1,4 @@
-module github.com/ConnectEverything/natster
+module github.com/synadia-labs/natster
 
 go 1.21
 

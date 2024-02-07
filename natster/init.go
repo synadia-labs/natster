@@ -7,11 +7,11 @@ import (
 	"path"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/ConnectEverything/natster/internal/globalservice"
-	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/choria-io/fisk"
 	"github.com/nats-io/jsm.go/natscontext"
 	"github.com/synadia-io/control-plane-sdk-go/syncp"
+	"github.com/synadia-labs/natster/internal/globalservice"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
 const (
@@ -102,7 +102,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	jwt.Subject = syncp.Ptr("*.natster.catalog.>")
 	jwt.Description = syncp.Ptr("Natster Catalog Service")
 	jwt.Name = syncp.Ptr("natster_catalog")
-	jwt.InfoUrl = syncp.Ptr("https://natster.io")
+	jwt.InfoUrl = syncp.Ptr("https:/natster.io")
 	jwt.ResponseType = syncp.Ptr(syncp.RESPONSETYPE_SINGLETON)
 	jwt.Type = syncp.Ptr(syncp.EXPORTTYPE_SERVICE)
 	req := syncp.SubjectExportCreateRequest{
@@ -165,7 +165,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return nil
 	}
 
-	newCtx := NatsterContext{
+	newCtx := models.NatsterContext{
 		TeamID:           teamId,
 		SystemID:         systemId,
 		AccountID:        accountId,

@@ -1,9 +1,9 @@
 package catalogserver
 
 import (
-	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/nats-io/jsm.go/natscontext"
 	"github.com/nats-io/nats.go"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
 const (
@@ -22,7 +22,7 @@ func generateConnectionFromOpts(opts *models.Options) (*nats.Conn, error) {
 		return nil, err
 	}
 
-	conn, err := natsContext.Connect()
+	conn, err := natsContext.Connect(nats.Name("natster_catalog"))
 	if err != nil {
 		return nil, err
 	}

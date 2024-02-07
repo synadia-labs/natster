@@ -6,11 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ConnectEverything/natster/internal/medialibrary"
-	"github.com/ConnectEverything/natster/internal/models"
+	"github.com/synadia-labs/natster/internal/medialibrary"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
-func CliStart(opts *models.Options, hubopts *models.HubOptions) {
+func CliStart(ctx *models.NatsterContext, opts *models.Options, hubopts *models.HubOptions) {
 	nc, err := generateConnectionFromOpts(opts)
 	if err != nil {
 		log.Error(
@@ -37,7 +37,7 @@ func CliStart(opts *models.Options, hubopts *models.HubOptions) {
 		log.String("name", hubopts.Name),
 	)
 
-	server := New(nc, library)
+	server := New(ctx, nc, library)
 	err = server.Start(hubopts.Port)
 	if err != nil {
 		log.Error(

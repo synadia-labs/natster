@@ -26,3 +26,13 @@ type Options struct {
 	// Timeout is how long to wait for operations
 	Timeout time.Duration
 }
+
+type NatsterContext struct {
+	TeamID           string `json:"team_id"`
+	SystemID         string `json:"system_id"`
+	AccountID        string `json:"account_id"`
+	AccountName      string `json:"account_name"`
+	AccountPublicKey string `json:"account_public_key"`
+	Token            string `json:"access_token"`
+	CredsPath        string `json:"creds"`
+}

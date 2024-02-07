@@ -6,9 +6,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ConnectEverything/natster/internal/medialibrary"
-	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/nats-io/nats.go"
+	"github.com/synadia-labs/natster/internal/medialibrary"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
 // API functions exposed over NATS, topic import/export is used to allow

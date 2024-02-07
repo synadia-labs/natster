@@ -3,8 +3,8 @@ package globalservice
 import (
 	"log/slog"
 
-	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/nats-io/nats.go"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
 func handleMyShares(srv *GlobalService) func(m *nats.Msg) {

@@ -27,6 +27,12 @@ type ApiResult struct {
 	Data  interface{} `json:"data"`
 }
 
+type TypedApiResult[T any] struct {
+	Error *string `json:"error,omitempty"`
+	Code  int     `json:"code"`
+	Data  T       `json:"data"`
+}
+
 func NewApiResultPass(data interface{}) []byte {
 	res := ApiResult{
 		Data: data,

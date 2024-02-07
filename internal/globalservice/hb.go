@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	"github.com/ConnectEverything/natster/internal/models"
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/nats-io/nats.go"
+	"github.com/synadia-labs/natster/internal/models"
 )
 
 func handleHeartbeat(srv *GlobalService) func(m *nats.Msg) {
