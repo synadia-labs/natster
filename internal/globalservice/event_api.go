@@ -24,7 +24,7 @@ func (srv *GlobalService) GetTotalSharedCatalogs() (uint64, error) {
 }
 
 func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogShareSummary, error) {
-	subject := fmt.Sprintf("natster.events.%s.*.*.%s", myAccountKey, models.CatalogSharedEventType)
+	subject := fmt.Sprintf("natster.events.*.*.*.%s", models.CatalogSharedEventType)
 	js, err := jetstream.New(srv.nc)
 	if err != nil {
 		return nil, err

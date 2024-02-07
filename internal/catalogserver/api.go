@@ -3,7 +3,6 @@ package catalogserver
 import (
 	"fmt"
 	log "log/slog"
-	"slices"
 	"strings"
 
 	"github.com/nats-io/nats.go"
@@ -33,7 +32,22 @@ func (srv *CatalogServer) startApiSubscriptions() error {
 func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
 		tokens := strings.Split(m.Subject, ".")
-		if !slices.Contains(srv.library.Shares, tokens[0]) { // is this account on the sharing list?
+		// TODO: should we cache this?
+		cats, err := srv.globalServiceClient.GetMyCatalogs()
+		if err != nil {
+			_ = m.Respond(models.NewApiResultFail("InternalServerError", 500))
+			return
+		}
+		// Is there a sharing record from me to the calling account
+		// for the catalog in question?
+		allowed := false
+		for _, cat := range cats {
+			if cat.Catalog == srv.library.Name &&
+				cat.ToAccount == tokens[0] {
+				allowed = true
+			}
+		}
+		if !allowed { // is this account on the sharing list?
 			_ = m.Respond(models.NewApiResultFail("Forbidden", 403))
 			return
 		}
