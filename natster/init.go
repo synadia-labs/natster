@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -31,6 +32,9 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	if err != nil {
 		return err
 	}
+	if len(resp.Items) == 0 {
+		return errors.New("no teams found for this Synadia Cloud access token")
+	}
 
 	teamNames := make([]string, len(resp.Items))
 
@@ -52,6 +56,9 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	sysResp, _, err := client.TeamAPI.ListTeamSystems(ctxx, teamId).Execute()
 	if err != nil {
 		return err
+	}
+	if len(sysResp.Items) == 0 {
+		return errors.New("no systems found in this team")
 	}
 
 	systemNames := make([]string, len(sysResp.Items))
@@ -75,6 +82,9 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	if err != nil {
 		return err
 	}
+	if len(acctResp.Items) == 0 {
+		return errors.New("no accounts found in this system")
+	}
 	accountNames := make([]string, len(acctResp.Items))
 	for i, account := range acctResp.Items {
 		accountNames[i] = account.Name
@@ -94,37 +104,12 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	accountKey := acctResp.Items[selectedAccount].AccountPublicKey
 	accountName := acctResp.Items[selectedAccount].Name
 
-	jwt := syncp.Export{}
-
-	// token position is 1-based since 0 means none
-	jwt.AccountTokenPosition = syncp.Ptr(int32(1))
-	jwt.Advertise = syncp.Ptr(true)
-	jwt.Subject = syncp.Ptr("*.natster.catalog.>")
-	jwt.Description = syncp.Ptr("Natster Catalog Service")
-	jwt.Name = syncp.Ptr("natster_catalog")
-	jwt.InfoUrl = syncp.Ptr("https:/natster.io")
-	jwt.ResponseType = syncp.Ptr(syncp.RESPONSETYPE_SINGLETON)
-	jwt.Type = syncp.Ptr(syncp.EXPORTTYPE_SERVICE)
-	req := syncp.SubjectExportCreateRequest{
-		JwtSettings:               jwt,
-		MetricsEnabled:            false,
-		MetricsSamplingPercentage: 0,
-	}
-	_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+	err = ensureSubjectExported(client, ctxx, accountId)
 	if err != nil {
 		return err
 	}
 
-	importReq := syncp.SubjectImportCreateRequest{
-		JwtSettings: syncp.Import{
-			Account:      syncp.Ptr(natsterGlobalAccount),
-			Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.global.>", accountKey)),
-			LocalSubject: syncp.Ptr("natster.global.>"),
-			Name:         syncp.Ptr("natster_global"),
-			Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
-		},
-	}
-	_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
+	err = ensureGlobalImport(client, ctxx, accountId, accountKey)
 	if err != nil {
 		return err
 	}
@@ -132,6 +117,9 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	users, _, err := client.AccountAPI.ListUsers(ctxx, accountId).Execute()
 	if err != nil {
 		return err
+	}
+	if len(users.Items) == 0 {
+		return errors.New("a user context is required for natster to operate properly. No users found")
 	}
 
 	usernames := make([]string, len(users.Items))
@@ -206,8 +194,73 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return err
 	}
 
-	fmt.Printf("Congratulations! Your account (%s) is now ready to serve Natster catalogs!\n", accountName)
+	fmt.Printf("Congratulations! Your account (%s) is ready to serve Natster catalogs!\n", accountName)
 	fmt.Println("You can now use `natster catalog serve` to host a media catalog and `natster catalog share` to share with friends.")
 
+	return nil
+}
+
+func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accountId string) error {
+	jwt := syncp.Export{}
+
+	resp, _, err := client.AccountAPI.ListSubjectExports(ctxx, accountId).Execute()
+	if err != nil {
+		return err
+	}
+	for _, exp := range resp.Items {
+		if *exp.JwtSettings.Name == "natster_catalog" {
+			fmt.Println("✅ Catalog service export is configured")
+			return nil
+		}
+	}
+
+	// token position is 1-based since 0 means none
+	jwt.AccountTokenPosition = syncp.Ptr(int32(1))
+	jwt.Advertise = syncp.Ptr(true)
+	jwt.Subject = syncp.Ptr("*.natster.catalog.>")
+	jwt.Description = syncp.Ptr("Natster Catalog Service")
+	jwt.Name = syncp.Ptr("natster_catalog")
+	jwt.InfoUrl = syncp.Ptr("https://natster.io")
+	jwt.ResponseType = syncp.Ptr(syncp.RESPONSETYPE_SINGLETON)
+	jwt.Type = syncp.Ptr(syncp.EXPORTTYPE_SERVICE)
+	req := syncp.SubjectExportCreateRequest{
+		JwtSettings:               jwt,
+		MetricsEnabled:            false,
+		MetricsSamplingPercentage: 0,
+	}
+	_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ensureGlobalImport(client *syncp.APIClient, ctxx context.Context, accountId string, accountKey string) error {
+
+	resp, _, err := client.AccountAPI.ListSubjectImports(ctxx, accountId).Execute()
+	if err != nil {
+		return err
+	}
+	for _, imp := range resp.Items {
+		if *imp.JwtSettings.Name == "natster_global" {
+			fmt.Println("✅ Natster global service import is configured")
+			return nil
+		}
+	}
+
+	importReq := syncp.SubjectImportCreateRequest{
+		JwtSettings: syncp.Import{
+			Account:      syncp.Ptr(natsterGlobalAccount),
+			Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.global.>", accountKey)),
+			LocalSubject: syncp.Ptr("natster.global.>"),
+			Name:         syncp.Ptr("natster_global"),
+			Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
+		},
+	}
+	_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
+	if err != nil {
+		return err
+	}
 	return nil
 }
