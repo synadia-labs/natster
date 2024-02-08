@@ -19,6 +19,7 @@ type CatalogEntry struct {
 	Description string `json:"description"`
 	MimeType    string `json:"mime_type"`
 	ByteSize    int64  `json:"byte_size"`
+	Hash        string `json:"hash"`
 }
 
 type ApiResult struct {

@@ -1,8 +1,11 @@
 package medialibrary
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	log "log/slog"
 	"os"
 	"path"
@@ -21,6 +24,7 @@ type MediaEntry struct {
 	Path        string `json:"path"`
 	Description string `json:"description"`
 	MimeType    string `json:"mime_type"`
+	Hash        string `json:"hash"`
 	ByteSize    int64  `json:"byte_size"`
 }
 
@@ -73,6 +77,17 @@ func (library *MediaLibrary) Save() error {
 	return nil
 }
 
+// Attempts to locate a media entry based on the hash. If it is not found,
+// the result will be nil
+func (library *MediaLibrary) FindByHash(hash string) *MediaEntry {
+	for _, entry := range library.Entries {
+		if entry.Hash == hash {
+			return &entry
+		}
+	}
+	return nil
+}
+
 // Recursively runs through the root directory and ensures that there's at least a
 // key in the library metadata for that file
 func (library *MediaLibrary) Ingest() error {
@@ -85,8 +100,13 @@ func (library *MediaLibrary) Ingest() error {
 				return err
 			}
 			if !info.IsDir() {
+				hash, err := hashFile(path)
+				if err != nil {
+					return err
+				}
 				entry := MediaEntry{
 					Path:        path,
+					Hash:        hash,
 					ByteSize:    info.Size(),
 					Description: "Auto-imported library entry",
 				}
@@ -123,4 +143,20 @@ func getNatsterHome() (string, error) {
 
 	return natsterHome, nil
 
+}
+
+func hashFile(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		slog.Error("Failed to open file for hashing", err)
+		return "", err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		slog.Error("Failed to copy file for hashing", err)
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

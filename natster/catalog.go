@@ -50,12 +50,28 @@ func ImportCatalog(ctx *fisk.ParseContext) error {
 	})
 	ctxx = context.WithValue(ctxx, syncp.ContextAccessToken, nctx.Token)
 
+	importName := fmt.Sprintf("natster_%s", ShareOpts.Name)
+
+	imports, _, err := client.AccountAPI.ListSubjectImports(ctxx, nctx.AccountID).Execute()
+	if err != nil {
+		fmt.Printf("Failed to query subject imports for this account: %s\n", err)
+		return err
+	}
+	for _, imp := range imports.Items {
+		if *imp.JwtSettings.Name == importName {
+			fmt.Printf("✅ Catalog '%s' is already imported from account '%s'\n",
+				ShareOpts.Name, ShareOpts.AccountKey,
+			)
+			return nil
+		}
+	}
+
 	importReq := syncp.SubjectImportCreateRequest{
 		JwtSettings: syncp.Import{
 			Account:      syncp.Ptr(ShareOpts.AccountKey),
 			Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.catalog.%s.>", nctx.AccountPublicKey, ShareOpts.Name)),
 			LocalSubject: syncp.Ptr(fmt.Sprintf("natster.catalog.%s.>", ShareOpts.Name)),
-			Name:         syncp.Ptr(fmt.Sprintf("natster_%s", ShareOpts.Name)),
+			Name:         syncp.Ptr(importName),
 			Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
 		},
 	}
@@ -75,6 +91,7 @@ func ShareCatalog(ctx *fisk.ParseContext) error {
 		return errors.New("target is not a properly formed account public key")
 	}
 
+	ShareOpts.Name = strings.ToLower(ShareOpts.Name)
 	err := publishCatalogShared()
 	if err != nil {
 		return err
@@ -106,6 +123,7 @@ func StartCatalogServer(ctx *fisk.ParseContext) error {
 func NewCatalog(ctx *fisk.ParseContext) error {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(io.Discard, nil)))
 
+	HubOpts.Name = strings.ToLower(HubOpts.Name)
 	lib, err := medialibrary.New(HubOpts.RootPath, HubOpts.Name, HubOpts.Description)
 	if err != nil {
 		fmt.Printf("Failed to initialize media catalog: %s\n", err)
