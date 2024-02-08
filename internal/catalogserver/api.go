@@ -82,6 +82,7 @@ func convertEntries(entries []medialibrary.MediaEntry) []models.CatalogEntry {
 	for i, entry := range entries {
 		outEntry := models.CatalogEntry{
 			Path:        entry.Path,
+			Hash:        entry.Hash,
 			Description: entry.Description,
 			MimeType:    entry.MimeType,
 			ByteSize:    entry.ByteSize,
