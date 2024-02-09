@@ -14,6 +14,11 @@ type HubOptions struct {
 	Port        int
 }
 
+type DownloadOptions struct {
+	Hash       string
+	OutputPath string
+}
+
 type ShareOptions struct {
 	Name       string
 	AccountKey string

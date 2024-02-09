@@ -51,36 +51,66 @@ func ImportCatalog(ctx *fisk.ParseContext) error {
 	ctxx = context.WithValue(ctxx, syncp.ContextAccessToken, nctx.Token)
 
 	importName := fmt.Sprintf("natster_%s", ShareOpts.Name)
+	mediaImportName := fmt.Sprintf("natster_%s_media", ShareOpts.Name)
 
 	imports, _, err := client.AccountAPI.ListSubjectImports(ctxx, nctx.AccountID).Execute()
 	if err != nil {
 		fmt.Printf("Failed to query subject imports for this account: %s\n", err)
 		return err
 	}
+	catFound := false
+	mediaFound := false
+
 	for _, imp := range imports.Items {
 		if *imp.JwtSettings.Name == importName {
-			fmt.Printf("✅ Catalog '%s' is already imported from account '%s'\n",
+			fmt.Printf("✅ Catalog '%s' is imported from account '%s'\n",
 				ShareOpts.Name, ShareOpts.AccountKey,
 			)
-			return nil
+			catFound = true
+		}
+		if *imp.JwtSettings.Name == mediaImportName {
+			fmt.Printf("✅ Catalog '%s' media stream is imported from account '%s'\n",
+				ShareOpts.Name, ShareOpts.AccountKey,
+			)
+			mediaFound = true
 		}
 	}
-
-	importReq := syncp.SubjectImportCreateRequest{
-		JwtSettings: syncp.Import{
-			Account:      syncp.Ptr(ShareOpts.AccountKey),
-			Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.catalog.%s.>", nctx.AccountPublicKey, ShareOpts.Name)),
-			LocalSubject: syncp.Ptr(fmt.Sprintf("natster.catalog.%s.>", ShareOpts.Name)),
-			Name:         syncp.Ptr(importName),
-			Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
-		},
+	if !catFound {
+		importReq := syncp.SubjectImportCreateRequest{
+			JwtSettings: syncp.Import{
+				Account:      syncp.Ptr(ShareOpts.AccountKey),
+				Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.catalog.%s.>", nctx.AccountPublicKey, ShareOpts.Name)),
+				LocalSubject: syncp.Ptr(fmt.Sprintf("natster.catalog.%s.>", ShareOpts.Name)),
+				Name:         syncp.Ptr(importName),
+				Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
+			},
+		}
+		_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, nctx.AccountID).SubjectImportCreateRequest(importReq).Execute()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("✅ Catalog '%s' is imported from account '%s'\n",
+			ShareOpts.Name, ShareOpts.AccountKey,
+		)
 	}
-	_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, nctx.AccountID).SubjectImportCreateRequest(importReq).Execute()
-	if err != nil {
-		return err
+	if !mediaFound {
+		importReq := syncp.SubjectImportCreateRequest{
+			JwtSettings: syncp.Import{
+				Account:      syncp.Ptr(ShareOpts.AccountKey),
+				Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.media.%s.*", nctx.AccountPublicKey, ShareOpts.Name)),
+				LocalSubject: syncp.Ptr(fmt.Sprintf("natster.media.%s.*", ShareOpts.Name)),
+				Name:         syncp.Ptr(importName),
+				Type:         syncp.Ptr(syncp.EXPORTTYPE_STREAM),
+			},
+		}
+		_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, nctx.AccountID).SubjectImportCreateRequest(importReq).Execute()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("✅ Catalog '%s' media stream is imported from account '%s'\n",
+			ShareOpts.Name, ShareOpts.AccountKey,
+		)
 	}
-
-	fmt.Printf("Catalog '%s' imported from account '%s'. You can now query this catalog.\n", ShareOpts.Name, ShareOpts.AccountKey)
 	return nil
 }
 

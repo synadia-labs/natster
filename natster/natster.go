@@ -18,6 +18,7 @@ var (
 	HubOpts   = &models.HubOptions{}
 	InitOpts  = &models.InitOptions{}
 	ShareOpts = &models.ShareOptions{}
+	DlOpts    = &models.DownloadOptions{}
 )
 
 func main() {
@@ -54,6 +55,12 @@ func main() {
 	catimport.Arg("name", "Name of the catalog to import").Required().StringVar(&ShareOpts.Name)
 	catimport.Arg("account", "Public key of the account from which to import").Required().StringVar(&ShareOpts.AccountKey)
 	catimport.Action(ImportCatalog)
+
+	catdl := catalog.Command("download", "Downloads a file from a catalog")
+	catdl.Arg("name", "Name of the catalog from which to download the file").Required().StringVar(&ShareOpts.Name)
+	catdl.Arg("hash", "SHA256 hash of the file to download. Hashes can be found in catalog metadata").Required().StringVar(&DlOpts.Hash)
+	catdl.Arg("out", "Path to output file").Required().StringVar(&DlOpts.OutputPath)
+	catdl.Action(DownloadFile)
 
 	catls := catalog.Command("list", "Lists my shared catalogs and catalogs shared with me").Alias("ls")
 	catls.Action(ListCatalogs)

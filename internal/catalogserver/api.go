@@ -26,27 +26,43 @@ func (srv *CatalogServer) startApiSubscriptions() error {
 		return err
 	}
 
+	_, err = srv.nc.Subscribe(
+		fmt.Sprintf("*.natster.catalog.%s.download", srv.library.Name),
+		handleDownloadRequest(srv))
+	if err != nil {
+		log.Error(
+			"Failed to subscribe to catalog item download",
+			log.String("library", srv.library.Name),
+		)
+		return err
+	}
+
 	return nil
+}
+
+func (srv *CatalogServer) isClientAllowed(accountKey string) bool {
+	cats, err := srv.globalServiceClient.GetMyCatalogs()
+	if err != nil {
+		return false
+	}
+	// Is there a sharing record from me to the calling account
+	// for the catalog in question?
+	allowed := false
+	for _, cat := range cats {
+		if cat.Catalog == srv.library.Name &&
+			cat.ToAccount == accountKey {
+			allowed = true
+		}
+	}
+	return allowed
 }
 
 func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
 		tokens := strings.Split(m.Subject, ".")
 		// TODO: should we cache this?
-		cats, err := srv.globalServiceClient.GetMyCatalogs()
-		if err != nil {
-			_ = m.Respond(models.NewApiResultFail("InternalServerError", 500))
-			return
-		}
-		// Is there a sharing record from me to the calling account
-		// for the catalog in question?
-		allowed := false
-		for _, cat := range cats {
-			if cat.Catalog == srv.library.Name &&
-				cat.ToAccount == tokens[0] {
-				allowed = true
-			}
-		}
+		allowed := srv.isClientAllowed(tokens[0])
+
 		if !allowed { // is this account on the sharing list?
 			_ = m.Respond(models.NewApiResultFail("Forbidden", 403))
 			return

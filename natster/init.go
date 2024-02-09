@@ -207,30 +207,59 @@ func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accoun
 	if err != nil {
 		return err
 	}
+	catFound := false
+	mediaFound := false
 	for _, exp := range resp.Items {
 		if *exp.JwtSettings.Name == "natster_catalog" {
 			fmt.Println("✅ Catalog service export is configured")
-			return nil
+			catFound = true
+		}
+		if *exp.JwtSettings.Name == "natster_media" {
+			fmt.Println("✅ Media stream export is configured")
+			mediaFound = true
 		}
 	}
 
-	// token position is 1-based since 0 means none
-	jwt.AccountTokenPosition = syncp.Ptr(int32(1))
-	jwt.Advertise = syncp.Ptr(true)
-	jwt.Subject = syncp.Ptr("*.natster.catalog.>")
-	jwt.Description = syncp.Ptr("Natster Catalog Service")
-	jwt.Name = syncp.Ptr("natster_catalog")
-	jwt.InfoUrl = syncp.Ptr("https://natster.io")
-	jwt.ResponseType = syncp.Ptr(syncp.RESPONSETYPE_SINGLETON)
-	jwt.Type = syncp.Ptr(syncp.EXPORTTYPE_SERVICE)
-	req := syncp.SubjectExportCreateRequest{
-		JwtSettings:               jwt,
-		MetricsEnabled:            false,
-		MetricsSamplingPercentage: 0,
+	if !catFound {
+		// token position is 1-based since 0 means none
+		jwt.AccountTokenPosition = syncp.Ptr(int32(1))
+		jwt.Advertise = syncp.Ptr(true)
+		jwt.Subject = syncp.Ptr("*.natster.catalog.>")
+		jwt.Description = syncp.Ptr("Natster Catalog Service")
+		jwt.Name = syncp.Ptr("natster_catalog")
+		jwt.InfoUrl = syncp.Ptr("https://natster.io")
+		jwt.ResponseType = syncp.Ptr(syncp.RESPONSETYPE_SINGLETON)
+		jwt.Type = syncp.Ptr(syncp.EXPORTTYPE_SERVICE)
+		req := syncp.SubjectExportCreateRequest{
+			JwtSettings:               jwt,
+			MetricsEnabled:            false,
+			MetricsSamplingPercentage: 0,
+		}
+		_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+		if err != nil {
+			return err
+		}
+		fmt.Println("✅ Catalog service export is configured")
 	}
-	_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
-	if err != nil {
-		return err
+	if !mediaFound {
+		// token position is 1-based since 0 means none
+		jwt.AccountTokenPosition = syncp.Ptr(int32(1))
+		jwt.Advertise = syncp.Ptr(true)
+		jwt.Subject = syncp.Ptr("*.natster.media.*.*")
+		jwt.Description = syncp.Ptr("Natster Media Stream")
+		jwt.Name = syncp.Ptr("natster_media")
+		jwt.InfoUrl = syncp.Ptr("https://natster.io")
+		jwt.Type = syncp.Ptr(syncp.EXPORTTYPE_STREAM)
+		req := syncp.SubjectExportCreateRequest{
+			JwtSettings:               jwt,
+			MetricsEnabled:            false,
+			MetricsSamplingPercentage: 0,
+		}
+		_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+		if err != nil {
+			return err
+		}
+		fmt.Println("✅ Media stream export is configured")
 	}
 
 	return nil
