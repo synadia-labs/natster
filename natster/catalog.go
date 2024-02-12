@@ -29,12 +29,22 @@ func ListCatalogs(ctx *fisk.ParseContext) error {
 	if err != nil {
 		return err
 	}
+	if len(catshares) == 0 {
+		fmt.Println("No catalog shares found")
+		return nil
+	}
+	table := newTableWriter("Catalog Shares")
+	table.AddHeaders("Catalog", "From", "To")
 	for _, share := range catshares {
 		if share.FromAccount == nctx.AccountPublicKey {
-			fmt.Printf("* ")
+			share.FromAccount = "me"
 		}
-		fmt.Println(share.Catalog)
+		if share.ToAccount == nctx.AccountPublicKey {
+			share.ToAccount = "me"
+		}
+		table.AddRow(share.Catalog, share.FromAccount, share.ToAccount)
 	}
+	fmt.Println(table.Render())
 
 	return nil
 }
@@ -161,6 +171,7 @@ func publishCatalogShared() error {
 		)
 		return err
 	}
+	client.Drain()
 
 	return nil
 }
