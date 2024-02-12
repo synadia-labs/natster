@@ -101,6 +101,12 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 			slog.Error("Failed to serialize Natster event", err)
 			return
 		}
+		slog.Info("Writing Natster global event",
+			slog.Int("bytes", len(raw)),
+			slog.String("target", evt.Target),
+			slog.String("catalog", evt.Catalog),
+			slog.String("event_type", evt.EventType),
+		)
 		err = srv.nc.Publish(subject, raw)
 		if err != nil {
 			slog.Error("Failed to publish Natster event", err)
