@@ -69,8 +69,8 @@ func coloredBorderStyle(c text.Color) table.Style {
 	return s
 }
 
-
 func newTableWriter(title string, style string) *tbl {
+	tbl := &tbl{writer: table.NewWriter()}
 	tbl.writer.SetStyle(styles[style])
 
 	tbl.writer.Style().Title.Align = text.AlignCenter
