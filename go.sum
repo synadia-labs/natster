@@ -14,6 +14,8 @@ github.com/agnivade/levenshtein v1.1.1/go.mod h1:veldBMzWxcCG2ZvUTKD2kJNRdCk5hVb
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883 h1:bvNMNQO63//z+xNgfBlViaCIJKLlCJ6/fmUseuG0wVQ=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0/go.mod h1:t2tdKJDJF9BV14lnkjHmOQgcvEKgtqs5a1N3LNdJhGE=
+github.com/aviddiviner/shortcode-go v1.0.0 h1:D3W+2xkLlwSlOiWPtY39PEbod/QW4UeA5Zbs7F9vgo8=
+github.com/aviddiviner/shortcode-go v1.0.0/go.mod h1:slUpZZHkMKYkE7e0PLn/fObwPKP6NJnvEhwwgIkGkhw=
 github.com/choria-io/fisk v0.6.2 h1:Vfvpcv8SD53FHW5cT4u7LStpz/wThwRPQHU7mzv1kMI=
 github.com/choria-io/fisk v0.6.2/go.mod h1:PajiUZTAotE5zO18eU6UexuPLLv565WOma4dB0ObxRM=
 github.com/creack/pty v1.1.17 h1:QeVUsEDNrLBW4tMgZHvxy18sKtr6VI492kBhUfhDJNI=

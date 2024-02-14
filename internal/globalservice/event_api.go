@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
@@ -21,6 +22,80 @@ func (srv *GlobalService) GetTotalInitializedAccounts() (uint64, error) {
 func (srv *GlobalService) GetTotalSharedCatalogs() (uint64, error) {
 	subject := fmt.Sprintf("natster.events.*.*.*.%s", models.CatalogSharedEventType)
 	return srv.countFilteredEvents(subject)
+}
+
+func (srv *GlobalService) GetOAuthIdForAccount(accountKey string) (*string, error) {
+	subject := fmt.Sprintf("natster.events.%s.none.none.%s", accountKey, models.ContextBoundEventType)
+	js, err := jetstream.New(srv.nc)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	s, err := js.Stream(ctx, streamName)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(subject)
+	msg, err := s.GetLastMsgForSubject(ctx, subject)
+	if err != nil {
+		return nil, err
+	}
+
+	var discoveredContext models.ContextBoundEvent
+	err = json.Unmarshal(msg.Data, &discoveredContext)
+	if err != nil {
+		slog.Error("Deserialization failure of context bound event", err)
+		return nil, err
+	}
+
+	return &discoveredContext.OAuthIdentity, nil
+}
+
+func (srv *GlobalService) GetBoundContextByOAuth(oauthId string) (*models.NatsterContext, error) {
+	subject := fmt.Sprintf("natster.events.*.*.*.%s", models.ContextBoundEventType)
+	js, err := jetstream.New(srv.nc)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
+	s, err := js.Stream(ctx, streamName)
+	if err != nil {
+		return nil, err
+	}
+	consumer, err := s.CreateConsumer(context.Background(), jetstream.ConsumerConfig{
+		FilterSubject: subject,
+		AckPolicy:     jetstream.AckNonePolicy,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan *models.NatsterContext)
+
+	cc, _ := consumer.Consume(func(msg jetstream.Msg) {
+		var discoveredContext models.ContextBoundEvent
+		err := json.Unmarshal(msg.Data(), &discoveredContext)
+		if err != nil {
+			slog.Error("Deserialization failure of context bound event", err)
+			ch <- nil
+		}
+		if discoveredContext.OAuthIdentity == oauthId {
+			ch <- &discoveredContext.BoundContext
+		}
+	})
+	discoveredContext := <-ch
+	cc.Stop()
+
+	return discoveredContext, nil
+
 }
 
 func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogShareSummary, error) {
@@ -48,12 +123,14 @@ func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogSh
 		from := tokens[2]
 		to := tokens[3]
 		catalog := tokens[4]
+		online := srv.IsCatalogOnline(catalog)
 
 		if from == myAccountKey || to == myAccountKey {
 			summaries = append(summaries, models.CatalogShareSummary{
-				FromAccount: from,
-				ToAccount:   to,
-				Catalog:     catalog,
+				FromAccount:   from,
+				ToAccount:     to,
+				Catalog:       catalog,
+				CatalogOnline: online,
 			})
 		}
 	}

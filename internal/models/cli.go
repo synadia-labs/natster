@@ -19,6 +19,11 @@ type DownloadOptions struct {
 	OutputPath string
 }
 
+type ClaimOpts struct {
+	Code          string
+	OAuthIdentity string
+}
+
 type ShareOptions struct {
 	Name       string
 	AccountKey string

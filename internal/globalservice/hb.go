@@ -19,6 +19,11 @@ func handleHeartbeat(srv *GlobalService) func(m *nats.Msg) {
 			slog.Error("Failed to deserialize heartbeat", err)
 			return
 		}
-		srv.hbCache.Set(accountKey, hb, ttlcache.DefaultTTL)
+
+		srv.hbCache.Set(hb.Catalog, hb, ttlcache.DefaultTTL)
 	}
+}
+
+func (srv *GlobalService) IsCatalogOnline(catalog string) bool {
+	return srv.hbCache.Has(catalog)
 }
