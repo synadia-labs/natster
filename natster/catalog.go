@@ -55,6 +55,7 @@ func ListCatalogs(ctx *fisk.ParseContext) error {
 		return err
 	}
 
+
 	t := newTableWriter("Shared Catalogs", "cyan")
 	w := t.writer
 	w.AppendHeader(table.Row{"Catalog", "From", "To"})
@@ -66,6 +67,7 @@ func ListCatalogs(ctx *fisk.ParseContext) error {
 		if share.ToAccount == nctx.AccountPublicKey {
 			share.ToAccount = "me"
 		}
+
 		w.AppendRow(table.Row{share.Catalog, share.FromAccount, share.ToAccount})
 	}
 	fmt.Println(w.Render())
