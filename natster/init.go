@@ -119,6 +119,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return err
 	}
 	if len(users.Items) == 0 {
+		// TODO: we should offer to create one here
 		return errors.New("a user context is required for natster to operate properly. No users found")
 	}
 
@@ -147,7 +148,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	if err != nil {
 		return err
 	}
-	credsFileName := path.Join(home, ".creds")
+	credsFileName := path.Join(home, fmt.Sprintf("%s.creds", Opts.ContextName))
 	err = os.WriteFile(credsFileName, []byte(creds), 0655)
 	if err != nil {
 		return nil

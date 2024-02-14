@@ -34,6 +34,15 @@ type DownloadResponse struct {
 	SenderXKey   string `json:"sender_xkey"`
 }
 
+type ContentsResponse struct {
+	Items []CatalogItemSummary `json:"items"`
+}
+
+type CatalogItemSummary struct {
+	Path string `json:"path"`
+	Hash string `json:"hash"`
+}
+
 type ApiResult struct {
 	Error *string     `json:"error,omitempty"`
 	Code  int         `json:"code"`

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 
@@ -13,7 +14,7 @@ func loadContext() (*models.NatsterContext, error) {
 	if err != nil {
 		return nil, err
 	}
-	file := path.Join(home, ".context")
+	file := path.Join(home, fmt.Sprintf("%s.context", Opts.ContextName))
 	bytes, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func writeContext(ctx models.NatsterContext) error {
 		return err
 	}
 
-	file := path.Join(home, ".context")
+	file := path.Join(home, fmt.Sprintf("%s.context", Opts.ContextName))
 	err = os.WriteFile(file, bytes, 0644)
 	if err != nil {
 		return err

@@ -62,7 +62,7 @@ func (c *Client) PublishEvent(eventType string, catalog string, target string, r
 	if err != nil {
 		return err
 	}
-	return nil
+	return c.nc.Flush()
 }
 
 func (c *Client) PublishHeartbeat(accountId string, catalog string) error {

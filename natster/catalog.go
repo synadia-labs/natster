@@ -16,6 +16,18 @@ import (
 	"github.com/synadia-labs/natster/internal/models"
 )
 
+func ViewCatalogItems(ctx *fisk.ParseContext) error {
+	nctx, err := loadContext()
+	if err != nil {
+		return err
+	}
+	client, err := catalogserver.NewClientWithCredsPath(nctx.CredsPath)
+	if err != nil {
+		return err
+	}
+	items, err := client.GetCatalogItems(ShareOpts.Name)
+}
+
 func ListCatalogs(ctx *fisk.ParseContext) error {
 	nctx, err := loadContext()
 	if err != nil {
@@ -99,7 +111,7 @@ func ImportCatalog(ctx *fisk.ParseContext) error {
 				Account:      syncp.Ptr(ShareOpts.AccountKey),
 				Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.media.%s.*", nctx.AccountPublicKey, ShareOpts.Name)),
 				LocalSubject: syncp.Ptr(fmt.Sprintf("natster.media.%s.*", ShareOpts.Name)),
-				Name:         syncp.Ptr(importName),
+				Name:         syncp.Ptr(mediaImportName),
 				Type:         syncp.Ptr(syncp.EXPORTTYPE_STREAM),
 			},
 		}

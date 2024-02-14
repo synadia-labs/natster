@@ -38,6 +38,23 @@ func NewClientWithCredsPath(credsPath string) (*Client, error) {
 	return NewClient(nc), nil
 }
 
+// Queries the contents of a given calog. Note that the contents supplied are
+// summary items, including only the path and hash
+func (c *Client) GetCatalogItems(catalog string) ([]models.CatalogItemSummary, error) {
+	reqSubject := fmt.Sprintf("natster.catalog.%s.get", catalog)
+	res, err := c.nc.Request(reqSubject, []byte{}, 1*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var resp models.ContentsResponse
+	err = json.Unmarshal(res.Data, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Items, nil
+}
+
 // Submits a request to download a file containing the hash of the file in question
 // and a public Xkey to be used to encrypt chunks
 // Subscribes to natster.media.{catalog}.{hash} for encrypted chunks
