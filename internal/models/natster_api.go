@@ -22,6 +22,19 @@ type CatalogEntry struct {
 	Hash        string `json:"hash"`
 }
 
+type DownloadRequest struct {
+	Hash       string `json:"hash"`
+	TargetXkey string `json:"target_xkey"`
+}
+
+type DownloadResponse struct {
+	Acknowledged bool   `json:"acknowledged"`
+	ChunkSize    uint   `json:"chunk_size"`
+	TotalChunks  uint   `json:"total_chunks"`
+	SenderXKey   string `json:"sender_xkey"`
+	TotalBytes   uint   `json:"total_bytes"`
+}
+
 type ApiResult struct {
 	Error *string     `json:"error,omitempty"`
 	Code  int         `json:"code"`

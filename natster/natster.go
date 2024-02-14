@@ -10,14 +10,13 @@ import (
 )
 
 var (
-	VERSION   = "development"
-	COMMIT    = ""
-	BUILDDATE = ""
+	VERSION = "0.1.0"
 
 	Opts      = &models.Options{}
 	HubOpts   = &models.HubOptions{}
 	InitOpts  = &models.InitOptions{}
 	ShareOpts = &models.ShareOptions{}
+	DlOpts    = &models.DownloadOptions{}
 )
 
 func main() {
@@ -27,11 +26,12 @@ func main() {
 	ncli := fisk.New("natster", help)
 	ncli.Author("Synadia Communications")
 	ncli.UsageWriter(os.Stdout)
-	ncli.Version(fmt.Sprintf("v%s [%s] | Built-on: %s", VERSION, COMMIT, BUILDDATE))
+	ncli.Version(fmt.Sprintf("v%s", VERSION))
 	ncli.HelpFlag.Short('h')
 	ncli.WithCheats().CheatCommand.Hidden()
 
 	ncli.Flag("timeout", "Time to wait on responses from NATS").Default("2s").Envar("NATS_TIMEOUT").PlaceHolder("DURATION").DurationVar(&Opts.Timeout)
+	ncli.Flag("context", "Name of the context in which to perform the command").Default("default").StringVar(&Opts.ContextName)
 
 	initcli := ncli.Command("init", "Initialize and configure the Natster CLI")
 	initcli.Flag("token", "Synadia Cloud personal access token").Required().StringVar(&InitOpts.Token)
@@ -54,6 +54,16 @@ func main() {
 	catimport.Arg("name", "Name of the catalog to import").Required().StringVar(&ShareOpts.Name)
 	catimport.Arg("account", "Public key of the account from which to import").Required().StringVar(&ShareOpts.AccountKey)
 	catimport.Action(ImportCatalog)
+
+	catdl := catalog.Command("download", "Downloads a file from a catalog")
+	catdl.Arg("name", "Name of the catalog from which to download the file").Required().StringVar(&ShareOpts.Name)
+	catdl.Arg("hash", "SHA256 hash of the file to download. Hashes can be found in catalog metadata").Required().StringVar(&DlOpts.Hash)
+	catdl.Arg("out", "Path to output file").Required().StringVar(&DlOpts.OutputPath)
+	catdl.Action(DownloadFile)
+
+	catcontents := catalog.Command("contents", "View the contents of a given catalog")
+	catcontents.Arg("name", "Name of the catalog to view").Required().StringVar(&ShareOpts.Name)
+	catcontents.Action(ViewCatalogItems)
 
 	catls := catalog.Command("list", "Lists my shared catalogs and catalogs shared with me").Alias("ls")
 	catls.Action(ListCatalogs)

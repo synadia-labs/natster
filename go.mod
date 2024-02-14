@@ -12,6 +12,7 @@ require (
 	github.com/jellydator/ttlcache/v3 v3.1.1
 	github.com/nats-io/jsm.go v0.1.1-0.20231031093634-09b45b142881
 	github.com/nats-io/nats.go v1.32.0
+	github.com/nats-io/nkeys v0.4.7
 	github.com/synadia-io/control-plane-sdk-go v0.3.2
 )
 
@@ -26,7 +27,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/nats-io/nkeys v0.4.7 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.6 // indirect

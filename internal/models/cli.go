@@ -14,6 +14,11 @@ type HubOptions struct {
 	Port        int
 }
 
+type DownloadOptions struct {
+	Hash       string
+	OutputPath string
+}
+
 type ShareOptions struct {
 	Name       string
 	AccountKey string
@@ -25,6 +30,8 @@ type Options struct {
 	Creds string
 	// Timeout is how long to wait for operations
 	Timeout time.Duration
+	// Context in which action is to be performed
+	ContextName string
 }
 
 type NatsterContext struct {
