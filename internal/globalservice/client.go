@@ -75,5 +75,9 @@ func (c *Client) PublishHeartbeat(accountId string, catalog string) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return c.nc.Flush()
+}
+
+func (c *Client) Drain() {
+	_ = c.nc.Drain()
 }

@@ -203,6 +203,7 @@ func publishCatalogShared() error {
 		)
 		return err
 	}
+	client.Drain()
 
 	return nil
 }
