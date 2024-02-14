@@ -27,13 +27,22 @@ func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
 		var req models.DownloadRequest
 		err := json.Unmarshal(m.Data, &req)
 		if err != nil {
+			slog.Error("Failed to deserialize download request", err)
 			_ = m.Respond(models.NewApiResultFail(err.Error(), 400))
 			return
 		}
 		if !srv.isClientAllowed(tokens[0]) {
+			slog.Debug("Request to download file from unauthorized client",
+				slog.String("hash", req.Hash),
+				slog.String("account", tokens[0]),
+				slog.String("target_xkey", req.TargetXkey),
+			)
 			_ = m.Respond(models.NewApiResultFail("Forbidden", 403))
 			return
 		}
+
+		slog.Info("Receiving request for file download",
+			slog.String("hash", req.Hash))
 
 		f := srv.library.FindByHash(req.Hash)
 		if f == nil {
@@ -50,6 +59,7 @@ func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
 			ChunkSize:    chunkSizeBytes,
 			TotalChunks:  chunks,
 			SenderXKey:   senderPublicKey,
+			TotalBytes:   uint(f.ByteSize),
 		}
 		_ = m.Respond(models.NewApiResultPass(resp))
 
@@ -114,7 +124,7 @@ func (srv *CatalogServer) transmitChunk(targetSubject string, request models.Dow
 
 func determineChunks(fileSize uint, chunkSize uint) uint {
 	chunks := fileSize / chunkSize
-	if fileSize%chunkSize == 0 {
+	if fileSize%chunkSize != 0 {
 		chunks = chunks + 1
 	}
 	return chunks

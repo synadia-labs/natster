@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/choria-io/fisk"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/synadia-io/control-plane-sdk-go/syncp"
 	"github.com/synadia-labs/natster/internal/catalogserver"
 	"github.com/synadia-labs/natster/internal/globalservice"
@@ -26,6 +27,18 @@ func ViewCatalogItems(ctx *fisk.ParseContext) error {
 		return err
 	}
 	items, err := client.GetCatalogItems(ShareOpts.Name)
+	if err != nil {
+		return err
+	}
+
+	t := newTableWriter(fmt.Sprintf("Items in Catalog %s", ShareOpts.Name), "cyan")
+	w := t.writer
+	w.AppendHeader(table.Row{"Hash", "Path"})
+	for _, item := range items {
+		w.AppendRow(table.Row{item.Hash, item.Path})
+	}
+	fmt.Println(w.Render())
+	return nil
 }
 
 func ListCatalogs(ctx *fisk.ParseContext) error {
@@ -41,12 +54,21 @@ func ListCatalogs(ctx *fisk.ParseContext) error {
 	if err != nil {
 		return err
 	}
+
+	t := newTableWriter("Shared Catalogs", "cyan")
+	w := t.writer
+	w.AppendHeader(table.Row{"Catalog", "From", "To"})
+
 	for _, share := range catshares {
 		if share.FromAccount == nctx.AccountPublicKey {
-			fmt.Printf("* ")
+			share.FromAccount = "me"
 		}
-		fmt.Println(share.Catalog)
+		if share.ToAccount == nctx.AccountPublicKey {
+			share.ToAccount = "me"
+		}
+		w.AppendRow(table.Row{share.Catalog, share.FromAccount, share.ToAccount})
 	}
+	fmt.Println(w.Render())
 
 	return nil
 }

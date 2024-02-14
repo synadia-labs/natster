@@ -32,15 +32,7 @@ type DownloadResponse struct {
 	ChunkSize    uint   `json:"chunk_size"`
 	TotalChunks  uint   `json:"total_chunks"`
 	SenderXKey   string `json:"sender_xkey"`
-}
-
-type ContentsResponse struct {
-	Items []CatalogItemSummary `json:"items"`
-}
-
-type CatalogItemSummary struct {
-	Path string `json:"path"`
-	Hash string `json:"hash"`
+	TotalBytes   uint   `json:"total_bytes"`
 }
 
 type ApiResult struct {
