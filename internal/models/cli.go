@@ -46,5 +46,6 @@ type NatsterContext struct {
 	AccountName      string `json:"account_name"`
 	AccountPublicKey string `json:"account_public_key"`
 	Token            string `json:"access_token"`
+	UserID           string `json:"user_id"`
 	CredsPath        string `json:"creds"`
 }

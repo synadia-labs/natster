@@ -33,6 +33,10 @@ func (srv *GlobalService) startApiSubscriptions() error {
 		"*.natster.global.whoami",
 		handleWhoAmi(srv))
 
+	_, _ = srv.nc.Subscribe(
+		"*.natster.global.context.get",
+		handleGetContext(srv))
+
 	return nil
 }
 

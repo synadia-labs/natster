@@ -77,10 +77,14 @@ func main() {
 	login := ncli.Command("weblogin", "Authenticate your local context for use with natster.io").Alias("login")
 	login.Action(WebLogin)
 
-	claim := ncli.Command("claim", "Claims an OTC code. For testing only - Can only be done by an administrator").Hidden()
+	claim := ncli.Command("claim", "Claims an OTC code. For testing only - Can only be done from the natster.io account").Hidden()
 	claim.Arg("code", "Previously generated one-time code").Required().StringVar(&ClaimOpts.Code)
 	claim.Arg("identity", "OAuth identity string").Required().StringVar(&ClaimOpts.OAuthIdentity)
 	claim.Action(ClaimOtc)
+
+	ctxlookup := ncli.Command("oauthcheck", "Looks up the context bound to the given OAuth ID. Debug - can only be done from the natster.io account").Hidden()
+	ctxlookup.Arg("oauthid", "OAuth identitifer to check").StringVar(&ClaimOpts.OAuthIdentity)
+	ctxlookup.Action(LookupOAuthId)
 
 	whoami := ncli.Command("whoami", "Displays information about the selected context")
 	whoami.Action(DisplayContext)

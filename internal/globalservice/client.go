@@ -51,6 +51,25 @@ func (c *Client) Whoami() (*models.WhoamiResponse, error) {
 	return &apiResult.Data, nil
 }
 
+// This is to be called by the natster.io site when someone logs into the site, which
+// will provide an OAuth identifier. If this OAuth ID has been bound to a context, we
+// should be able to download that context and the corresponding credentials
+func (c *Client) GetBoundContextByOAuth(oauthId string) (*models.ContextQueryResponse, error) {
+	res, err := c.nc.Request("natster.global.context.get", []byte(oauthId), 1*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var apiResult models.TypedApiResult[models.ContextQueryResponse]
+	err = json.Unmarshal(res.Data, &apiResult)
+	if err != nil {
+		return nil, err
+	}
+	if apiResult.Error != nil {
+		return nil, errors.New(*apiResult.Error)
+	}
+	return &apiResult.Data, nil
+}
+
 func (c *Client) GenerateOneTimeCode(context models.NatsterContext) (*models.OtcGenerateResponse, error) {
 	ctxBytes, err := json.Marshal(context)
 	if err != nil {

@@ -55,6 +55,11 @@ type WhoamiResponse struct {
 	OAuthIdentity *string `json:"oauth_id,omitempty"`
 }
 
+type ContextQueryResponse struct {
+	Context   NatsterContext `json:"context"`
+	FullCreds string         `json:"full_creds"`
+}
+
 type OtcGenerateResponse struct {
 	Code         string `json:"code"`
 	ValidMinutes int    `json:"valid_minutes"`

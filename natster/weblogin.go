@@ -36,6 +36,26 @@ func WebLogin(ctx *fisk.ParseContext) error {
 	return nil
 }
 
+func LookupOAuthId(ctx *fisk.ParseContext) error {
+	nctx, err := loadContext()
+	if err != nil {
+		return err
+	}
+	globalClient, err := globalservice.NewClientWithCredsPath(nctx.CredsPath)
+	if err != nil {
+		return err
+	}
+
+	resp, err := globalClient.GetBoundContextByOAuth(ClaimOpts.OAuthIdentity)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("DEBUG - Context retrieved:\n%+v\n---\n\n%s", resp.Context, resp.FullCreds)
+
+	return nil
+}
+
 func ClaimOtc(ctx *fisk.ParseContext) error {
 	nctx, err := loadContext()
 	if err != nil {
