@@ -2,6 +2,7 @@ package globalservice
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -32,6 +33,86 @@ func NewClientWithCredsPath(credsPath string) (*Client, error) {
 		return nil, err
 	}
 	return NewClient(nc), nil
+}
+
+func (c *Client) Whoami() (*models.WhoamiResponse, error) {
+	res, err := c.nc.Request("natster.global.whoami", []byte{}, 1*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var apiResult models.TypedApiResult[models.WhoamiResponse]
+	err = json.Unmarshal(res.Data, &apiResult)
+	if err != nil {
+		return nil, err
+	}
+	if apiResult.Error != nil {
+		return nil, errors.New(*apiResult.Error)
+	}
+	return &apiResult.Data, nil
+}
+
+// This is to be called by the natster.io site when someone logs into the site, which
+// will provide an OAuth identifier. If this OAuth ID has been bound to a context, we
+// should be able to download that context and the corresponding credentials
+func (c *Client) GetBoundContextByOAuth(oauthId string) (*models.ContextQueryResponse, error) {
+	res, err := c.nc.Request("natster.global.context.get", []byte(oauthId), 1*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var apiResult models.TypedApiResult[models.ContextQueryResponse]
+	err = json.Unmarshal(res.Data, &apiResult)
+	if err != nil {
+		return nil, err
+	}
+	if apiResult.Error != nil {
+		return nil, errors.New(*apiResult.Error)
+	}
+	return &apiResult.Data, nil
+}
+
+func (c *Client) GenerateOneTimeCode(context models.NatsterContext) (*models.OtcGenerateResponse, error) {
+	ctxBytes, err := json.Marshal(context)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.nc.Request("natster.global.otc.generate", ctxBytes, 1*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var apiResult models.TypedApiResult[models.OtcGenerateResponse]
+	err = json.Unmarshal(res.Data, &apiResult)
+	if err != nil {
+		return nil, err
+	}
+	if apiResult.Error != nil {
+		return nil, errors.New(*apiResult.Error)
+	}
+	return &apiResult.Data, nil
+}
+
+func (c *Client) ClaimOneTimeCode(code string, oauthIdentifier string) (*models.NatsterContext, error) {
+	request := models.OtcClaimRequest{
+		Code:          code,
+		OAuthIdentity: oauthIdentifier,
+	}
+	bytes, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.nc.Request("natster.global.otc.claim", bytes, 2*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var apiResult models.TypedApiResult[models.NatsterContext]
+	err = json.Unmarshal(res.Data, &apiResult)
+	if err != nil {
+		return nil, err
+	}
+	if apiResult.Code != 200 {
+		return nil, errors.New(*apiResult.Error)
+	}
+	return &apiResult.Data, nil
 }
 
 func (c *Client) GetMyCatalogs() ([]models.CatalogShareSummary, error) {
@@ -65,10 +146,10 @@ func (c *Client) PublishEvent(eventType string, catalog string, target string, r
 	return c.nc.Flush()
 }
 
-func (c *Client) PublishHeartbeat(accountId string, catalog string) error {
+func (c *Client) PublishHeartbeat(nctx *models.NatsterContext, catalog string) error {
 	hb := models.Heartbeat{
-		AccountId: accountId,
-		Catalog:   catalog,
+		AccountKey: nctx.AccountPublicKey,
+		Catalog:    catalog,
 	}
 	hbBytes, _ := json.Marshal(&hb)
 	err := c.nc.Publish("natster.global.heartbeats.put", hbBytes)

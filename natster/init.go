@@ -158,6 +158,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		TeamID:           teamId,
 		SystemID:         systemId,
 		AccountID:        accountId,
+		UserID:           userId,
 		AccountName:      accountName,
 		AccountPublicKey: accountKey,
 		Token:            InitOpts.Token,

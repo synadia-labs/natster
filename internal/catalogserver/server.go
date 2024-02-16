@@ -52,7 +52,7 @@ func (srv *CatalogServer) startHeartbeatEmitter() {
 		for {
 			select {
 			case <-ticker.C:
-				_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx.AccountID, srv.library.Name)
+				_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library.Name)
 			case <-srv.hbQuit:
 				ticker.Stop()
 				close(srv.hbQuit)

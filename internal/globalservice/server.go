@@ -35,6 +35,11 @@ func (srv *GlobalService) Start() error {
 		return err
 	}
 
+	_, err = srv.createOrReuseOtcBucket()
+	if err != nil {
+		return err
+	}
+
 	srv.hbCache.OnEviction(func(ctx context.Context, reason ttlcache.EvictionReason, item *ttlcache.Item[string, models.Heartbeat]) {
 		if reason == ttlcache.EvictionReasonCapacityReached {
 			slog.Info("Evicting heartbeat cache item - capacity reached",

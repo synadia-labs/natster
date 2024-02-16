@@ -21,6 +21,22 @@ func (srv *GlobalService) startApiSubscriptions() error {
 		"*.natster.global.my.shares",
 		handleMyShares(srv))
 
+	_, _ = srv.nc.Subscribe(
+		"*.natster.global.otc.generate",
+		handleOtcGenerate(srv))
+
+	_, _ = srv.nc.Subscribe(
+		"*.natster.global.otc.claim",
+		handleOtcClaim(srv))
+
+	_, _ = srv.nc.Subscribe(
+		"*.natster.global.whoami",
+		handleWhoAmi(srv))
+
+	_, _ = srv.nc.Subscribe(
+		"*.natster.global.context.get",
+		handleGetContext(srv))
+
 	return nil
 }
 

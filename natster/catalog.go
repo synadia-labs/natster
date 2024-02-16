@@ -33,9 +33,9 @@ func ViewCatalogItems(ctx *fisk.ParseContext) error {
 
 	t := newTableWriter(fmt.Sprintf("Items in Catalog %s", ShareOpts.Name), "cyan")
 	w := t.writer
-	w.AppendHeader(table.Row{"Hash", "Path"})
+	w.AppendHeader(table.Row{"Hash", "Path", "Mime Type"})
 	for _, item := range items {
-		w.AppendRow(table.Row{item.Hash, item.Path})
+		w.AppendRow(table.Row{item.Hash, item.Path, item.MimeType})
 	}
 	fmt.Println(w.Render())
 	return nil
@@ -55,20 +55,43 @@ func ListCatalogs(ctx *fisk.ParseContext) error {
 		return err
 	}
 
+	catalogs := make(map[string][]models.CatalogShareSummary)
+	for _, share := range catshares {
+		cat, ok := catalogs[share.Catalog]
+		var catshares []models.CatalogShareSummary
+		if !ok {
+			catshares = make([]models.CatalogShareSummary, 0)
+			catshares = append(catshares, share)
+		} else {
+			catshares = cat
+			catshares = append(catshares, share)
+		}
+		catalogs[share.Catalog] = catshares
+	}
 
 	t := newTableWriter("Shared Catalogs", "cyan")
 	w := t.writer
-	w.AppendHeader(table.Row{"Catalog", "From", "To"})
+	w.AppendHeader(table.Row{"", "Catalog", "From", "To"})
 
-	for _, share := range catshares {
-		if share.FromAccount == nctx.AccountPublicKey {
-			share.FromAccount = "me"
+	for catalog, shares := range catalogs {
+		online := " "
+		if shares[0].CatalogOnline {
+			online = "🟢"
 		}
-		if share.ToAccount == nctx.AccountPublicKey {
-			share.ToAccount = "me"
+		for i, share := range shares {
+			if share.FromAccount == nctx.AccountPublicKey {
+				share.FromAccount = "me"
+			}
+			if share.ToAccount == nctx.AccountPublicKey {
+				share.ToAccount = "me"
+			}
+			if i > 0 {
+				w.AppendRow(table.Row{"", "", share.FromAccount, share.ToAccount})
+			} else {
+				w.AppendRow(table.Row{online, catalog, share.FromAccount, share.ToAccount})
+			}
 		}
 
-		w.AppendRow(table.Row{share.Catalog, share.FromAccount, share.ToAccount})
 	}
 	fmt.Println(w.Render())
 

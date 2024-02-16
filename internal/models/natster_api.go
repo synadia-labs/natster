@@ -47,6 +47,16 @@ type TypedApiResult[T any] struct {
 	Data  T       `json:"data"`
 }
 
+func NewTypedApiResult[T any](data T, code int, err *string) []byte {
+	res := TypedApiResult[T]{
+		Error: err,
+		Code:  code,
+		Data:  data,
+	}
+	bytes, _ := json.Marshal(res)
+	return bytes
+}
+
 func NewApiResultPass(data interface{}) []byte {
 	res := ApiResult{
 		Data: data,

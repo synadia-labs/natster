@@ -17,6 +17,7 @@ var (
 	InitOpts  = &models.InitOptions{}
 	ShareOpts = &models.ShareOptions{}
 	DlOpts    = &models.DownloadOptions{}
+	ClaimOpts = &models.ClaimOpts{}
 )
 
 func main() {
@@ -72,6 +73,21 @@ func main() {
 	hub_up.Arg("name", "The name of the catalog to serve").Required().StringVar(&HubOpts.Name)
 	hub_up.Flag("port", "HTTP port on which to run the UI/API").Default("8080").IntVar(&HubOpts.Port)
 	hub_up.Action(StartCatalogServer)
+
+	login := ncli.Command("weblogin", "Authenticate your local context for use with natster.io").Alias("login")
+	login.Action(WebLogin)
+
+	claim := ncli.Command("claim", "Claims an OTC code. For testing only - Can only be done from the natster.io account").Hidden()
+	claim.Arg("code", "Previously generated one-time code").Required().StringVar(&ClaimOpts.Code)
+	claim.Arg("identity", "OAuth identity string").Required().StringVar(&ClaimOpts.OAuthIdentity)
+	claim.Action(ClaimOtc)
+
+	ctxlookup := ncli.Command("oauthcheck", "Looks up the context bound to the given OAuth ID. Debug - can only be done from the natster.io account").Hidden()
+	ctxlookup.Arg("oauthid", "OAuth identitifer to check").StringVar(&ClaimOpts.OAuthIdentity)
+	ctxlookup.Action(LookupOAuthId)
+
+	whoami := ncli.Command("whoami", "Displays information about the selected context")
+	whoami.Action(DisplayContext)
 
 	ncli.MustParseWithUsage(os.Args[1:])
 
