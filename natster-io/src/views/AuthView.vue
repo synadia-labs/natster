@@ -1,4 +1,5 @@
 <template>
+  <Notification />
   <TransitionRoot as="template" :show="sidebarOpen">
     <Dialog as="div" class="relative z-50 lg:hidden" @close="sidebarOpen = false">
       <TransitionChild
@@ -50,39 +51,7 @@
               <nav class="flex flex-1 flex-col">
                 <ul role="list" class="flex flex-1 flex-col gap-y-7">
                   <li>
-                    <ul role="list" class="-mx-2 space-y-1">
-                      <li v-for="item in navigation" :key="item.name">
-                        <router-link
-                          @click.native="toggleSelectedNav()"
-                          :to="item.href"
-                          :class="[
-                            item.current
-                              ? 'bg-gray-800 text-white'
-                              : 'text-gray-400 hover:text-white hover:bg-gray-800',
-                            'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
-                          ]"
-                        >
-                          <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
-                          {{ item.name }}
-                        </router-link>
-                      </li>
-                    </ul>
-                  </li>
-                  <li>
-                    <div class="text-xs font-semibold leading-6 text-gray-400">Your Libraries</div>
-                    <ul role="list" class="-mx-2 mt-2 space-y-1">
-                      <li v-for="team in teams" :key="team.name">
-                        <div
-                          class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-gray-400"
-                        >
-                          <span
-                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-gray-700 bg-gray-800 text-[0.625rem] font-medium text-gray-400"
-                            >{{ team.initial }}</span
-                          >
-                          <span class="truncate">{{ team.name }}</span>
-                        </div>
-                      </li>
-                    </ul>
+                    <Catalogs />
                   </li>
                 </ul>
               </nav>
@@ -103,67 +72,17 @@
       <nav class="flex flex-1 flex-col">
         <ul role="list" class="flex flex-1 flex-col gap-y-7">
           <li>
-            <ul role="list" class="-mx-2 space-y-1">
-              <li v-for="item in navigation" :key="item.name">
-                <router-link
-                  @click="toggleSelectedNav()"
-                  :to="item.href"
-                  :class="[
-                    item.current
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800',
-                    'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
-                  ]"
-                >
-                  <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
-                  {{ item.name }}
-                </router-link>
-              </li>
-            </ul>
-          </li>
-          <li>
-            <div class="text-xs font-semibold leading-6 text-gray-400">Natster Libraries</div>
-            <ul role="list" class="-mx-2 mt-2 space-y-1">
-              <li v-for="team in teams" :key="team.name">
-                <div
-                  class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-gray-400"
-                >
-                  <span
-                    class="relative inline-block flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-gray-700 bg-gray-800 text-[0.625rem] font-medium text-gray-400"
-                  >
-                    <span
-                      class="absolute right-0 top-0 block h-1.5 w-1.5 -translate-y-1/2 translate-x-1/2 transform rounded-full ring-1 ring-white"
-                      :class="[team.online ? 'bg-green-500' : 'bg-gray-500']"
-                    />
-                    <span class="">{{ team.initial }} </span>
-                  </span>
-                  <span class="truncate">{{ team.name }} </span>
-                </div>
-              </li>
-            </ul>
+            <Catalogs />
           </li>
           <li class="-mx-6 mt-auto">
             <div
               class="flex flex-row-reverse items-center gap-x-4 px-6 py-3 text-sm inset-y-0 right-0"
             >
-              <Avatar>
-                <span class="relative inline-block">
-                  <img class="h-12 w-12 rounded-md" :src="uStore.getUserPhotoUrl" alt="" />
-                  <span
-                    class="absolute right-0 top-0 block h-4 w-4 -translate-y-1/2 translate-x-1/2 transform rounded-full bg-yellow-300 text-center text-xs align-top text-black ring-1 ring-white"
-                  >
-                    2</span
-                  >
-                </span>
-              </Avatar>
-              <div>
-                <p class="text-white font-semibold" aria-hidden="true">
-                  {{ uStore.getUserName }}
-                </p>
-                <p class="text-gray-500" aria-hidden="true">
-                  {{ uStore.getAccount.substring(0, 8) }}...
-                </p>
-              </div>
+              <Avatar
+                :user="user.name"
+                :natster_account="uStore.getAccount"
+                :photo="user.picture"
+              />
             </div>
           </li>
         </ul>
@@ -179,22 +98,13 @@
       <Bars3Icon class="h-6 w-6" aria-hidden="true" />
     </button>
     <div class="flex-1 text-sm font-semibold leading-6 text-white">Dashboard</div>
-    <a href="#">
-      <span class="sr-only">Your profile</span>
-      <img
-        class="h-8 w-8 rounded-full bg-gray-800"
-        src="https://avatars.githubusercontent.com/u/15827604?v=4"
-        alt=""
-      />
-    </a>
+    <Avatar :user="user.name" :natster_account="uStore.getAccount" :photo="user.picture" />
   </div>
 
   <main class="py-10 lg:pl-72">
     <div class="px-4 sm:px-6 lg:px-8">
       <div>
-        <TopBar :user="libraryName" />
-        {{ uStore.getUser }}
-        {{ uStore.getNatsCode }}
+        <TopBar :user="user.name" />
       </div>
       <div>
         <slot></slot>
@@ -204,82 +114,40 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
+import { useAuth0 } from '@auth0/auth0-vue'
+import { storeToRefs } from 'pinia'
+import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
+
 import TopBar from '../components/TopBar.vue'
 import Avatar from '../components/Avatar.vue'
-import { userStore } from '../stores/user.js'
+import Notification from '../components/Notification.vue'
+import Catalogs from '../components/Catalogs.vue'
+import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
+
+import { userStore } from '../stores/user'
+import { natsStore } from '../stores/nats'
+
+const { isLoading, isAuthenticated, user } = useAuth0()
 const uStore = userStore()
-
-import { useAuth0 } from '@auth0/auth0-vue'
-const { isLoading } = 'useAuth0'
-
-import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import {
-  Bars3Icon,
-  CalendarIcon,
-  ChartPieIcon,
-  DocumentDuplicateIcon,
-  FolderIcon,
-  HomeIcon,
-  UsersIcon,
-  XMarkIcon
-} from '@heroicons/vue/24/outline'
+const nStore = natsStore()
+const { jwt, nkey, nats_code } = storeToRefs(uStore)
 
 const natsterImg = new URL('../assets/natster.svg', import.meta.url)
-const libraryName = computed(() => uStore.getUserName + "'s Library")
-const navigation = reactive([
-  { name: 'My Files', href: '/library', icon: HomeIcon, current: true },
-  { name: 'My Shares', href: '/shares', icon: FolderIcon, current: false }
-])
-const teams = [
-  {
-    id: 1,
-    name: 'Synadia Global Share',
-    href: '#',
-    initial: 'S',
-    online: true,
-    current: false
-  },
-  {
-    id: 2,
-    name: 'KevBuzz',
-    href: '#',
-    initial: 'KB',
-    online: false,
-    current: false
-  },
-  {
-    id: 3,
-    name: 'KylesSlowJams',
-    href: '#',
-    initial: 'KSJ',
-    online: true,
-    current: false
-  },
-  {
-    id: 4,
-    name: 'Dope Filez',
-    href: '#',
-    initial: 'DF',
-    online: true,
-    current: false
-  },
-  {
-    id: 5,
-    name: 'MySecrets',
-    href: '#',
-    initial: 'MS',
-    online: true,
-    current: false
-  }
-]
 
-function toggleSelectedNav() {
-  var arrayLength = navigation.length
-  for (var i = 0; i < arrayLength; i++) {
-    navigation[i].current = false
+onMounted(() => {
+  if (isAuthenticated && user !== null) {
+    uStore.setJWT(user.value.natster.jwt)
+    uStore.setNkey(user.value.natster.nkey)
+    uStore.setNatsCode(user.value.natster.natsCode)
   }
-}
+})
+
+watch(jwt, (value) => {
+  if (value !== '' && user !== null) {
+    nStore.connect()
+  }
+})
 
 const sidebarOpen = ref(false)
 </script>

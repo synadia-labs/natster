@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { userStore } from './user.js'
-import { connect, jwtAuthenticator } from 'nats.ws'
+import { userStore } from './user'
+import { connect, jwtAuthenticator, JSONCodec } from 'nats.ws'
 
 export const natsStore = defineStore('nats', {
   state: () => ({
@@ -23,9 +23,10 @@ export const natsStore = defineStore('nats', {
             authenticator: jwtAuthenticator(uStore.jwt, new TextEncoder().encode(uStore.nkey))
           })
           this.connection = conn
-          uStore.loggedIn = true
         } catch (err) {
           console.error('nats connect err: ', err)
+        } finally {
+          this.connected = true
         }
       }
     },
@@ -33,10 +34,12 @@ export const natsStore = defineStore('nats', {
       try {
         if (this.connection) {
           await this.connection.close()
-          this.connection = null
         }
       } catch (err) {
         console.error('nats disconnect err: ', err)
+      } finally {
+        this.connection = null
+        this.connected = false
       }
     },
     async ping() {
