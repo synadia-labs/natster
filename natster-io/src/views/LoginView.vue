@@ -39,11 +39,14 @@
           <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
             Login to start using Natster
           </h1>
-          <p class="mt-6 text-lg leading-8 text-gray-300">
-            You will need to initiate the login workflow by running
-            <code class="text-green-500 bg-gray-800">natster login</code> from the command line.
-            This will provide you with a link/code you can enter below.
-          </p>
+          You will need to initiate the login workflow by running
+          <pre>
+            <code class="text-green-500 bg-gray-800">
+curl -lSs https://natster.com/install.sh | sh
+natster init --token YOUR_SYNADIA_CLOUD_TOKEN
+natster web-login</code>
+            </pre>
+          from the command line. This will provide you with a link/code you can enter below.
         </div>
         <div v-if="!codeProvided" class="mt-10 2xl:h-48 xl:h-20 w-auto gap-x-6">
           <div class="flex flex-col-6 lg:h-full gap-5">
@@ -120,7 +123,10 @@ const codeProvided = computed(() => {
   const { loginWithRedirect } = useAuth0()
   loginWithRedirect({
     appState: {
-      target: '/callback',
+      target: '/library',
+      nats_code: route.params.code
+    },
+    authorizationParams: {
       nats_code: route.params.code
     }
   })

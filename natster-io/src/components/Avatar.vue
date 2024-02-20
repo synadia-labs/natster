@@ -3,7 +3,14 @@
     <Float placement="top-end">
       <div>
         <MenuButton class="flex items-center no-underline focus:outline-none">
-          <slot></slot>
+          <span class="relative inline-block">
+            <img class="h-12 w-12 rounded-md" :src="userPhotoUrl" alt="" />
+            <span
+              class="absolute right-0 top-0 block h-4 w-4 -translate-y-1/2 translate-x-1/2 transform rounded-full bg-yellow-300 text-center text-xs align-top text-black ring-1 ring-white"
+            >
+              2</span
+            >
+          </span>
         </MenuButton>
       </div>
 
@@ -36,16 +43,54 @@
       </transition>
     </Float>
   </Menu>
+  <div>
+    <p @click="getXKeys" class="text-white font-semibold" aria-hidden="true">
+      {{ user }}
+    </p>
+    <p @click="copyAccountIdToClipboard" class="text-gray-500" aria-hidden="true">
+      {{ natster_account.substring(0, 8) }}...
+    </p>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import { Float } from '@headlessui-float/vue'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-
 import { useAuth0 } from '@auth0/auth0-vue'
+import { notificationStore } from '../stores/notification'
+
+import init, { getXKeys } from '../wasm/generate-xkeys/pkg/generate_xkeys.js'
+
+// import init, { add } from '../wasm/go/generate_xkeys.wasm?init'
+// import wasmUrl from '../wasm/go/generate_xkeys.wasm?url'
+
 const { logout } = useAuth0()
+const nStore = notificationStore()
+
+onMounted(async () => {
+  await init()
+})
 
 function signout() {
   logout({ logoutParams: { returnTo: window.location.origin } })
+}
+
+const userPhotoUrl = computed(() => {
+  if (props.photo === undefined || props.photo === '') {
+    return 'https://ui-avatars.com/api/?name=' + props.name
+  }
+  return props.photo
+})
+
+const props = defineProps({
+  user: String,
+  photo: String,
+  natster_account: String
+})
+
+function copyAccountIdToClipboard() {
+  navigator.clipboard.writeText(props.natster_account)
+  notificationStore().setNotification('Copied!', 'Account ID copied to clipboard')
 }
 </script>
