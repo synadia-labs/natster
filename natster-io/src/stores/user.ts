@@ -4,7 +4,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import { natsStore } from './nats'
 import type { Catalog } from '../types/types.ts'
 import { JSONCodec, StringCodec } from 'nats.ws'
-import init, { getXKeys, decryptChunk } from '../wasm/generate-xkeys/pkg/generate_xkeys.js'
+//import init, { get_xkeys, decrypt_chunk } from '../wasm/generate-xkeys/pkg/generate_xkeys.js'
 
 export const userStore = defineStore('user', {
   state: () => ({
@@ -53,53 +53,45 @@ export const userStore = defineStore('user', {
       })
     },
     async downloadFile(catalog, hash) {
-      const go = new Go()
-      WebAssembly.instantiateStreaming(fetch('./src/wasm/go/test.wasm'), go.importObject).then(
-        (obj) => {
-          let wasm = obj.instance;
-          go.run(wasm);
-          let a = wasm.exports.get_xkey()
-          console.log(a)
-        }
-      )
-
-      //		WebAssembly.instantiateStreaming(fetch("./src/wasm/go/test.wasm"), go.importObject).then((result) => {
-      //			go.run(result.instance);
-      //		});
-
-      init()
-      var buf = new Uint8Array(32)
-      window.crypto.getRandomValues(buf)
-
-      let xkey = JSON.parse(getXKeys(buf))
-      this.xkey_seed = xkey.seed
-      this.xkey_pub = xkey.public
-
-      console.log('FROM DECRYPT: ', decryptChunk(xkey.seed))
-
-      const nStore = natsStore()
-      const sub = nStore.connection.subscribe('natster.media.' + catalog + '.' + hash)
-      ;(async () => {
-        for await (const m of sub) {
-          console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`)
-        }
-        console.log('subscription closed')
-      })()
-
-      const dl_request = {
-        hash: hash,
-        target_xkey: this.xkey_pub
-      }
-      await nStore.connection
-        .request('natster.catalog.' + catalog + '.download', JSON.stringify(dl_request), {
-          timeout: 5000
-        })
-        .then((m) => {
-          console.log(JSONCodec().decode(m.data))
-        })
-        .catch((err) => {
-          console.error('nats requestCatalogFiles err: ', err)
-        })
+      console.log("someday ill download things")
+      // await init()
+      // var buf = new Uint8Array(32)
+      // window.crypto.getRandomValues(buf)
+      //
+      // let xkey = JSON.parse(get_xkeys(buf))
+      // this.xkey_seed = xkey.seed
+      // this.xkey_pub = xkey.public
+      //
+      // var sender_xkey
+      // const nStore = natsStore()
+      // const sub = nStore.connection.subscribe('natster.media.' + catalog + '.' + hash)
+      // ;(async () => {
+      //   for await (const m of sub) {
+      //     await new Promise(r => setTimeout(r, 1000));
+      //     console.log('mine', this.xkey_seed)
+      //     console.log('theirs', sender_xkey)
+      //     console.log('data', m.data)
+      //     console.log('DECRYPTED: ', decrypt_chunk(m.data, this.xkey_seed, sender_xkey))
+      //     //console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`)
+      //   }
+      //   console.log('subscription closed')
+      // })()
+      //
+      // const dl_request = {
+      //   hash: hash,
+      //   target_xkey: this.xkey_pub
+      // }
+      // await nStore.connection
+      //   .request('natster.catalog.' + catalog + '.download', JSON.stringify(dl_request), {
+      //     timeout: 5000
+      //   })
+      //   .then((m) => {
+      //   let data = JSONCodec().decode(m.data)
+      //     sender_xkey = data.data.sender_xkey
+      //   })
+      //   .catch((err) => {
+      //     console.error('nats requestCatalogFiles err: ', err)
+      //   })
     }
   },
   getters: {
