@@ -23,7 +23,7 @@ type Client struct {
 func NewClient(nc *nats.Conn) *Client {
 	return &Client{
 		nc:          nc,
-		dlResponses: make(chan models.TypedApiResult[models.DownloadResponse], 0),
+		dlResponses: make(chan models.TypedApiResult[models.DownloadResponse]),
 	}
 }
 

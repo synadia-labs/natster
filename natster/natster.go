@@ -46,6 +46,10 @@ func main() {
 	newcat.Arg("path", "Path to the root directory containing the catalog's media").Required().ExistingDirVar(&HubOpts.RootPath)
 	newcat.Action(NewCatalog)
 
+	inbox := catalog.Command("inbox", "Lists the catalogs that have been shared with you that have not yet been imported").
+		HelpLong("This requires at least one catalog server running within the selected context. Will prompt the user to choose a catalog to import.")
+	inbox.Action(RenderInbox)
+
 	sharecat := catalog.Command("share", "Shares a catalog with a target account")
 	sharecat.Arg("name", "The name of the catalog to share").Required().StringVar(&ShareOpts.Name)
 	sharecat.Arg("account", "Public key of the target account").Required().StringVar(&ShareOpts.AccountKey)

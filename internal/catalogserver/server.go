@@ -38,6 +38,7 @@ func (srv *CatalogServer) Start(uiPort int) error {
 		return err
 	}
 	log.Info("Natster Media Catalog Server Started")
+	log.Info("Local (private) services are available on 'natster.local.>'")
 
 	srv.startHeartbeatEmitter()
 	srv.startWebServer(uiPort)

@@ -37,6 +37,14 @@ func (srv *CatalogServer) startApiSubscriptions() error {
 		return err
 	}
 
+	_, err = srv.nc.QueueSubscribe("natster.local.>", "natsterlocalservices",
+		handleLocalServiceRequest(srv))
+	if err != nil {
+		log.Error(
+			"Failed to subscribe to natster local services subject")
+		return err
+	}
+
 	return nil
 }
 
