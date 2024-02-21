@@ -4,6 +4,7 @@ interface Catalog {
   to: string
   from: string
   name: string
+  pending_invite: bool
   files: File[]
 }
 
