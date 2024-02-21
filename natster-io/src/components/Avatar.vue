@@ -6,9 +6,16 @@
           <span class="relative inline-block">
             <img class="h-12 w-12 rounded-md" :src="userPhotoUrl" alt="" />
             <span
-              class="absolute right-0 top-0 block h-4 w-4 -translate-y-1/2 translate-x-1/2 transform rounded-full bg-yellow-300 text-center text-xs align-top text-black ring-1 ring-white"
+        :class="[
+          catalog_online 
+            ? 'bg-green-600 text-white'
+            : 'bg-gray-200 text-black',
+              'absolute right-0 top-0 block h-4 w-4 -translate-y-1/2 translate-x-1/2 transform rounded-full text-center text-xs align-top text-black ring-1 ring-white'
+        ]"
+
             >
-              2</span
+            {{ pending_imports == 0 ? '' : pending_imports }}
+            </span
             >
           </span>
         </MenuButton>
@@ -44,7 +51,7 @@
     </Float>
   </Menu>
   <div>
-    <p @click="was, getXKeys" class="text-white font-semibold" aria-hidden="true">
+    <p class="text-white font-semibold" aria-hidden="true">
       {{ user }}
     </p>
     <p @click="copyAccountIdToClipboard" class="text-gray-500" aria-hidden="true">
@@ -54,14 +61,16 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { Float } from '@headlessui-float/vue'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useAuth0 } from '@auth0/auth0-vue'
-import { notificationStore } from '../stores/notification'
+import { userStore } from '../stores/user'
+const uStore = userStore()
+const { catalog_online, pending_imports } = storeToRefs(uStore)
 
 const { logout } = useAuth0()
-const nStore = notificationStore()
 
 function signout() {
   logout({ logoutParams: { returnTo: window.location.origin } })

@@ -43,11 +43,18 @@ export const natsStore = defineStore('nats', {
       }
     },
     async ping() {
-      try {
-        await this.connection.ping()
-      } catch (err) {
-        console.error('nats ping err: ', err)
-      }
+      const uStore = userStore()
+      await this.connection
+        .request('natster.local.inbox', '', { timeout: 5000 })
+        .then((msg) => {
+          let m = JSONCodec().decode(msg.data)
+          console.log('nats ping: ', m)
+          if (m.code == 200) {
+            uStore.catalog_online = true
+            uStore.pending_imports = m.data.unimported_shares.length
+          }
+        })
+        .catch((err) => console.error('nats ping err: ', err))
     }
   }
 })
