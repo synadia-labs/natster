@@ -27,32 +27,8 @@ const { connection } = storeToRefs(nStore)
 
 watch(connection, () => {
   if (nStore.connection !== null) {
-    nStore.connection
-      .request('natster.global.my.shares', '', { timeout: 5000 })
-      .then((m) => {
-        const catalogs = JSONCodec().decode(m.data).data
-        catalogs.forEach((c, i) => {
-          if (c.to_account === uStore.getAccount) {
-            const catalog: Catalog = {
-              selected: false,
-              to: c.to_account,
-              from: c.from_account,
-              name: c.catalog,
-              online: c.catalog_online,
-              files: []
-            }
-            uStore.catalogs.push(catalog)
-
-            if (i == 0) {
-              uStore.setCatalogSelected(catalog)
-            }
-          }
-        })
-        nStore.ping()
-      })
-      .catch((err) => {
-        console.log(`problem with request: ${err.message}`)
-      })
+    nStore.getShares(true)
+    nStore.ping()
   }
 })
 </script>

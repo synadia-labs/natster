@@ -1,7 +1,7 @@
 <template>
   <div class="text-xs font-semibold leading-6 text-gray-400">Natster Shares</div>
   <ul role="list" class="-mx-2 mt-2 space-y-1">
-    <li v-for="(catalog, i) in catalogs" :key="i">
+    <li v-for="(catalog, i) in getImportedCatalogs" :key="i">
       <div
         @click="uStore.setCatalogSelected(catalog)"
         :class="[
@@ -27,8 +27,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+
 import { userStore } from '../stores/user'
-const uStore = userStore()
-const { catalogs } = storeToRefs(uStore)
+
+const { getImportedCatalogs } = storeToRefs(userStore())
 </script>

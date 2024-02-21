@@ -120,6 +120,10 @@ export const userStore = defineStore('user', {
     getUserName(state) {
       const { user } = useAuth0()
       return user.name
+    },
+    getImportedCatalogs(state) {
+      console.log('here')
+      return state.catalogs.filter((c) => !c.pending_invite)
     }
   }
 })
