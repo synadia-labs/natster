@@ -65,7 +65,9 @@
                 </MenuItem>
                 <MenuItem v-slot="{ active }">
                   <button
-                    @click.prevent="uStore.viewFile(getFileName(file.path), catalog.name, file.hash)"
+                    @click.prevent="
+                      uStore.viewFile(getFileName(file.path), catalog.name, file.hash)
+                    "
                     :class="[
                       active ? 'bg-violet-500 text-white' : 'text-gray-900',
                       'group flex w-full items-center rounded-md px-2 py-2 text-sm'

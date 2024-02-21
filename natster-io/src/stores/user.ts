@@ -19,7 +19,9 @@ export const userStore = defineStore('user', {
     catalogs: [] as Catalog[],
     files: [] as File[],
     xkey_seed: '',
-    xkey_pub: ''
+    xkey_pub: '',
+    catalog_online: false,
+    pending_imports: 0
   }),
   actions: {
     setJWT(jwt) {

@@ -48,6 +48,7 @@ watch(connection, () => {
             }
           }
         })
+        nStore.ping()
       })
       .catch((err) => {
         console.log(`problem with request: ${err.message}`)
