@@ -10,6 +10,8 @@ import topLevelAwait from "vite-plugin-top-level-await";
 export default defineConfig({
   plugins: [
     vue(),
+    wasm(), 
+    topLevelAwait(),
     basicSsl({
       name: 'natster',
       domains: ['192.168.150.239:3000'],

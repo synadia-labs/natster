@@ -44,7 +44,7 @@
     </Float>
   </Menu>
   <div>
-    <p @click="getXKeys" class="text-white font-semibold" aria-hidden="true">
+    <p @click="was, getXKeys" class="text-white font-semibold" aria-hidden="true">
       {{ user }}
     </p>
     <p @click="copyAccountIdToClipboard" class="text-gray-500" aria-hidden="true">
@@ -54,23 +54,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { Float } from '@headlessui-float/vue'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { notificationStore } from '../stores/notification'
 
-import init, { getXKeys } from '../wasm/generate-xkeys/pkg/generate_xkeys.js'
-
-// import init, { add } from '../wasm/go/generate_xkeys.wasm?init'
-// import wasmUrl from '../wasm/go/generate_xkeys.wasm?url'
-
 const { logout } = useAuth0()
 const nStore = notificationStore()
-
-onMounted(async () => {
-  await init()
-})
 
 function signout() {
   logout({ logoutParams: { returnTo: window.location.origin } })
