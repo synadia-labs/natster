@@ -31,6 +31,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { userStore } from '../stores/user'
+const uStore = userStore()
 
 const { getImportedCatalogs } = storeToRefs(userStore())
 </script>
