@@ -2,19 +2,28 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"strings"
+	"time"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/choria-io/fisk"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/nats-io/jsm.go/natscontext"
+	"github.com/nats-io/nats.go"
 	"github.com/synadia-io/control-plane-sdk-go/syncp"
 	"github.com/synadia-labs/natster/internal/catalogserver"
 	"github.com/synadia-labs/natster/internal/globalservice"
 	"github.com/synadia-labs/natster/internal/medialibrary"
 	"github.com/synadia-labs/natster/internal/models"
+)
+
+const (
+	ngsUrl = "tls://connect.ngs.global"
 )
 
 func ViewCatalogItems(ctx *fisk.ParseContext) error {
@@ -96,6 +105,69 @@ func ListCatalogs(ctx *fisk.ParseContext) error {
 	fmt.Println(w.Render())
 
 	return nil
+}
+
+type inboxResponse struct {
+	UnimportedShares []models.CatalogShareSummary `json:"unimported_shares"`
+}
+
+func RenderInbox(ctx *fisk.ParseContext) error {
+	nctx, err := loadContext()
+	if err != nil {
+		return err
+	}
+	ctxOpts := []natscontext.Option{
+		natscontext.WithServerURL(ngsUrl),
+		natscontext.WithCreds(nctx.CredsPath),
+	}
+
+	natsContext, err := natscontext.New("natster_temp", false, ctxOpts...)
+	if err != nil {
+		return err
+	}
+
+	conn, err := natsContext.Connect(nats.Name("natster_client"))
+	if err != nil {
+		return err
+	}
+
+	resp, err := conn.Request("natster.local.inbox", []byte{}, 1*time.Second)
+	if err != nil {
+		return err
+	}
+	var inbox models.TypedApiResult[inboxResponse]
+	err = json.Unmarshal(resp.Data, &inbox)
+	if err != nil {
+		return err
+	}
+	if inbox.Code != 200 {
+		fmt.Printf("Error retrieving inbox: %s", *inbox.Error)
+		return nil
+	}
+	if len(inbox.Data.UnimportedShares) == 0 {
+		fmt.Println("Inbox zero! No unimported catalogs")
+		return nil
+	}
+
+	catalogNames := make([]string, len(inbox.Data.UnimportedShares))
+	for i, cat := range inbox.Data.UnimportedShares {
+		catalogNames[i] = cat.Catalog
+	}
+
+	userPrompt := survey.Select{
+		Message: "Select a catalog to import",
+		Options: catalogNames,
+	}
+	var selectedCatalog int
+	err = survey.AskOne(&userPrompt, &selectedCatalog, survey.WithValidator(survey.Required))
+	if err != nil {
+		return err
+	}
+
+	ShareOpts.Name = catalogNames[selectedCatalog]
+	ShareOpts.AccountKey = inbox.Data.UnimportedShares[selectedCatalog].FromAccount
+
+	return ImportCatalog(ctx)
 }
 
 func ImportCatalog(ctx *fisk.ParseContext) error {

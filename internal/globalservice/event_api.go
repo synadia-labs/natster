@@ -3,6 +3,7 @@ package globalservice
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -24,7 +25,7 @@ func (srv *GlobalService) GetTotalSharedCatalogs() (uint64, error) {
 	return srv.countFilteredEvents(subject)
 }
 
-func (srv *GlobalService) GetOAuthIdForAccount(accountKey string) (*string, error) {
+func (srv *GlobalService) GetBoundContext(accountKey string) (*models.ContextBoundEvent, error) {
 	subject := fmt.Sprintf("natster.events.%s.none.none.%s", accountKey, models.ContextBoundEventType)
 	js, err := jetstream.New(srv.nc)
 	if err != nil {
@@ -47,11 +48,23 @@ func (srv *GlobalService) GetOAuthIdForAccount(accountKey string) (*string, erro
 	if err != nil {
 		return nil, err
 	}
+	if msg == nil {
+		return nil, errors.New("context bound event not found")
+	}
 
 	var discoveredContext models.ContextBoundEvent
 	err = json.Unmarshal(msg.Data, &discoveredContext)
 	if err != nil {
 		slog.Error("Deserialization failure of context bound event", err)
+		return nil, err
+	}
+
+	return &discoveredContext, nil
+}
+
+func (srv *GlobalService) GetOAuthIdForAccount(accountKey string) (*string, error) {
+	discoveredContext, err := srv.GetBoundContext(accountKey)
+	if err != nil {
 		return nil, err
 	}
 
