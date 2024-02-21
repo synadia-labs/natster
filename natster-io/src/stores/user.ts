@@ -59,10 +59,7 @@ export const userStore = defineStore('user', {
       const tfStore = textFileStore()
 
       await init()
-      var buf = new Uint8Array(32)
-      window.crypto.getRandomValues(buf)
-
-      let xkey = JSON.parse(get_xkeys(buf))
+      let xkey = JSON.parse(get_xkeys())
       this.xkey_seed = xkey.seed
       this.xkey_pub = xkey.public
 
@@ -72,15 +69,10 @@ export const userStore = defineStore('user', {
       ;(async () => {
         for await (const m of sub) {
           await new Promise((r) => setTimeout(r, 1000))
-          console.log('mine', this.xkey_seed)
-          console.log('theirs', sender_xkey)
-          console.log('data', m.data)
-          let decrypted = decrypt_chunk(m.data, this.xkey_seed, sender_xkey)
-          console.log('DECRYPTED: ', decrypted)
-
+          let decrypted = decrypt_chunk(m.data, xkey.seed, sender_xkey)
           tfStore.showTextFile(fileName, decrypted)
-          //console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`)
         }
+
         console.log('subscription closed')
       })()
 
@@ -94,7 +86,6 @@ export const userStore = defineStore('user', {
         })
         .then((m) => {
           let data = JSONCodec().decode(m.data)
-          console.log(m.data)
           sender_xkey = data.data.sender_xkey
         })
         .catch((err) => {

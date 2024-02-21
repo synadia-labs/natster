@@ -8,7 +8,6 @@ export const notificationStore = defineStore('notification', {
   }),
   actions: {
     setNotification(title, message) {
-      console.log('In setNotification', title, message)
       this.title = title
       this.message = message
       this.show = true

@@ -67,6 +67,7 @@ import { Float } from '@headlessui-float/vue'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { userStore } from '../stores/user'
+import { notificationStore } from '../stores/notification'
 const uStore = userStore()
 const { catalog_online, pending_imports } = storeToRefs(uStore)
 
