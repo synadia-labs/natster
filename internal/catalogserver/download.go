@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/nats-io/nats.go"
@@ -16,7 +17,10 @@ import (
 )
 
 const (
-	chunkSizeBytes = 5120
+	chunkSizeBytes    = 5120
+	headerChunkIndex  = "x-natster-chunk-idx"
+	headerSenderXkey  = "x-natster-sender-xkey"
+	headerTotalChunks = "x-natster-total-chunks"
 )
 
 func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
@@ -63,7 +67,7 @@ func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
 		}
 		_ = m.Respond(models.NewApiResultPass(resp))
 
-		go srv.transmitChunkedFile(senderKp, tokens[0], req, f, chunks)
+		go srv.transmitChunkedFile(senderKp, tokens[0], req, f, chunks, resp)
 	}
 }
 
@@ -72,7 +76,8 @@ func (srv *CatalogServer) transmitChunkedFile(
 	targetAccount string,
 	request models.DownloadRequest,
 	entry *medialibrary.MediaEntry,
-	chunks uint) {
+	chunks uint,
+	resp models.DownloadResponse) {
 
 	f, err := os.Open(entry.Path)
 	if err != nil {
@@ -105,7 +110,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 			slog.Error("Encryption failure", err)
 			break
 		}
-		err = srv.transmitChunk(targetSubject, request, sealed)
+		err = srv.transmitChunk(i, targetSubject, request, sealed, resp)
 		if err != nil {
 			slog.Error("Failed to transmit chunk", err)
 			break
@@ -113,9 +118,15 @@ func (srv *CatalogServer) transmitChunkedFile(
 	}
 }
 
-func (srv *CatalogServer) transmitChunk(targetSubject string, request models.DownloadRequest, buf []byte) error {
+func (srv *CatalogServer) transmitChunk(index int, targetSubject string, request models.DownloadRequest, buf []byte, resp models.DownloadResponse) error {
 
-	err := srv.nc.Publish(targetSubject, buf)
+	m := nats.NewMsg(targetSubject)
+	m.Header.Add(headerChunkIndex, strconv.Itoa(index))
+	m.Header.Add(headerSenderXkey, resp.SenderXKey)
+	m.Header.Add(headerTotalChunks, strconv.Itoa(int(resp.TotalChunks)))
+	m.Data = buf
+
+	err := srv.nc.PublishMsg(m)
 	if err != nil {
 		return err
 	}
