@@ -55,28 +55,28 @@
                       'group flex w-full items-center rounded-md px-2 py-2 text-sm disabled:bg-blue-100'
                     ]"
                   >
-                    <FolderOpenIcon
-                      :active="active"
-                      class="mr-2 h-5 w-5 text-violet-400"
-                      aria-hidden="true"
-                    />
-                    View
-                  </button>
-                </MenuItem>
-                <MenuItem v-slot="{ active }">
-                  <button
-                    @click.prevent="uStore.downloadFile(catalog.name, file.hash)"
-                    :class="[
-                      active ? 'bg-violet-500 text-white' : 'text-gray-900',
-                      'group flex w-full items-center rounded-md px-2 py-2 text-sm'
-                    ]"
-                  >
                     <ArrowDownTrayIcon
                       :active="active"
                       class="mr-2 h-5 w-5 text-violet-400"
                       aria-hidden="true"
                     />
                     Download
+                  </button>
+                </MenuItem>
+                <MenuItem v-slot="{ active }">
+                  <button
+                    @click.prevent="uStore.viewFile(getFileName(file.path), catalog.name, file.hash)"
+                    :class="[
+                      active ? 'bg-violet-500 text-white' : 'text-gray-900',
+                      'group flex w-full items-center rounded-md px-2 py-2 text-sm'
+                    ]"
+                  >
+                    <FolderOpenIcon
+                      :active="active"
+                      class="mr-2 h-5 w-5 text-violet-400"
+                      aria-hidden="true"
+                    />
+                    View
                   </button>
                 </MenuItem>
               </div>
