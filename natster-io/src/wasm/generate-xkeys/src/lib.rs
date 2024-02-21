@@ -14,24 +14,27 @@ pub fn get_xkeys() -> JsValue {
     let mut buf = [0u8; 32];
     let r = getrandom::getrandom(&mut buf);
     match r {
-        Ok(_) => {}
+        Ok(_) => {
+            web_sys::console::log_1(&format!("random: {:?}", buf.to_vec()).into());
+        }
         Err(e) => println!("error parsing header: {e:?}"),
     }
 
-    // web_sys::console::log_1(&"XKeys from embedded wasm!".into());
     let pair = KeyPair::new_from_raw(nkeys::KeyPairType::Curve, buf);
     match pair {
         Ok(pair) => {
-            let public_key = pair.public_key();
-            let seed = pair.seed().unwrap();
+            // let public_key = pair.public_key();
+            // let seed = pair.seed().unwrap();
+            let public_key = "XDEUIW5UQGWQLYWM2GDGWJ5J2XPDBNA63B3PEWVRBRSXWVVSVBNGX6QT";
+            let seed = "SXAPFTI242W2ZLCJQAFHTQ3T3VZKSJZZGKNZOTJV4WG7T2MYWYYW7N7OEY";
+            web_sys::console::log_1(&format!("public key: {}", public_key).into());
+            web_sys::console::log_1(&format!("seed: {}", seed).into());
 
             let xkey = json!({
                 "public": public_key,
                 "seed": seed,
             });
 
-            web_sys::console::log_1(&public_key.into());
-            web_sys::console::log_1(&seed.into());
             JsValue::from_str(xkey.to_string().as_str())
         }
         Err(e) => JsValue::from_str(format!("Error parsing header: {}", e).as_str()),
@@ -68,19 +71,16 @@ pub fn decrypt_chunk(encrypted_in: Uint8Array, seed: String, sender: String) -> 
 
 #[wasm_bindgen_test]
 fn it_works() {
-    let mine = "SXAJ7S4BJAFGK6JYNEXSY7LFLF4LX57UVCOHFNOYDK3TMRIPFGTNFDPSKQ";
-    let theirs = "XDPYKH2N6JV3TUWWBWM2HWJX4FYEHDUYMJCPSYDJRAURXSBVVZTV2BAG";
+    let mine = "SXAPFTI242W2ZLCJQAFHTQ3T3VZKSJZZGKNZOTJV4WG7T2MYWYYW7N7OEY";
+    let theirs = "XACKDJCVN7UF7WTXNHR5R224FGVN56AL45UF2JC37FAOFYBY6WDFXIDR";
     let a = Uint8Array::new(&JsValue::NULL);
-    //Uint8Array::copy_from(&a, &[0]);
     a.copy_from(&[
-        120, 107, 118, 49, 50, 180, 249, 241, 115, 221, 5, 5, 106, 143, 46, 162, 228, 135, 89, 169,
-        56, 77, 107, 136, 91, 253, 64, 31, 242, 36, 163, 146, 77, 7, 176, 42, 241, 236, 136, 117,
-        179, 34, 128, 78, 74, 63, 48, 144, 207, 248, 240, 34, 154, 239, 103, 116, 137, 103, 1, 151,
-        127, 52, 175, 163, 151, 178,
+        120, 107, 118, 49, 18, 112, 233, 144, 97, 92, 195, 225, 63, 111, 79, 221, 156, 131, 166,
+        142, 122, 163, 45, 191, 47, 140, 20, 46, 189, 84, 191, 226, 224, 94, 239, 169, 223, 22,
+        225, 32, 99, 241, 171, 249, 64, 132, 33, 225, 28, 225, 13, 237, 146, 183, 149, 117, 175,
     ]);
 
-    //let data = [120, 107, 118, 49, 50, 180, 249, 241, 115, 221, 5, 5, 106, 143, 46, 162, 228, 135, 89, 169, 56, 77, 107, 136, 91, 253, 64, 31, 242, 36, 163, 146, 77, 7, 176, 42, 241, 236, 136, 117, 179, 34, 128, 78, 74, 63, 48, 144, 207, 248, 240, 34, 154, 239, 103, 116, 137, 103, 1, 151, 127, 52, 175, 163, 151, 178]
     let b = decrypt_chunk(a, mine.to_string(), theirs.to_string());
-    //let result = 2 + 2;
-    assert_eq!(b, "");
+    console_log!("{:?}", b);
+    assert_eq!(b, "hello kevin");
 }
