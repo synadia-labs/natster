@@ -6,17 +6,13 @@
           <span class="relative inline-block">
             <img class="h-12 w-12 rounded-md" :src="userPhotoUrl" alt="" />
             <span
-        :class="[
-          catalog_online 
-            ? 'bg-green-600 text-white'
-            : 'bg-gray-200 text-black',
-              'absolute right-0 top-0 block h-4 w-4 -translate-y-1/2 translate-x-1/2 transform rounded-full text-center text-xs align-top text-black ring-1 ring-white'
-        ]"
-
+              :class="[
+                catalog_online ? 'bg-green-600 text-white' : 'bg-gray-200 text-black',
+                'absolute right-0 top-0 block h-4 w-4 -translate-y-1/2 translate-x-1/2 transform rounded-full text-center text-xs align-top text-black ring-1 ring-white'
+              ]"
             >
-            {{ pending_imports == 0 ? '' : pending_imports }}
-            </span
-            >
+              {{ pending_imports == 0 ? '' : pending_imports }}
+            </span>
           </span>
         </MenuButton>
       </div>
