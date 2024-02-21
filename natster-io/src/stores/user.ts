@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
 import { jwtDecode } from 'jwt-decode'
 import { useAuth0 } from '@auth0/auth0-vue'
+import { createCurve } from 'nkeys.js'
 import { natsStore } from './nats'
 import type { Catalog } from '../types/types.ts'
 import { JSONCodec, StringCodec } from 'nats.ws'
-import init, { get_xkeys, decrypt_chunk } from '../wasm/generate-xkeys/pkg/generate_xkeys.js'
 import { textFileStore } from './textfile'
 
 export const userStore = defineStore('user', {
@@ -58,10 +58,9 @@ export const userStore = defineStore('user', {
     async viewFile(fileName, catalog, hash) {
       const tfStore = textFileStore()
 
-      await init()
-      let xkey = JSON.parse(get_xkeys())
-      this.xkey_seed = xkey.seed
-      this.xkey_pub = xkey.public
+      let xkey = createCurve()
+      this.xkey_seed = new TextDecoder().decode(xkey.getSeed())
+      this.xkey_pub = xkey.getPublicKey()
 
       var sender_xkey
       const nStore = natsStore()
@@ -69,10 +68,9 @@ export const userStore = defineStore('user', {
       ;(async () => {
         for await (const m of sub) {
           await new Promise((r) => setTimeout(r, 1000))
-          let decrypted = decrypt_chunk(m.data, xkey.seed, sender_xkey)
-          tfStore.showTextFile(fileName, decrypted)
+          let decrypted = xkey.open(m.data, sender_xkey)
+          tfStore.showTextFile(fileName, new TextDecoder().decode(decrypted))
         }
-
         console.log('subscription closed')
       })()
 
@@ -86,6 +84,7 @@ export const userStore = defineStore('user', {
         })
         .then((m) => {
           let data = JSONCodec().decode(m.data)
+          console.log('data: ', data)
           sender_xkey = data.data.sender_xkey
         })
         .catch((err) => {
