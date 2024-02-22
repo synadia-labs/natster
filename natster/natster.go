@@ -12,12 +12,13 @@ import (
 var (
 	VERSION = "0.1.0"
 
-	Opts      = &models.Options{}
-	HubOpts   = &models.HubOptions{}
-	InitOpts  = &models.InitOptions{}
-	ShareOpts = &models.ShareOptions{}
-	DlOpts    = &models.DownloadOptions{}
-	ClaimOpts = &models.ClaimOpts{}
+	Opts         = &models.Options{}
+	HubOpts      = &models.HubOptions{}
+	InitOpts     = &models.InitOptions{}
+	ShareOpts    = &models.ShareOptions{}
+	DlOpts       = &models.DownloadOptions{}
+	ClaimOpts    = &models.ClaimOpts{}
+	WebLoginOpts = &models.WebLoginOpts{}
 )
 
 func main() {
@@ -82,6 +83,7 @@ func main() {
 	hub_up.Action(StartCatalogServer)
 
 	login := ncli.Command("weblogin", "Authenticate your local context for use with natster.io").Alias("login")
+	login.Flag("qrcode", "Displays QR code in terminal of login link").Default("false").UnNegatableBoolVar(&WebLoginOpts.DisplayQR)
 	login.Action(WebLogin)
 
 	claim := ncli.Command("claim", "Claims an OTC code. For testing only - Can only be done from the natster.io account").Hidden()

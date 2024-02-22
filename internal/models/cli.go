@@ -29,6 +29,10 @@ type ShareOptions struct {
 	AccountKey string
 }
 
+type WebLoginOpts struct {
+	DisplayQR bool
+}
+
 // Options configure the CLI
 type Options struct {
 	// Creds is nats credentials to authenticate with
