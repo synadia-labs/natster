@@ -141,7 +141,7 @@ onMounted(() => {
   if (isAuthenticated && user !== null) {
     uStore.setJWT(user.value.natster.jwt)
     uStore.setNkey(user.value.natster.nkey)
-    uStore.setNatsCode(user.value.natster.natsCode)
+    uStore.setOauthId(user.value.natster.oauth_id)
   }
 })
 

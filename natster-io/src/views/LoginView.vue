@@ -116,13 +116,30 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { userStore } from '../stores/user.js'
 import { useAuth0 } from '@auth0/auth0-vue'
 
-const codeProvided = computed(() => {
+const codeProvided = computed( () => {
+  const { loginWithRedirect } = useAuth0()
+  const uStore = userStore()
+
+  if (uStore.getOauthId != null && typeof(uStore.getOauthId) !== undefined && uStore.getOauthId !== '') {
+    console.log('Logging in with oauthid', uStore.getOauthId)
+    loginWithRedirect({
+      appState: {
+        target: '/library',
+        in_oauthid: uStore.getOauthId
+      },
+      authorizationParams: {
+        in_oauthid: uStore.getOauthId
+      }
+    })
+
+    return true
+  }
+
   const route = useRoute()
   if (route.params.code === undefined || route.params.code === '') {
     return false
   }
 
-  const { loginWithRedirect } = useAuth0()
   loginWithRedirect({
     appState: {
       target: '/library',

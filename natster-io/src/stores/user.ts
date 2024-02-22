@@ -12,7 +12,7 @@ export const userStore = defineStore('user', {
     jwt: '',
     nkey: '',
     user: null,
-    nats_code: '',
+    oauth_id: '',
     authenticated: false,
     loading: false,
     decoded_jwt: null,
@@ -26,12 +26,15 @@ export const userStore = defineStore('user', {
   actions: {
     setJWT(jwt) {
       this.jwt = jwt
+      localStorage.setItem('natster_jwt', jwt)
     },
     setNkey(nkey) {
       this.nkey = nkey
+      localStorage.setItem('natster_nkey', nkey)
     },
-    setNatsCode(code) {
-      this.nats_code = code
+    setOauthId(id) {
+      this.oauth_id = id
+      localStorage.setItem('natster_oauth_id', id)
     },
     setCatalogSelected(cat) {
       this.catalogs.forEach(async function (item, index) {
@@ -100,13 +103,13 @@ export const userStore = defineStore('user', {
   },
   getters: {
     getJWT(state) {
-      return state.jwt
+      return state.jwt !== '' ? state.jwt : localStorage.getItem('natster_jwt')
     },
     getNkey(state) {
-      return state.nkey
+      return state.nkey !== '' ? state.nkey : localStorage.getItem('natster_nkey')
     },
-    getNatsCode(state) {
-      return state.nats_code
+    getOauthId(state) {
+      return state.oauth_id !== '' ? state.oauth_id : localStorage.getItem('natster_oauth_id')
     },
     getUser(state) {
       const { user } = useAuth0()

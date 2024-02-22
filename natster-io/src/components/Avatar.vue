@@ -70,6 +70,7 @@ const { catalog_online, pending_imports } = storeToRefs(uStore)
 const { logout } = useAuth0()
 
 function signout() {
+  localStorage.clear()
   logout({ logoutParams: { returnTo: window.location.origin } })
 }
 

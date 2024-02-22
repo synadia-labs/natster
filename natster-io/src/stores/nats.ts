@@ -9,7 +9,6 @@ export const natsStore = defineStore('nats', {
     connection: null,
     connected: false
   }),
-
   actions: {
     async connect() {
       const uStore = userStore()
