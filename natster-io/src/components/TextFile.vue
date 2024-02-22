@@ -73,7 +73,7 @@
   </TransitionRoot>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'

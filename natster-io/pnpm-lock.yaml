@@ -92,7 +92,7 @@ devDependencies:
     specifier: ~5.3.0
     version: 5.3.3
   vite:
-    specifier: ^5.0.11
+    specifier: ^5.1.1
     version: 5.1.1(@types/node@20.11.17)
   vite-plugin-top-level-await:
     specifier: ^1.4.1

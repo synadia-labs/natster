@@ -45,7 +45,7 @@
             <code class="text-green-500 bg-gray-800">
 curl -lSs https://natster.io/install.sh | sh
 natster init --token YOUR_SYNADIA_CLOUD_TOKEN
-natster web-login</code>
+natster weblogin</code>
             </pre>
             from the command line. This will provide you with a link/code you can enter below.
           </div>

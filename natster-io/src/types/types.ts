@@ -16,4 +16,4 @@ interface File {
   path: string
 }
 
-export { Catalog }
+export { Catalog };
