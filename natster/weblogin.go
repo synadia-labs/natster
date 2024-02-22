@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/choria-io/fisk"
+	"github.com/mdp/qrterminal/v3"
 	"github.com/synadia-labs/natster/internal/globalservice"
 )
 
@@ -32,6 +34,9 @@ func WebLogin(ctx *fisk.ParseContext) error {
 		response.ValidMinutes,
 		response.ClaimUrl,
 	)
+	if WebLoginOpts.DisplayQR {
+		qrterminal.Generate(response.ClaimUrl, qrterminal.L, os.Stdout)
+	}
 
 	return nil
 }
