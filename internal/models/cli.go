@@ -11,7 +11,7 @@ type HubOptions struct {
 	Name        string
 	Description string
 	RootPath    string
-	Port        int
+	AllowAll    bool
 }
 
 type DownloadOptions struct {

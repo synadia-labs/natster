@@ -75,7 +75,10 @@ func main() {
 
 	hub_up := catalog.Command("serve", "Starts the media catalog server")
 	hub_up.Arg("name", "The name of the catalog to serve").Required().StringVar(&HubOpts.Name)
-	hub_up.Flag("port", "HTTP port on which to run the UI/API").Default("8080").IntVar(&HubOpts.Port)
+	hub_up.Flag("allowall", "Disables security checks for contents and downloads - Use with caution").
+		Envar("CATALOG_ALLOW_ALL").
+		Default("false").
+		UnNegatableBoolVar(&HubOpts.AllowAll)
 	hub_up.Action(StartCatalogServer)
 
 	login := ncli.Command("weblogin", "Authenticate your local context for use with natster.io").Alias("login")
