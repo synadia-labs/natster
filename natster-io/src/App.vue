@@ -13,7 +13,7 @@ import { watch } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { storeToRefs } from 'pinia'
 import { JSONCodec } from 'nats.ws'
-import { Catalog } from './types/types'
+import type { Catalog } from './types/types'
 
 import AuthView from './views/AuthView.vue'
 import { userStore } from './stores/user'

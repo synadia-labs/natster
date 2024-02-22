@@ -16,7 +16,7 @@ app.use(
     domain: 'natster.us.auth0.com',
     clientId: 'veI5fgi7qKMaYc4SRs1CTgpNL2RfgRFK',
     authorizationParams: {
-      redirect_uri: window.location.origin + '/library'
+      redirect_uri: window.location.origin + '/#/library'
     }
   })
 )
