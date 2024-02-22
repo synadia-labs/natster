@@ -34,6 +34,7 @@ func DisplayContext(ctx *fisk.ParseContext) error {
 	w.AppendRow(table.Row{"Account", ctxx.AccountPublicKey})
 	w.AppendRow(table.Row{"Synadia Cloud Team", ctxx.TeamID})
 	w.AppendRow(table.Row{"Synadia Cloud System", ctxx.SystemID})
+	w.AppendRow(table.Row{"Synadia Cloud User", ctxx.UserID})
 	w.AppendRow(table.Row{"Credentials", ctxx.CredsPath})
 	w.AppendRow(table.Row{"Natster.io Login", idString})
 	fmt.Println(w.Render())

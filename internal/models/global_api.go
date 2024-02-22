@@ -56,8 +56,9 @@ type WhoamiResponse struct {
 }
 
 type ContextQueryResponse struct {
-	Context   NatsterContext `json:"context"`
-	FullCreds string         `json:"full_creds"`
+	Context  NatsterContext `json:"context"`
+	UserJwt  string         `json:"user_jwt"`
+	UserSeed string         `json:"user_seed"`
 }
 
 type OtcGenerateResponse struct {
