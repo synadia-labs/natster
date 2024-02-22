@@ -122,16 +122,41 @@ const codeProvided = computed(() => {
     return false
   }
 
-  const { loginWithRedirect } = useAuth0()
-  loginWithRedirect({
-    appState: {
-      target: '/library',
-      nats_code: route.params.code
-    },
-    authorizationParams: {
-      nats_code: route.params.code
+  var seed = undefined;
+
+  const hash = route.hash?.substring(1)
+  if (hash) {
+    try {
+      // url-encoded fragment: https://natster.io/login/code#%7B%22seed%22%3A%20%22SXXXX%22%7D
+      const decoded = decodeURIComponent(hash)
+      const params = JSON.parse(decoded)
+      seed = params.seed
+    } catch (e) {
+      // failed to parse params...
     }
-  })
+  }
+
+  const valid = typeof(seed) !== 'undefined' && route.params.code
+
+  if (valid) {
+    localStorage.setItem('natster.seed', seed)
+
+    // TODO-- use localStorage.getItem('natster.seed') to read the seed...
+    // TODO-- use localStorage.getItem('natster.oauth_id') to read the oauth id...
+
+    const { loginWithRedirect } = useAuth0()
+    loginWithRedirect({
+      appState: {
+        target: '/library',
+        nats_code: route.params.code
+      },
+      authorizationParams: {
+        nats_code: route.params.code
+      }
+    })
+  } else {
+    // render an error on the UI
+  }
 
   return true
 })
