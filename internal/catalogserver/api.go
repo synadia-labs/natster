@@ -49,6 +49,9 @@ func (srv *CatalogServer) startApiSubscriptions() error {
 }
 
 func (srv *CatalogServer) isClientAllowed(accountKey string) bool {
+	if srv.allowAll {
+		return true
+	}
 	cats, err := srv.globalServiceClient.GetMyCatalogs()
 	if err != nil {
 		return false

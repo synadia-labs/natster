@@ -20,19 +20,26 @@ type CatalogServer struct {
 	library             *medialibrary.MediaLibrary
 	nctx                *models.NatsterContext
 	hbQuit              chan bool
+	allowAll            bool
 }
 
-func New(ctx *models.NatsterContext, nc *nats.Conn, library *medialibrary.MediaLibrary) *CatalogServer {
+func New(ctx *models.NatsterContext, nc *nats.Conn, library *medialibrary.MediaLibrary, allowAll bool) *CatalogServer {
 	return &CatalogServer{
 		nc:                  nc,
 		hbQuit:              make(chan bool),
 		nctx:                ctx,
 		globalServiceClient: globalservice.NewClient(nc),
 		library:             library,
+		allowAll:            allowAll,
 	}
 }
 
-func (srv *CatalogServer) Start(uiPort int) error {
+func (srv *CatalogServer) Start() error {
+	if srv.allowAll {
+		log.Warn("WARNING - This server will not enforce any security checks on contents queries or downloads.")
+		log.Warn("If your catalogs are exported, anyone with your 56-character account ID will be able to acccess your media.")
+		log.Warn("If this is not what you wanted, please stop this server immediately.")
+	}
 	err := srv.startApiSubscriptions()
 	if err != nil {
 		return err
@@ -41,7 +48,6 @@ func (srv *CatalogServer) Start(uiPort int) error {
 	log.Info("Local (private) services are available on 'natster.local.>'")
 
 	srv.startHeartbeatEmitter()
-	srv.startWebServer(uiPort)
 
 	return nil
 }

@@ -37,8 +37,8 @@ func CliStart(ctx *models.NatsterContext, opts *models.Options, hubopts *models.
 		log.String("name", hubopts.Name),
 	)
 
-	server := New(ctx, nc, library)
-	err = server.Start(hubopts.Port)
+	server := New(ctx, nc, library, hubopts.AllowAll)
+	err = server.Start()
 	if err != nil {
 		log.Error(
 			"Failed to start Natster Hub",
