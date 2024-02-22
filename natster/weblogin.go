@@ -51,7 +51,7 @@ func LookupOAuthId(ctx *fisk.ParseContext) error {
 		return err
 	}
 
-	fmt.Printf("DEBUG - Context retrieved:\n%+v\n---\n\n%s", resp.Context, resp.FullCreds)
+	fmt.Printf("DEBUG - Context retrieved:\n%+v\n---\n\n%s\n\n%s", resp.Context, resp.UserJwt, resp.UserSeed)
 
 	return nil
 }

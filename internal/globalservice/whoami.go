@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nkeys"
 	"github.com/synadia-io/control-plane-sdk-go/syncp"
 	"github.com/synadia-labs/natster/internal/models"
 )
@@ -45,6 +46,13 @@ func handleGetContext(srv *GlobalService) func(m *nats.Msg) {
 			slog.Error("Failed to query bound context for OAuth ID", err,
 				slog.String("id", string(m.Data)),
 			)
+			_ = m.Respond(models.NewApiResultFail("Not Found", 404))
+			return
+		}
+		if nctx == nil {
+			slog.Error("No such context")
+			_ = m.Respond(models.NewApiResultFail("Not Found", 404))
+			return
 		}
 
 		client := syncp.NewAPIClient(syncp.NewConfiguration())
@@ -58,12 +66,27 @@ func handleGetContext(srv *GlobalService) func(m *nats.Msg) {
 			slog.Error("Failed to download NATS user creds from Synadia Cloud", err,
 				slog.String("user_id", nctx.UserID),
 			)
+			_ = m.Respond(models.NewApiResultFail("Not Found", 404))
 			return
 		}
 
+		jwt, err := nkeys.ParseDecoratedJWT([]byte(creds))
+		if err != nil {
+			slog.Error("Corrupt credentials data", err)
+			_ = m.Respond(models.NewApiResultFail("Internal Server Error", 500))
+			return
+		}
+		seed, err := nkeys.ParseDecoratedUserNKey([]byte(creds))
+		if err != nil {
+			slog.Error("Corrupt credentials data", err)
+			_ = m.Respond(models.NewApiResultFail("Internal Server Error", 500))
+		}
+		seedKey, _ := seed.Seed()
+
 		resp := models.ContextQueryResponse{
-			Context:   *nctx,
-			FullCreds: creds,
+			Context:  *nctx,
+			UserJwt:  jwt,
+			UserSeed: string(seedKey),
 		}
 		_ = m.Respond(models.NewApiResultPass(resp))
 	}

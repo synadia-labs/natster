@@ -43,7 +43,6 @@ func (srv *GlobalService) GetBoundContext(accountKey string) (*models.ContextBou
 		return nil, err
 	}
 
-	fmt.Println(subject)
 	msg, err := s.GetLastMsgForSubject(ctx, subject)
 	if err != nil {
 		return nil, err
