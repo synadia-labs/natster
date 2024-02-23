@@ -35,7 +35,7 @@ jobs:
         run: |
           curl -fsSL https://get.pnpm.io/install.sh | SHELL=bash sh -
           ~/.local/share/pnpm/pnpm install
-          ~/.local/share/pnpm/pnpm build --outDir server/dist
+          ~/.local/share/pnpm/pnpm build-only --outDir server/dist
       -
         name: Set up Go
         uses: actions/setup-go@v4
