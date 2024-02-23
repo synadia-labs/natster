@@ -54,6 +54,8 @@ func (srv *CatalogServer) Start() error {
 
 func (srv *CatalogServer) startHeartbeatEmitter() {
 	ticker := time.NewTicker(heartbeatIntervalSeconds * time.Second)
+	// publish one immediately
+	_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library.Name)
 
 	go func() {
 		for {

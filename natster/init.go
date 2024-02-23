@@ -273,25 +273,54 @@ func ensureGlobalImport(client *syncp.APIClient, ctxx context.Context, accountId
 	if err != nil {
 		return err
 	}
+	globalFound := false
+	globalEventsFound := false
 	for _, imp := range resp.Items {
 		if *imp.JwtSettings.Name == "natster_global" {
 			fmt.Println("✅ Natster global service import is configured")
-			return nil
+			globalFound = true
+		}
+		if *imp.JwtSettings.Name == "natster_global_events" {
+			fmt.Println("✅ Natster global events import is configured")
+			globalEventsFound = true
 		}
 	}
 
-	importReq := syncp.SubjectImportCreateRequest{
-		JwtSettings: syncp.Import{
-			Account:      syncp.Ptr(natsterGlobalAccount),
-			Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.global.>", accountKey)),
-			LocalSubject: syncp.Ptr("natster.global.>"),
-			Name:         syncp.Ptr("natster_global"),
-			Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
-		},
+	if !globalFound {
+		importReq := syncp.SubjectImportCreateRequest{
+			JwtSettings: syncp.Import{
+				Account:      syncp.Ptr(natsterGlobalAccount),
+				Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.global.>", accountKey)),
+				LocalSubject: syncp.Ptr("natster.global.>"),
+				Name:         syncp.Ptr("natster_global"),
+				Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
+			},
+		}
+		_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
+		if err != nil {
+			fmt.Printf("Failed to create natster global import: %s\n", err)
+			return err
+		}
+		fmt.Println("✅ Natster global service import is configured")
 	}
-	_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
-	if err != nil {
-		return err
+
+	if !globalEventsFound {
+		importReq := syncp.SubjectImportCreateRequest{
+			JwtSettings: syncp.Import{
+				Account:      syncp.Ptr(natsterGlobalAccount),
+				Subject:      syncp.Ptr(fmt.Sprintf("%s.natster.global-events.*", accountKey)),
+				LocalSubject: syncp.Ptr("natster.global-events.*"),
+				Name:         syncp.Ptr("natster_global_events"),
+				Type:         syncp.Ptr(syncp.EXPORTTYPE_STREAM),
+			},
+		}
+		_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
+		if err != nil {
+			fmt.Printf("Failed to create natster global events import: %s\n", err)
+			return err
+		}
+		fmt.Println("✅ Natster global events import is configured")
 	}
+
 	return nil
 }

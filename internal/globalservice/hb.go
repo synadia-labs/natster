@@ -2,6 +2,7 @@ package globalservice
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	"github.com/jellydator/ttlcache/v3"
@@ -21,9 +22,28 @@ func handleHeartbeat(srv *GlobalService) func(m *nats.Msg) {
 		}
 
 		srv.hbCache.Set(hb.Catalog, hb, ttlcache.DefaultTTL)
+
+		go srv.rebroadcastHeartbeat(accountKey, m.Data)
 	}
 }
 
 func (srv *GlobalService) IsCatalogOnline(catalog string) bool {
 	return srv.hbCache.Has(catalog)
+}
+
+func (srv *GlobalService) rebroadcastHeartbeat(accountKey string, data []byte) {
+	shares, err := srv.GetMyCatalogs(accountKey)
+	if err != nil {
+		slog.Error("Failed to get catalog list for source account",
+			slog.String("account", accountKey))
+	}
+
+	// Send a heartbeat to each account _to which_ the catalog has been shared from
+	// the source account (accountKey)
+	for _, share := range shares {
+		if share.FromAccount == accountKey {
+			subject := fmt.Sprintf("%s.natster.global-events.heartbeat", share.ToAccount)
+			_ = srv.nc.Publish(subject, data)
+		}
+	}
 }
