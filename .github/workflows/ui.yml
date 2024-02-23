@@ -47,11 +47,11 @@ jobs:
         run: |
           go build -tags netgo -ldflags '-extldflags "-static"' -o natster-ui-server
           go build -tags with_tailscale -o natster-ui-server-ts
-      - name: Archive server binaries
+      - 
+        name: Archive server binaries
         uses: actions/upload-artifact@v4
-        working-directory: ./natster-io/server
         with:
           name: binaries
           retention-days: 1
           path: |
-            natster-ui-server*
+            ./natster-io/server/natster-ui-server*
