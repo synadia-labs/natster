@@ -1,0 +1,57 @@
+name: 'UI'
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  check-ui:
+    runs-on: ubuntu-latest
+    name: Check UI for edits
+    outputs:
+      status: ${{ steps.ui-edited.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changes to UI directory
+        id: ui-edited
+        uses: tj-actions/changed-files@v34
+        with:
+          files: natster-io/**
+  build-ui:
+    runs-on: ubuntu-latest
+    name: Builds UI if edits found
+    needs: check-ui
+    if: needs.check-ui.outputs.status
+    steps:
+      - 
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - 
+        name: Build ui
+        working-directory: ./natster-io
+        run: |
+          curl -fsSL https://get.pnpm.io/install.sh | SHELL=bash sh -
+          ~/.local/share/pnpm/pnpm install
+          ~/.local/share/pnpm/pnpm build --outDir server/dist
+      -
+        name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.0'
+      -
+        name: Build server
+        working_dir: ./natster-io/server
+        run: |
+          go build -tags netgo -ldflags '-extldflags "-static"' -o natster-ui-server
+          go build -tags with_tailscale -o natster-ui-server-ts
+      - name: Archive server binaries
+        uses: actions/upload-artifact@v4
+        working_dir: ./natster-io/server
+        with:
+          name: binaries
+          retention-days: 1
+          path: |
+            natster-ui-server*
