@@ -3,21 +3,20 @@ package medialibrary
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
-	log "log/slog"
 	"os"
 	"path"
 	"path/filepath"
 )
 
 type MediaLibrary struct {
-	Name        string       `json:"name"`
-	RootDir     string       `json:"root_dir"`
-	Description string       `json:"description"`
-	Entries     []MediaEntry `json:"entries"`
-	Shares      []string     `json:"shares"`
+	Name        string        `json:"name"`
+	RootDir     string        `json:"root_dir"`
+	Description string        `json:"description"`
+	Entries     []*MediaEntry `json:"entries"`
 }
 
 type MediaEntry struct {
@@ -33,8 +32,7 @@ func New(rootDir string, name string, description string) (*MediaLibrary, error)
 		Name:        name,
 		RootDir:     rootDir,
 		Description: description,
-		Shares:      make([]string, 0),
-		Entries:     make([]MediaEntry, 0),
+		Entries:     make([]*MediaEntry, 0),
 	}, nil
 }
 
@@ -53,10 +51,6 @@ func Load(name string) (*MediaLibrary, error) {
 		return nil, err
 	}
 	return &library, nil
-}
-
-func (library *MediaLibrary) AddShare(accountKey string) {
-	library.Shares = append(library.Shares, accountKey)
 }
 
 func (library *MediaLibrary) Save() error {
@@ -82,7 +76,7 @@ func (library *MediaLibrary) Save() error {
 func (library *MediaLibrary) FindByHash(hash string) *MediaEntry {
 	for _, entry := range library.Entries {
 		if entry.Hash == hash {
-			return &entry
+			return entry
 		}
 	}
 	return nil
@@ -92,7 +86,7 @@ func (library *MediaLibrary) FindByHash(hash string) *MediaEntry {
 // key in the library metadata for that file
 func (library *MediaLibrary) Ingest() error {
 
-	library.Entries = make([]MediaEntry, 0)
+	library.Entries = make([]*MediaEntry, 0)
 
 	err := filepath.Walk(library.RootDir,
 		func(path string, info os.FileInfo, err error) error {
@@ -110,13 +104,13 @@ func (library *MediaLibrary) Ingest() error {
 					ByteSize:    info.Size(),
 					Description: "Auto-imported library entry",
 				}
-				library.Entries = append(library.Entries, entry)
+				library.Entries = append(library.Entries, &entry)
 			}
 			return nil
 		})
 
 	if err == nil {
-		log.Info(
+		slog.Info(
 			"Imported library entries",
 		)
 	}
@@ -124,9 +118,18 @@ func (library *MediaLibrary) Ingest() error {
 	return err
 }
 
-func (library *MediaLibrary) GetCatalog() ([]MediaEntry, error) {
+func (library *MediaLibrary) GetCatalog() ([]*MediaEntry, error) {
 
 	return library.Entries, nil
+}
+
+func (library *MediaLibrary) DescribeItem(hash string, description string) error {
+	entry := library.FindByHash(hash)
+	if entry == nil {
+		return errors.New("no such file")
+	}
+	entry.Description = description
+	return nil
 }
 
 func getNatsterHome() (string, error) {

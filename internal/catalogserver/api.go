@@ -104,7 +104,7 @@ func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
 	}
 }
 
-func convertEntries(entries []medialibrary.MediaEntry) []models.CatalogEntry {
+func convertEntries(entries []*medialibrary.MediaEntry) []models.CatalogEntry {
 	out := make([]models.CatalogEntry, len(entries))
 	for i, entry := range entries {
 		outEntry := models.CatalogEntry{

@@ -74,6 +74,13 @@ func main() {
 	catls := catalog.Command("list", "Lists my shared catalogs and catalogs shared with me").Alias("ls")
 	catls.Action(ListCatalogs)
 
+	// TODO: reusing all these shared opts is awful. Need to isolate
+	catdescribe := catalog.Command("describe", "Sets the description for a given file")
+	catdescribe.Arg("name", "Name of the catalog").Required().StringVar(&ShareOpts.Name)
+	catdescribe.Arg("hash", "Hash of the file to describe").Required().StringVar(&DlOpts.Hash)
+	catdescribe.Arg("description", "Description of the file").Required().StringVar(&HubOpts.Description)
+	catdescribe.Action(DescribeCatalogItem)
+
 	hub_up := catalog.Command("serve", "Starts the media catalog server")
 	hub_up.Arg("name", "The name of the catalog to serve").Required().StringVar(&HubOpts.Name)
 	hub_up.Flag("allowall", "Disables security checks for contents and downloads - Use with caution").
