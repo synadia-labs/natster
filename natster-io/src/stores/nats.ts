@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { userStore } from './user'
 import { connect, jwtAuthenticator, JSONCodec } from 'nats.ws'
+import { userStore } from './user'
 
 export const natsStore = defineStore('nats', {
   state: () => ({
@@ -40,49 +40,6 @@ export const natsStore = defineStore('nats', {
         this.connection = null
         this.connected = false
       }
-    },
-    async getShares(init) {
-      const uStore = userStore()
-      await this.connection
-        .request('natster.global.my.shares', '', { timeout: 5000 })
-        .then((msg) => {
-          let m = JSONCodec().decode(msg.data)
-          if (m.code == 200) {
-            m.data.forEach((c, i) => {
-              if (c.to_account === uStore.getAccount) {
-                const catalog: Catalog = {
-                  selected: false,
-                  to: c.to_account,
-                  from: c.from_account,
-                  name: c.catalog,
-                  online: c.catalog_online,
-                  pending_invite: false,
-                  files: []
-                }
-
-                if (c.catalog == 'Synadia Hub' && init) {
-                  catalog.selected = true
-                }
-                uStore.catalogs.push(catalog)
-              }
-            })
-          }
-        })
-        .catch((err) => console.error('nats shares err: ', err))
-    },
-
-    async ping() {
-      const uStore = userStore()
-      await this.connection
-        .request('natster.local.inbox', '', { timeout: 5000 })
-        .then((msg) => {
-          let m = JSONCodec().decode(msg.data)
-          if (m.code == 200) {
-            uStore.catalog_online = true
-            uStore.pending_imports = m.data.unimported_shares.length
-          }
-        })
-        .catch((err) => console.error('nats ping err: ', err))
     }
   }
 })

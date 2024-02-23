@@ -1,9 +1,9 @@
 <template>
   <div class="text-xs font-semibold leading-6 text-gray-400">Natster Shares</div>
-  <ul role="list" class="-mx-2 mt-2 space-y-1">
+  <ul v-if="catalogsInitialized" role="list" class="-mx-2 mt-2 space-y-1">
     <li v-for="(catalog, i) in getImportedCatalogs" :key="i">
       <div
-        @click="uStore.setCatalogSelected(catalog)"
+        @click="cStore.setCatalogSelected(catalog)"
         :class="[
           catalog.selected
             ? 'bg-gray-800 text-white'
@@ -27,11 +27,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { natsStore } from '../stores/nats'
+import { catalogStore } from '../stores/catalog'
 
-import { userStore } from '../stores/user'
-const uStore = userStore()
+const nStore = natsStore()
+const cStore = catalogStore()
+const { connection } = storeToRefs(nStore)
 
-const { getImportedCatalogs } = storeToRefs(userStore())
+const { catalogsInitialized, getImportedCatalogs } = storeToRefs(catalogStore())
+
+watch(connection, () => {
+  if (nStore.connection !== null) {
+    cStore.getShares(true)
+    cStore.getLocalInbox()
+  }
+})
 </script>

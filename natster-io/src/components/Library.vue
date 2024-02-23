@@ -66,7 +66,7 @@
                 <MenuItem v-slot="{ active }">
                   <button
                     @click.prevent="
-                      uStore.viewFile(getFileName(file.path), catalog.name, file.hash)
+                      cStore.viewFile(getFileName(file.path), catalog.name, file.hash)
                     "
                     :class="[
                       active ? 'bg-violet-500 text-white' : 'text-gray-900',
@@ -94,17 +94,17 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { jwtDecode } from 'jwt-decode'
-import { userStore } from '../stores/user'
 import { natsStore } from '../stores/nats'
+import { catalogStore } from '../stores/catalog'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon, ArrowDownTrayIcon, FolderOpenIcon } from '@heroicons/vue/20/solid'
 
-const uStore = userStore()
 const nStore = natsStore()
+const cStore = catalogStore()
 
 const isDisabled = computed(() => true)
+const { catalogs } = storeToRefs(cStore)
 
-const { catalogs } = storeToRefs(uStore)
 function catalogImage(name) {
   return 'https://ui-avatars.com/api/?name=+' + name
 }
