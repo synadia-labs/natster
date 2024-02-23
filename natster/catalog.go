@@ -26,6 +26,27 @@ const (
 	ngsUrl = "tls://connect.ngs.global"
 )
 
+func DescribeCatalogItem(ctx *fisk.ParseContext) error {
+	library, err := medialibrary.Load(ShareOpts.Name)
+	if err != nil {
+		fmt.Printf("Failed to load catalog: %s\n", err)
+		return err
+	}
+	err = library.DescribeItem(DlOpts.Hash, HubOpts.Description)
+	if err != nil {
+		fmt.Printf("Failed to describe file item in catalog: %s\n", err)
+		return err
+	}
+	err = library.Save()
+	if err != nil {
+		fmt.Printf("Failed to write updated catalog: %s\n", err)
+		return err
+	}
+	fmt.Printf("New description set for file %s in catalog %s\n", DlOpts.Hash, ShareOpts.Name)
+
+	return nil
+}
+
 func ViewCatalogItems(ctx *fisk.ParseContext) error {
 	nctx, err := loadContext()
 	if err != nil {
