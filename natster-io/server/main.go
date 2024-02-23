@@ -58,7 +58,7 @@ func main() {
 	serveTailscale.Flag("name", "Tailscale node name").Default("natster-ui").StringVar(&Opts.tailscaleNodeName)
 	serveTailscale.Flag("key", "Tailscale auth key").PlaceHolder("ts-auth-...").Envar("TS_AUTHKEY").Required().StringVar(&Opts.tailscaleAuthKey)
 	serveTailscale.Action(func(_ *fisk.ParseContext) error {
-		return UseTailscale()
+		return RunTailscale()
 	})
 
 	natsterServer.MustParseWithUsage(os.Args[1:])
@@ -76,8 +76,7 @@ func RunServer() error {
 	return http.ListenAndServe(fmt.Sprintf(":%d", Opts.servePort), fs)
 }
 
-func UseTailscale() error {
-	flag.Parse()
+func RunTailscale() error {
 	f, err := os.CreateTemp(os.TempDir(), "natster-tailscale_*")
 	if err != nil {
 		return err
