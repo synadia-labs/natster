@@ -139,6 +139,12 @@ const natsterImg = new URL('../assets/natster.svg', import.meta.url)
 
 onMounted(() => {
   if (isAuthenticated && user !== null) {
+    user.value.natster ||= {
+      jwt: uStore.getJWT,
+      nkey: uStore.getNkey,
+      oauth_id: uStore.getOauthId
+    }
+
     uStore.setJWT(user.value.natster.jwt)
     uStore.setNkey(user.value.natster.nkey)
     uStore.setOauthId(user.value.natster.oauth_id)
