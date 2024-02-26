@@ -35,8 +35,8 @@ func main() {
 	natsterServer.Version(fmt.Sprintf("v%s [%s]", VERSION, COMMIT))
 
 	serve := natsterServer.Command("serve", "Serve webapp")
-	serve.Flag("host", "Host to serve on").Default("").StringVar(&Opts.serveHost)
-	serve.Flag("addr", "Address to listen on").Default("8080").IntVar(&Opts.servePort)
+	serve.Flag("host", "Host to serve on").StringVar(&Opts.serveHost)
+	serve.Flag("port", "Port to listen on").Default("8080").IntVar(&Opts.servePort)
 	serve.Action(func(_ *fisk.ParseContext) error {
 		return RunServer()
 	})
@@ -53,5 +53,5 @@ func RunServer() error {
 	fs := http.FileServer(http.FS(htmlContent))
 
 	fmt.Printf("Server started %s:%d\n", Opts.serveHost, Opts.servePort)
-	return http.ListenAndServe(fmt.Sprintf(":%d", Opts.servePort), fs)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", Opts.serveHost, Opts.servePort), fs)
 }
