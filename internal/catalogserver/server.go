@@ -62,13 +62,13 @@ func (srv *CatalogServer) Start() error {
 func (srv *CatalogServer) startHeartbeatEmitter() {
 	ticker := time.NewTicker(heartbeatIntervalSeconds * time.Second)
 	// publish one immediately
-	_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library.Name)
+	_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library)
 
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library.Name)
+				_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library)
 			case <-srv.hbQuit:
 				ticker.Stop()
 				close(srv.hbQuit)
