@@ -15,8 +15,8 @@ import (
 
 func (srv *CatalogServer) startApiSubscriptions() error {
 
-	_, err := srv.nc.Subscribe(
-		fmt.Sprintf("*.natster.catalog.%s.get", srv.library.Name),
+	_, err := srv.nc.QueueSubscribe(
+		fmt.Sprintf("*.natster.catalog.%s.get", srv.library.Name), "natsterglobal",
 		handleCatalogGet(srv))
 	if err != nil {
 		log.Error(
@@ -26,8 +26,8 @@ func (srv *CatalogServer) startApiSubscriptions() error {
 		return err
 	}
 
-	_, err = srv.nc.Subscribe(
-		fmt.Sprintf("*.natster.catalog.%s.download", srv.library.Name),
+	_, err = srv.nc.QueueSubscribe(
+		fmt.Sprintf("*.natster.catalog.%s.download", srv.library.Name), "natsterglobal",
 		handleDownloadRequest(srv))
 	if err != nil {
 		log.Error(
