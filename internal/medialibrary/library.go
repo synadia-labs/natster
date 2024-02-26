@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 )
 
 type MediaLibrary struct {
@@ -94,17 +95,7 @@ func (library *MediaLibrary) Ingest() error {
 				return err
 			}
 			if !info.IsDir() {
-				hash, err := hashFile(path)
-				if err != nil {
-					return err
-				}
-				entry := MediaEntry{
-					Path:        path,
-					Hash:        hash,
-					ByteSize:    info.Size(),
-					Description: "Auto-imported library entry",
-				}
-				library.Entries = append(library.Entries, &entry)
+				_ = library.AddFile(path, info.Size())
 			}
 			return nil
 		})
@@ -116,6 +107,36 @@ func (library *MediaLibrary) Ingest() error {
 	}
 
 	return err
+}
+
+func (library *MediaLibrary) AddFile(path string, size int64) error {
+	hash, err := HashFile(path)
+	if err != nil {
+		return err
+	}
+	entry := MediaEntry{
+		Path:        path,
+		Hash:        hash,
+		ByteSize:    size,
+		Description: "Auto-imported library entry",
+	}
+	library.Entries = append(library.Entries, &entry)
+
+	return library.Save()
+}
+
+func (library *MediaLibrary) RemoveFile(path string) error {
+	removeAt := -1
+	for i, entry := range library.Entries {
+		if entry.Path == path {
+			removeAt = i
+		}
+	}
+	if removeAt > -1 {
+		library.Entries = slices.Delete(library.Entries, removeAt, removeAt+1)
+		return library.Save()
+	}
+	return nil
 }
 
 func (library *MediaLibrary) GetCatalog() ([]*MediaEntry, error) {
@@ -148,7 +169,7 @@ func getNatsterHome() (string, error) {
 
 }
 
-func hashFile(path string) (string, error) {
+func HashFile(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		slog.Error("Failed to open file for hashing", err)

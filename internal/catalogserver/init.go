@@ -35,6 +35,7 @@ func CliStart(ctx *models.NatsterContext, opts *models.Options, hubopts *models.
 	log.Info(
 		"Opened Media Catalog",
 		log.String("name", hubopts.Name),
+		log.String("rootpath", library.RootDir),
 	)
 
 	server := New(ctx, nc, library, hubopts.AllowAll)
