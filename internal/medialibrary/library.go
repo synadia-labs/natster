@@ -55,6 +55,7 @@ func Load(name string) (*MediaLibrary, error) {
 	}
 	if library.LastModified == 0 {
 		library.LastModified = time.Now().UTC().Unix()
+		_ = library.Save()
 	}
 	return &library, nil
 }
