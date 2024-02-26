@@ -11,13 +11,15 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"time"
 )
 
 type MediaLibrary struct {
-	Name        string        `json:"name"`
-	RootDir     string        `json:"root_dir"`
-	Description string        `json:"description"`
-	Entries     []*MediaEntry `json:"entries"`
+	Name         string        `json:"name"`
+	RootDir      string        `json:"root_dir"`
+	Description  string        `json:"description"`
+	LastModified int64         `json:"last_modified"`
+	Entries      []*MediaEntry `json:"entries"`
 }
 
 type MediaEntry struct {
@@ -51,10 +53,15 @@ func Load(name string) (*MediaLibrary, error) {
 	if err != nil {
 		return nil, err
 	}
+	if library.LastModified == 0 {
+		library.LastModified = time.Now().UTC().Unix()
+		_ = library.Save()
+	}
 	return &library, nil
 }
 
 func (library *MediaLibrary) Save() error {
+	library.LastModified = time.Now().UTC().Unix()
 	natsterHome, err := getNatsterHome()
 	if err != nil {
 		return err

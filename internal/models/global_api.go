@@ -11,6 +11,7 @@ const (
 type Heartbeat struct {
 	Catalog    string `json:"catalog"`
 	AccountKey string `json:"account_key"`
+	Revision   int64  `json:"revision"`
 }
 
 // Events are emitted by the natster server process

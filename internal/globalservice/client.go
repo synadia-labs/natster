@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go"
+	"github.com/synadia-labs/natster/internal/medialibrary"
 	"github.com/synadia-labs/natster/internal/models"
 )
 
@@ -146,10 +147,11 @@ func (c *Client) PublishEvent(eventType string, catalog string, target string, r
 	return c.nc.Flush()
 }
 
-func (c *Client) PublishHeartbeat(nctx *models.NatsterContext, catalog string) error {
+func (c *Client) PublishHeartbeat(nctx *models.NatsterContext, library *medialibrary.MediaLibrary) error {
 	hb := models.Heartbeat{
 		AccountKey: nctx.AccountPublicKey,
-		Catalog:    catalog,
+		Catalog:    library.Name,
+		Revision:   library.LastModified,
 	}
 	hbBytes, _ := json.Marshal(&hb)
 	err := c.nc.Publish("natster.global.heartbeats.put", hbBytes)
