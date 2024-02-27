@@ -4,7 +4,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import { natsStore } from './nats'
 import type { Catalog } from '../types/types.ts'
 import { JSONCodec, StringCodec } from 'nats.ws'
-import { textFileStore } from './textfile'
+import { fileStore } from './file'
 
 export const userStore = defineStore('user', {
   state: () => ({

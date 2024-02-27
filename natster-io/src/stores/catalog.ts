@@ -4,7 +4,7 @@ import { natsStore } from './nats'
 import { createCurve } from 'nkeys.js'
 import { connect, jwtAuthenticator, JSONCodec } from 'nats.ws'
 import type { Catalog, File } from '../types/types.ts'
-import { textFileStore } from './textfile'
+import { fileStore } from './file'
 import { notificationStore } from './notification'
 
 export const catalogStore = defineStore('catalog', {
@@ -137,22 +137,33 @@ export const catalogStore = defineStore('catalog', {
         })
         .catch((err) => console.error('nats ping err: ', err))
     },
-    async viewFile(fileName, catalog, hash) {
-      const tfStore = textFileStore()
+    async viewFile(fileName, catalog, hash, mimeType) {
+      const fStore = fileStore()
 
       let xkey = createCurve()
       this.xkey_seed = new TextDecoder().decode(xkey.getSeed())
       this.xkey_pub = xkey.getPublicKey()
 
-      var sender_xkey
       var fileArray
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog + '.' + hash)
       ;(async () => {
         for await (const m of sub) {
-          await new Promise((r) => setTimeout(r, 1000))
-          let decrypted = xkey.open(m.data, sender_xkey)
-          tfStore.showTextFile(fileName, new TextDecoder().decode(decrypted))
+          const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
+          // const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+          const senderXKey = m.headers.get('x-natster-sender-xkey')
+          let decrypted = xkey.open(m.data, senderXKey)
+          // let decrypted = Array.from(xkey.open(m.data, sender_xkey))
+          // fileArray = [...decrypted]
+          // console.log("decrypted: ", decrypted)
+          // console.log("fileArray: ", fileArray)
+          console.log(`chunk #${chunkIdx}: ${decrypted?.byteLength} bytes`)
+
+          if (mimeType.toLowerCase().indexOf('video/') === 0) {
+            fStore.render(fileName, mimeType, decrypted)
+          } else {
+            fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
+          }
         }
         console.log('subscription closed')
       })()
@@ -167,8 +178,9 @@ export const catalogStore = defineStore('catalog', {
         })
         .then((m) => {
           let data = JSONCodec().decode(m.data)
-          console.log('data: ', data)
-          sender_xkey = data.data.sender_xkey
+          // console.log('data: ', data)
+          // sender_xkey = data.data.sender_xkey
+          fileArray = new Array(data.data.total_bytes)
         })
         .catch((err) => {
           console.error('nats requestCatalogFiles err: ', err)

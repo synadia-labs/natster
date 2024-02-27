@@ -50,9 +50,20 @@
                     title
                   }}</DialogTitle>
                   <div class="mt-2">
-                    <p class="text-sm text-gray-500">
+                    <p v-if="!!body" class="text-sm text-gray-500">
                       {{ body }}
                     </p>
+
+                    <video
+                      v-if="!!mediaUrl"
+                        id="video"
+                        :type="mimeType"
+                        :src="mediaUrl"
+                        width="640"
+                        height="360"
+                        autoplay
+                        controls
+                    ></video>
                   </div>
                 </div>
               </div>
@@ -74,12 +85,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { InformationCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
-import { textFileStore } from '../stores/textfile'
-const tfStore = textFileStore()
-const { body, title, show } = storeToRefs(tfStore)
+import { fileStore } from '../stores/file'
+const tfStore = fileStore()
+const { body, title, show, mimeType, mediaUrl } = storeToRefs(tfStore)
+
+watch(
+  mimeType,
+  (newVal, oldVal) => {
+    console.log(`mime type changed... ${newVal}`)
+    if (!!newVal && newVal.toLowerCase().indexOf('video/') === 0) {
+      console.log('video incoming')
+    }
+  }
+)
+
+watch(
+  mediaUrl,
+  (newVal, oldVal) => {
+    if (!!newVal) {
+      setTimeout(() => {
+        // document.querySelector('video').play() // HACK
+      }, 100)
+    }
+  }
+)
 </script>
