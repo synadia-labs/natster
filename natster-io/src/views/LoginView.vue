@@ -58,6 +58,7 @@ natster weblogin</code>
               <input
                 type="text"
                 name="code1"
+                v-model="loginCode"
                 id="code1"
                 class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6 text-center text-xl"
                 pattern="[a-zA-Z0-9]{1}$"
@@ -67,6 +68,7 @@ natster weblogin</code>
           </div>
           <div class="flex justify-end pt-10">
             <button
+              @click.prevent="loginWithCode(loginCode)"
               type="button"
               class="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             >
@@ -116,8 +118,11 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { userStore } from '../stores/user.js'
 import { useAuth0 } from '@auth0/auth0-vue'
 
+const { loginWithRedirect } = useAuth0()
+
+let loginCode = ref('')
+
 const codeProvided = computed(() => {
-  const { loginWithRedirect } = useAuth0()
   const uStore = userStore()
 
   if (
@@ -156,4 +161,24 @@ const codeProvided = computed(() => {
 
   return true
 })
+
+function loginWithCode(incode: string) {
+  if (loginCode === '') {
+    loginWithRedirect({
+      appState: {
+        target: '/library'
+      }
+    })
+  } else {
+    loginWithRedirect({
+      appState: {
+        target: '/library',
+        nats_code: incode
+      },
+      authorizationParams: {
+        nats_code: incode
+      }
+    })
+  }
+}
 </script>
