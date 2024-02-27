@@ -209,5 +209,5 @@ func (a Authenticator) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		profile["sub"])
 
 	a.loginComplete <- struct{}{}
-	http.Redirect(w, r, "https://natster.io/#/login", http.StatusPermanentRedirect)
+	http.Redirect(w, r, "https://natster.io/#/library", http.StatusPermanentRedirect)
 }
