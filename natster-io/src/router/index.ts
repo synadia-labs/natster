@@ -9,7 +9,6 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/:code?', name: 'home', component: HomeView },
-   // { path: '/login/:code?', name: 'login', component: LoginView },
     { path: '/library', name: 'library', component: Library, beforeEnter: authGuard }
   ]
 })
