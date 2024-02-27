@@ -89,9 +89,12 @@ func main() {
 		UnNegatableBoolVar(&HubOpts.AllowAll)
 	hub_up.Action(StartCatalogServer)
 
-	login := ncli.Command("weblogin", "Authenticate your local context for use with natster.io").Alias("login")
-	login.Flag("qrcode", "Displays QR code in terminal of login link").Default("false").UnNegatableBoolVar(&WebLoginOpts.DisplayQR)
-	login.Action(WebLogin)
+	auth := ncli.Command("auth", "Authenticate your local context for use with natster.io")
+	weblogin := auth.Command("web", "Authenticate with one time code")
+	weblogin.Flag("qrcode", "Displays QR code in terminal of login link").Default("false").UnNegatableBoolVar(&WebLoginOpts.DisplayQR)
+	weblogin.Action(WebLogin)
+	login := auth.Command("login", "Associate OAuth ID with natster account")
+	login.Action(OauthLogin)
 
 	claim := ncli.Command("claim", "Claims an OTC code. For testing only - Can only be done from the natster.io account").Hidden()
 	claim.Arg("code", "Previously generated one-time code").Required().StringVar(&ClaimOpts.Code)
