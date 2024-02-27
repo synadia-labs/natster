@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -184,13 +185,12 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return err
 	}
 	globalClient := globalservice.NewClient(conn)
-	err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none",
-		models.NatsterInitializedEvent{
-			AccountId:   newCtx.AccountID,
-			AccountName: newCtx.AccountName,
-			AccountKey:  newCtx.AccountPublicKey,
-		},
-	)
+	data, _ := json.Marshal(models.NatsterInitializedEvent{
+		AccountId:   newCtx.AccountID,
+		AccountName: newCtx.AccountName,
+		AccountKey:  newCtx.AccountPublicKey,
+	})
+	err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none", data)
 	if err != nil {
 		fmt.Printf("Failed to contact Natster global service to post initialization event: %s", err)
 		return err

@@ -195,7 +195,7 @@ func (a Authenticator) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		models.ContextBoundEventType,
 		"none",
 		"none",
-		string(r_cbe),
+		r_cbe,
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
