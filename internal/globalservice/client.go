@@ -130,7 +130,7 @@ func (c *Client) GetMyCatalogs() ([]models.CatalogShareSummary, error) {
 	return apiResult.Data, nil
 }
 
-func (c *Client) PublishEvent(eventType string, catalog string, target string, rawData interface{}) error {
+func (c *Client) PublishEvent(eventType string, catalog string, target string, rawData json.RawMessage) error {
 	bytes, err := json.Marshal(models.NatsterEvent{
 		Catalog:   catalog,
 		Target:    target,
