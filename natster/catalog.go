@@ -63,9 +63,9 @@ func ViewCatalogItems(ctx *fisk.ParseContext) error {
 
 	t := newTableWriter(fmt.Sprintf("Items in Catalog %s", ShareOpts.Name), "cyan")
 	w := t.writer
-	w.AppendHeader(table.Row{"Hash", "Path", "Mime Type"})
+	w.AppendHeader(table.Row{"Path", "Hash", "Mime Type"})
 	for _, item := range items {
-		w.AppendRow(table.Row{item.Hash, item.Path, item.MimeType})
+		w.AppendRow(table.Row{item.Path, item.Hash, item.MimeType})
 	}
 	fmt.Println(w.Render())
 	return nil
