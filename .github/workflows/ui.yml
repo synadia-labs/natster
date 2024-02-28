@@ -16,7 +16,7 @@ jobs:
 
       - name: Get changes to UI directory
         id: ui-edited
-        uses: tj-actions/changed-files@v34
+        uses: tj-actions/changed-files@v42
         with:
           files: natster-io/**
   build-ui:
