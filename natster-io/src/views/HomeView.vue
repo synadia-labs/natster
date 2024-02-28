@@ -65,11 +65,11 @@
           A peer-to-multipeer media sharing application built with nothing but NATS and powered by
           Synadia Cloud.
         </p>
-        <div class="mt-10 flex items-center gap-x-6">
-          <router-link
-            to="/login"
+        <div v-if="!codeProvided" class="mt-10 flex items-center gap-x-6">
+          <button
+            @click.prevent="login"
             class="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-            >Login</router-link
+            >Login</button
           >
           <a href="#" class="text-sm font-semibold leading-6 text-white"
             >Learn more <span aria-hidden="true">→</span></a
@@ -94,7 +94,65 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { userStore } from '../stores/user.js'
+import { useAuth0 } from '@auth0/auth0-vue'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+
 const natsterImg = new URL('@/assets/natster.svg', import.meta.url)
 const natsterScreen = new URL('@/assets/natster_screen.png', import.meta.url)
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+const { loginWithRedirect } = useAuth0()
+
+const codeProvided = computed(() => {
+  const uStore = userStore()
+
+  if (
+    uStore.getOauthId != null &&
+    typeof uStore.getOauthId !== undefined &&
+    uStore.getOauthId !== ''
+  ) {
+    console.log('Logging in with oauthid', uStore.getOauthId)
+    loginWithRedirect({
+      appState: {
+        target: '/library',
+        in_oauthid: uStore.getOauthId
+      },
+      authorizationParams: {
+        in_oauthid: uStore.getOauthId
+      }
+    })
+
+    return true
+  }
+
+  const route = useRoute()
+  if (route.params.code === undefined || route.params.code === '') {
+    return false
+  }
+
+  loginWithRedirect({
+    appState: {
+      target: '/library',
+      nats_code: route.params.code
+    },
+    authorizationParams: {
+      nats_code: route.params.code
+    }
+  })
+
+  return true
+})
+
+function login() {
+
+  loginWithRedirect({
+    appState: {
+      target: '/library',
+    },
+    authorizationParams: {
+    }
+  })
+}
+
 </script>
