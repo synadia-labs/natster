@@ -79,13 +79,13 @@ jobs:
       -
         name: Stop QA Server
         run: |
-          ssh root@natster-ui systemctl stop natster-ui-qa.service
+          ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@natster-ui.pig-bee.ts.net systemctl stop natster-ui-qa.service
       -
         name: Update QA server on host
         run: |
-          scp root@natster-ui natster-ui-server-qa /usr/local/bin/natster-ui-server-qa
+          scp -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@natster-ui.pig-bee.ts.net natster-ui-server-qa /usr/local/bin/natster-ui-server-qa
       -
         name: Restart QA Server
         run: |
-          ssh root@natster-ui systemctl start natster-ui-qa.service
+          ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@natster-ui.pig-bee.ts.net systemctl start natster-ui-qa.service
       
