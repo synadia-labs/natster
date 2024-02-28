@@ -11,7 +11,6 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
-	"github.com/synadia-io/control-plane-sdk-go/syncp"
 	"github.com/synadia-labs/natster/internal/models"
 )
 
@@ -152,29 +151,12 @@ func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogSh
 		}
 	}
 
-	boundContext, err := srv.GetBoundContext(myAccountKey)
-	if err == nil {
-		client := syncp.NewAPIClient(syncp.NewConfiguration())
-		ctxx := context.WithValue(context.Background(), syncp.ContextServerVariables, map[string]string{
-			"baseUrl": "https://cloud.synadia.com",
-		})
-		ctxx = context.WithValue(ctxx, syncp.ContextAccessToken, boundContext.BoundContext.Token)
-		imports, _, err := client.AccountAPI.ListSubjectImports(ctxx, boundContext.BoundContext.AccountID).Execute()
-		if err != nil {
-			slog.Error("Failed to get subject imports for account", slog.Any("error", err), slog.String("account", myAccountKey))
-		} else {
-			for _, imp := range imports.Items {
-				if imp.Name == "natster_synadiahub" {
-					summaries = append(summaries, models.CatalogShareSummary{
-						FromAccount:   synadiaHubAccount,
-						ToAccount:     myAccountKey,
-						Catalog:       "synadiahub",
-						CatalogOnline: true,
-					})
-				}
-			}
-		}
-	}
+	summaries = append(summaries, models.CatalogShareSummary{
+		FromAccount:   synadiaHubAccount,
+		ToAccount:     myAccountKey,
+		Catalog:       "synadiahub",
+		CatalogOnline: true,
+	})
 
 	return summaries, nil
 }
