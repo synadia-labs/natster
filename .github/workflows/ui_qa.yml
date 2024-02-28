@@ -59,6 +59,7 @@ jobs:
   deployment:
     runs-on: ubuntu-latest
     name: Deploy to QA
+    needs: build-ui
     environment:
       name: QA
       url: https://natster-ui.pig-bee.ts.net
