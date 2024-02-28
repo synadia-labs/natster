@@ -14,6 +14,10 @@ import (
 	"github.com/synadia-labs/natster/internal/models"
 )
 
+const (
+	synadiaHubAccount = "AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC"
+)
+
 // Returns the total number of accounts in which developers have run `natster init`
 func (srv *GlobalService) GetTotalInitializedAccounts() (uint64, error) {
 	subject := fmt.Sprintf("natster.events.*.*.*.%s", models.NatsterInitializedEventType)
@@ -146,6 +150,13 @@ func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogSh
 			})
 		}
 	}
+
+	summaries = append(summaries, models.CatalogShareSummary{
+		FromAccount:   synadiaHubAccount,
+		ToAccount:     myAccountKey,
+		Catalog:       "synadiahub",
+		CatalogOnline: true,
+	})
 
 	return summaries, nil
 }
