@@ -42,6 +42,7 @@ watch(connection, () => {
   if (nStore.connection !== null) {
     cStore.getShares(true)
     cStore.getLocalInbox()
+    cStore.subscribeToHeartbeats()
   }
 })
 </script>

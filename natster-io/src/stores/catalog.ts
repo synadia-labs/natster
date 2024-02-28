@@ -14,6 +14,32 @@ export const catalogStore = defineStore('catalog', {
     pending_init: false
   }),
   actions: {
+    subscribeToHeartbeats() {
+      const nStore = natsStore()
+      const sub = nStore.connection.subscribe('natster.global-events.>')
+      ;(async () => {
+        for await (const msg of sub) {
+          let m = JSONCodec().decode(msg.data)
+          this.setOnlineAndCatalogRevision(m.catalog, m.revision)
+          console.log(m)
+        }
+        console.log('subscription closed')
+      })()
+    },
+    setOnlineAndCatalogRevision(inCat, rev) {
+      var d = new Date(0)
+      d.setUTCSeconds(rev)
+      this.catalogs.forEach((c, i) => {
+        if (c.name == inCat) {
+          c.lastSeen = Date.now()
+          if (c.status != rev) {
+            // TODO: repull files here
+            console.log(c.name + ' updated')
+            c.status = rev
+          }
+        }
+      })
+    },
     async getShares(init) {
       const nStore = natsStore()
       const uStore = userStore()
@@ -30,13 +56,16 @@ export const catalogStore = defineStore('catalog', {
                   from: c.from_account,
                   name: c.catalog,
                   online: c.catalog_online,
+                  lastSeen: Date.now(),
                   pending_invite: false,
+                  status: Date.now(),
                   files: []
                 }
-                if (c.catalog == 'Synadia Hub' && init) {
-                  catalog.selected = true
-                }
+
                 this.catalogs.push(catalog)
+                if (c.catalog == 'synadiahub' && init) {
+                  this.setCatalogSelected(c.catalog)
+                }
               }
             })
           }
@@ -155,6 +184,13 @@ export const catalogStore = defineStore('catalog', {
             tCatalog.pending_invite = true
           }
         })
+
+        if (Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
+          tCatalog.online = true
+        } else {
+          tCatalog.online = false
+          console.log(tCatalog.name + ' is offline')
+        }
       })
 
       return state.catalogs.filter((c) => !c.pending_invite)
