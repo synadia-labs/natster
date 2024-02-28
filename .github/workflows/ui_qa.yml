@@ -4,6 +4,22 @@ on:
     branches:
       - main
 jobs:
+  check-ui:
+    runs-on: ubuntu-latest
+    name: Check UI for edits
+    outputs:
+      status: ${{ steps.ui-edited.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changes to UI directory
+        id: ui-edited
+        uses: tj-actions/changed-files@v34
+        with:
+          files: natster-io/**
+
   build-ui:
     runs-on: ubuntu-latest
     name: Builds UI if edits found
