@@ -31,6 +31,11 @@ func (srv *GlobalService) IsCatalogOnline(catalog string) bool {
 	return srv.hbCache.Has(catalog)
 }
 
+func (srv *GlobalService) CatalogRevision(catalog string) int64 {
+	c := srv.hbCache.Get(catalog)
+	return c.Value().Revision
+}
+
 func (srv *GlobalService) rebroadcastHeartbeat(accountKey string, data []byte) {
 	shares, err := srv.GetMyCatalogs(accountKey)
 	if err != nil {

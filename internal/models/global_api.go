@@ -48,6 +48,7 @@ type CatalogShareSummary struct {
 	ToAccount     string `json:"to_account"`
 	Catalog       string `json:"catalog"`
 	CatalogOnline bool   `json:"catalog_online"`
+	Revision      int64  `json:"revision"`
 	// TODO: add a timestamp here
 }
 
