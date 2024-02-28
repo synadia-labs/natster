@@ -1,0 +1,74 @@
+name: 'UI - QA Env'
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-ui:
+    runs-on: ubuntu-latest
+    name: Builds UI if edits found
+    needs: check-ui
+    if: needs.check-ui.outputs.status
+    steps:
+      - 
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - 
+        name: Build ui
+        working-directory: ./natster-io
+        run: |
+          curl -fsSL https://get.pnpm.io/install.sh | SHELL=bash sh -
+          ~/.local/share/pnpm/pnpm install
+          ~/.local/share/pnpm/pnpm build-only --outDir server/dist
+      -
+        name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.0'
+      -
+        name: Build server
+        working-directory: ./natster-io/server
+        run: |
+          go build -o natster-ui-server-qa
+      - 
+        name: Archive server binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: tailscale_server
+          retention-days: 1
+          path: |
+            ./natster-io/server/natster-ui-server-qa
+
+  deployment:
+    runs-on: ubuntu-latest
+    name: Deploy to QA
+    environment:
+      name: QA
+      url: https://natster-ui.pig-bee.ts.net
+    steps:
+      -
+        name: Download server artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tailscale_server
+      - 
+        name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:natster
+      -
+        name: Stop QA Server
+        run: |
+          ssh root@natster-ui systemctl stop natster-ui-qa.service
+      -
+        name: Update QA server on host
+        run: |
+          scp root@natster-ui natster-ui-server-qa /usr/local/bin/natster-ui-server-qa
+      -
+        name: Restart QA Server
+        run: |
+          ssh root@natster-ui systemctl start natster-ui-qa.service
+      
