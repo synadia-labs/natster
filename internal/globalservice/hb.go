@@ -33,6 +33,9 @@ func (srv *GlobalService) IsCatalogOnline(catalog string) bool {
 
 func (srv *GlobalService) CatalogRevision(catalog string) int64 {
 	c := srv.hbCache.Get(catalog)
+	if c == nil {
+		return 0
+	}
 	return c.Value().Revision
 }
 

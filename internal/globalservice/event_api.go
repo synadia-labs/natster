@@ -140,7 +140,7 @@ func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogSh
 		to := tokens[3]
 		catalog := tokens[4]
 		online := srv.IsCatalogOnline(catalog)
-		ret := srv.CatalogRevision(catalog)
+		rev := srv.CatalogRevision(catalog)
 
 		if from == myAccountKey || to == myAccountKey {
 			summaries = append(summaries, models.CatalogShareSummary{
@@ -148,7 +148,7 @@ func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogSh
 				ToAccount:     to,
 				Catalog:       catalog,
 				CatalogOnline: online,
-				Revision:      ret,
+				Revision:      rev,
 			})
 		}
 	}
