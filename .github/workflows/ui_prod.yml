@@ -1,0 +1,92 @@
+name: 'UI - Prod Env'
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  check-ui:
+    runs-on: ubuntu-latest
+    name: Check UI for edits
+    outputs:
+      status: ${{ steps.ui-edited.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changes to UI directory
+        id: ui-edited
+        uses: tj-actions/changed-files@v42
+        with:
+          files: natster-io/**
+
+  build-ui:
+    runs-on: ubuntu-latest
+    name: Builds UI if edits found
+    needs: check-ui
+    if: needs.check-ui.outputs.status
+    steps:
+      - 
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - 
+        name: Build ui
+        working-directory: ./natster-io
+        run: |
+          curl -fsSL https://get.pnpm.io/install.sh | SHELL=bash sh -
+          ~/.local/share/pnpm/pnpm install
+          ~/.local/share/pnpm/pnpm build-only --outDir server/dist
+      -
+        name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.0'
+      -
+        name: Build server
+        working-directory: ./natster-io/server
+        run: |
+          go build -o natster-ui-server
+      - 
+        name: Archive server binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: web_server
+          retention-days: 1
+          path: |
+            ./natster-io/server/natster-ui-server
+
+  deployment:
+    runs-on: ubuntu-latest
+    name: Deploy to Prod
+    needs: build-ui
+    environment:
+      name: Prod
+      url: https://natster.io
+    steps:
+      -
+        name: Download server artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web_server
+      - 
+        name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:natster
+      -
+        name: Stop Prod Server
+        run: |
+          ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@natster-ui.pig-bee.ts.net systemctl stop natster-ui-prod.service
+      -
+        name: Update Prod server on host
+        run: |
+          scp -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" natster-ui-server root@natster-ui.pig-bee.ts.net:/usr/local/bin/natster-ui-server
+      -
+        name: Restart Prod Server
+        run: |
+          ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@natster-ui.pig-bee.ts.net systemctl start natster-ui-prod.service
+      
