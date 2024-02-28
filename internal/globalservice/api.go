@@ -5,36 +5,36 @@ import (
 )
 
 func (srv *GlobalService) startApiSubscriptions() error {
-	_, _ = srv.nc.Subscribe(
-		"*.natster.global.events.put",
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.events.put", "globalservice",
 		handleEventPut(srv))
 
-	_, _ = srv.nc.Subscribe(
-		"*.natster.global.heartbeats.put",
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.heartbeats.put", "globalservice",
 		handleHeartbeat(srv))
 
-	_, _ = srv.nc.Subscribe(
-		"*.natster.global.stats",
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.stats", "globalservice",
 		handleStats(srv))
 
-	_, _ = srv.nc.Subscribe(
-		"*.natster.global.my.shares",
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.my.shares", "globalservice",
 		handleMyShares(srv))
 
-	_, _ = srv.nc.Subscribe(
-		"*.natster.global.otc.generate",
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.otc.generate", "globalservice",
 		handleOtcGenerate(srv))
 
-	_, _ = srv.nc.Subscribe(
-		"*.natster.global.otc.claim",
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.otc.claim", "globalservice",
 		handleOtcClaim(srv))
 
-	_, _ = srv.nc.Subscribe(
-		"*.natster.global.whoami",
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.whoami", "globalservice",
 		handleWhoAmi(srv))
 
-	_, _ = srv.nc.Subscribe(
-		"*.natster.global.context.get",
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.context.get", "globalservice",
 		handleGetContext(srv))
 
 	return nil

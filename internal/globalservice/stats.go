@@ -12,14 +12,10 @@ func handleMyShares(srv *GlobalService) func(m *nats.Msg) {
 		key := extractAccountKey(m.Subject)
 		shares, err := srv.GetMyCatalogs(key)
 		if err != nil {
+			slog.Error("Failed to handle request for my catalog shares", slog.Any("error", err))
 			return
 		}
 		res := models.NewApiResultPass(shares)
-
-		if err != nil {
-			slog.Error("Failed to serialize share summaries")
-			return
-		}
 		_ = m.Respond(res)
 	}
 }
@@ -40,10 +36,6 @@ func handleStats(srv *GlobalService) func(m *nats.Msg) {
 			SharedCatalogs:   shareCount,
 		}
 		res := models.NewApiResultPass(stats)
-		if err != nil {
-			slog.Error("Failed to serialize community stats", err)
-			return
-		}
 		_ = m.Respond(res)
 	}
 }
