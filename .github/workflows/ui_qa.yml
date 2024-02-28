@@ -83,7 +83,7 @@ jobs:
       -
         name: Update QA server on host
         run: |
-          scp -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@natster-ui.pig-bee.ts.net natster-ui-server-qa /usr/local/bin/natster-ui-server-qa
+          scp -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" natster-ui-server-qa root@natster-ui.pig-bee.ts.net:/usr/local/bin/natster-ui-server-qa
       -
         name: Restart QA Server
         run: |
