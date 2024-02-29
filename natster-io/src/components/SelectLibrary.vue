@@ -11,7 +11,7 @@
         </p>
         <p class="mt-6 text-base leading-7">
           Any catalog that has been shared and you have imported will show up in the left sidebar.
-          You can select a catalog to view the files that catalog.
+          You can select a catalog to view the files in that catalog.
         </p>
       </div>
     </div>
