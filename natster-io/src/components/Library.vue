@@ -1,8 +1,5 @@
 <template>
-  <div v-if="getNumCatalogsSelected == 0">
-    <h1>Click something over there</h1>
-    <h1><----------</h1>
-  </div>
+  <SelectLibrary v-if="getNumCatalogsSelected == 0" />
   <div v-else>
     <ul v-for="catalog in getImportedCatalogs" role="list" class="divide-y divide-gray-100">
       <li v-for="file in catalog.files" :key="file.hash" class="flex justify-between gap-x-6 py-5">
@@ -104,6 +101,8 @@ import { natsStore } from '../stores/nats'
 import { catalogStore } from '../stores/catalog'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon, ArrowDownTrayIcon, FolderOpenIcon } from '@heroicons/vue/20/solid'
+
+import SelectLibrary from './SelectLibrary.vue'
 
 const nStore = natsStore()
 const cStore = catalogStore()
