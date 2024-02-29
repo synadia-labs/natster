@@ -91,6 +91,7 @@ export const catalogStore = defineStore('catalog', {
               if (c.to_account === uStore.getAccount) {
                 const catalog: Catalog = {
                   selected: false,
+                  description: 'PLACEHOLDER',
                   to: c.to_account,
                   from: c.from_account,
                   name: c.catalog,
