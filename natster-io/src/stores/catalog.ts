@@ -5,6 +5,7 @@ import { createCurve } from 'nkeys.js'
 import { connect, jwtAuthenticator, JSONCodec } from 'nats.ws'
 import type { Catalog, File } from '../types/types.ts'
 import { textFileStore } from './textfile'
+import { notificationStore } from './notification'
 
 export const catalogStore = defineStore('catalog', {
   state: () => ({
@@ -21,21 +22,54 @@ export const catalogStore = defineStore('catalog', {
         for await (const msg of sub) {
           let m = JSONCodec().decode(msg.data)
           this.setOnlineAndCatalogRevision(m.catalog, m.revision)
-          console.log(m)
         }
         console.log('subscription closed')
       })()
     },
     setOnlineAndCatalogRevision(inCat, rev) {
+      const nStore = notificationStore()
       var d = new Date(0)
       d.setUTCSeconds(rev)
-      this.catalogs.forEach((c, i) => {
+      this.catalogs.forEach(async function (c, i) {
         if (c.name == inCat) {
           c.lastSeen = Date.now()
           if (c.status != rev) {
-            // TODO: repull files here
-            console.log(c.name + ' updated')
             c.status = rev
+            nStore.setNotification(
+              'New Library Content!',
+              'You share ' + c.name + ' has published new content'
+            )
+            if (c.selected) {
+              natsStore()
+                .connection.request('natster.catalog.' + c.name + '.get', '', { timeout: 5000 })
+                .then((m) => {
+                  c.files = [] as File[]
+                  c.files.push(...JSONCodec().decode(m.data).data.entries)
+                })
+                .catch((err) => {
+                  console.error('nats requestCatalogFiles err: ', err)
+                })
+            }
+          }
+        }
+      })
+    },
+    setCatalogSelected(cat) {
+      this.catalogs.forEach(async function (item, index) {
+        if (cat.name == item.name) {
+          if (item.selected) {
+            item.files = [] as File[]
+            item.selected = false
+          } else {
+            natsStore()
+              .connection.request('natster.catalog.' + cat.name + '.get', '', { timeout: 5000 })
+              .then((m) => {
+                item.files.push(...JSONCodec().decode(m.data).data.entries)
+                item.selected = true
+              })
+              .catch((err) => {
+                console.error('nats requestCatalogFiles err: ', err)
+              })
           }
         }
       })
@@ -58,7 +92,7 @@ export const catalogStore = defineStore('catalog', {
                   online: c.catalog_online,
                   lastSeen: Date.now(),
                   pending_invite: false,
-                  status: Date.now(),
+                  status: c.revision,
                   files: []
                 }
 
@@ -67,13 +101,11 @@ export const catalogStore = defineStore('catalog', {
                   this.setCatalogSelected(c.catalog)
                 }
               }
+              this.shares_init = true
             })
           }
         })
         .catch((err) => console.error('nats shares err: ', err))
-        .finally(() => {
-          this.shares_init = true
-        })
     },
     async getLocalInbox() {
       const uStore = userStore()
@@ -95,34 +127,10 @@ export const catalogStore = defineStore('catalog', {
                 this.pending_catalogs.push(catalog)
               }
             })
+            this.pending_init = true
           }
         })
         .catch((err) => console.error('nats ping err: ', err))
-        .finally(() => {
-          this.pending_init = true
-        })
-    },
-    setCatalogSelected(cat) {
-      this.catalogs.forEach(async function (item, index) {
-        if (cat.name == item.name) {
-          if (item.selected) {
-            item.files = [] as File[]
-            item.selected = false
-          } else {
-            await natsStore()
-              .connection.request('natster.catalog.' + cat.name + '.get', '', { timeout: 5000 })
-              .then((m) => {
-                item.files.push(...JSONCodec().decode(m.data).data.entries)
-              })
-              .catch((err) => {
-                console.error('nats requestCatalogFiles err: ', err)
-              })
-              .finally(() => {
-                item.selected = true
-              })
-          }
-        }
-      })
     },
     async viewFile(fileName, catalog, hash) {
       const tfStore = textFileStore()
@@ -185,11 +193,18 @@ export const catalogStore = defineStore('catalog', {
           }
         })
 
-        if (Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
+        if (!tCatalog.online && Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
           tCatalog.online = true
-        } else {
+            notificationStore().setNotification(
+              'Catalog Online',
+              tCatalog.name + ' has come online'
+            )
+        } else if (tCatalog.online && Date.now() - tCatalog.lastSeen > 1 * 60 * 1000){
           tCatalog.online = false
-          console.log(tCatalog.name + ' is offline')
+            notificationStore().setNotification(
+              'Catalog Offline',
+              tCatalog.name + ' has gone offline'
+            )
         }
       })
 

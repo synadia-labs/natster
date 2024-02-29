@@ -2,15 +2,17 @@
   <div class="text-xs font-semibold leading-6 text-gray-400">Natster Shares</div>
   <ul v-if="catalogsInitialized" role="list" class="-mx-2 mt-2 space-y-1">
     <li v-for="(catalog, i) in getImportedCatalogs" :key="i">
-      <div
+      <div class="w-full">
+      <button
         @click="cStore.setCatalogSelected(catalog)"
+        :disabled="!catalog.online"
         :class="[
           catalog.selected
-            ? 'bg-gray-800 text-white'
-            : 'text-gray-400 hover:text-white hover:bg-gray-800',
-          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+            ? 'enabled:bg-gray-800 enabled:text-white '
+            : 'enabled:text-gray-400 enabled:hover:text-white enabled:hover:bg-gray-800',
+          'group w-full flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold disabled:text-gray-500'
         ]"
-      >
+        >
         <span
           class="relative inline-block flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-gray-700 bg-gray-800 text-[0.625rem] font-medium text-gray-400"
         >
@@ -21,6 +23,7 @@
           <span class=""> {{ catalog.name.substring(0, 1).toUpperCase() }} </span>
         </span>
         <span class="truncate">{{ catalog.name }} </span>
+        </button>
       </div>
     </li>
   </ul>
