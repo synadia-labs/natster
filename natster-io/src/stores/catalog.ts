@@ -9,6 +9,7 @@ import { notificationStore } from './notification'
 
 export const catalogStore = defineStore('catalog', {
   state: () => ({
+    numSelected: 0,
     catalogs: [] as Catalog[],
     pending_catalogs: [] as Catalog[],
     shares_init: false,
@@ -36,8 +37,8 @@ export const catalogStore = defineStore('catalog', {
           if (c.status != rev) {
             c.status = rev
             nStore.setNotification(
-              'New Library Content!',
-              'You share ' + c.name + ' has published new content'
+              'New Catalog Content!',
+              'The catalog ' + c.name + ' has published new content'
             )
             if (c.selected) {
               natsStore()
@@ -55,9 +56,11 @@ export const catalogStore = defineStore('catalog', {
       })
     },
     setCatalogSelected(cat) {
+      let selectedDiff = 0
       this.catalogs.forEach(async function (item, index) {
         if (cat.name == item.name) {
           if (item.selected) {
+            selectedDiff = -1
             item.files = [] as File[]
             item.selected = false
           } else {
@@ -70,9 +73,11 @@ export const catalogStore = defineStore('catalog', {
               .catch((err) => {
                 console.error('nats requestCatalogFiles err: ', err)
               })
+            selectedDiff = 1
           }
         }
       })
+      this.numSelected += selectedDiff
     },
     async getShares(init) {
       const nStore = natsStore()
@@ -173,6 +178,9 @@ export const catalogStore = defineStore('catalog', {
     }
   },
   getters: {
+    getNumCatalogsSelected(state) {
+      return state.numSelected
+    },
     getCatalogs(state) {
       return state.catalogs
     },
