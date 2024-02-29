@@ -203,6 +203,11 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 			slog.String("event_type", evt.EventType),
 		)
 		err = srv.nc.Publish(subject, raw)
+		if err != nil {
+			slog.Error("Failed to publish Natster event", err)
+			return
+		}
+
 		// NOTE: in a real event sourced system, we'd have a consumer listening to this event
 		// type and when we receive it, publish the autoshare and then ack. But that's an exercise
 		// we can leave for when Natster has a hojillion users
@@ -211,10 +216,6 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 			if err != nil {
 				slog.Error("Failed to publish autoshare event for synadia hub", slog.Any("error", err))
 			}
-		}
-		if err != nil {
-			slog.Error("Failed to publish Natster event", err)
-			return
 		}
 	}
 }
