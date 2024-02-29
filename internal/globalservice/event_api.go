@@ -153,13 +153,6 @@ func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogSh
 		}
 	}
 
-	summaries = append(summaries, models.CatalogShareSummary{
-		FromAccount:   synadiaHubAccount,
-		ToAccount:     myAccountKey,
-		Catalog:       "synadiahub",
-		CatalogOnline: true,
-	})
-
 	return summaries, nil
 }
 
@@ -214,5 +207,32 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 			slog.Error("Failed to publish Natster event", err)
 			return
 		}
+
+		// NOTE: in a real event sourced system, we'd have a consumer listening to this event
+		// type and when we receive it, publish the autoshare and then ack. But that's an exercise
+		// we can leave for when Natster has a hojillion users
+		if evt.EventType == models.NatsterInitializedEventType {
+			err = srv.publishSynadiaHubAutoShare(key)
+			if err != nil {
+				slog.Error("Failed to publish autoshare event for synadia hub", slog.Any("error", err))
+			}
+		}
 	}
+}
+
+func (srv *GlobalService) publishSynadiaHubAutoShare(targetKey string) error {
+	slog.Info("Detected Natster initialized event, auto-sharing synadia hub.")
+	subject := fmt.Sprintf("natster.events.%s.%s.synadiahub.%s",
+		synadiaHubAccount,
+		targetKey,
+		models.CatalogSharedEventType)
+
+	// This is intentional - the catalog shared event is empty (for now) as all the relevant
+	// data is in the subject tokens
+	err := srv.nc.Publish(subject, []byte{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
