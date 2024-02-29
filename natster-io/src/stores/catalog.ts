@@ -195,16 +195,13 @@ export const catalogStore = defineStore('catalog', {
 
         if (!tCatalog.online && Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
           tCatalog.online = true
-            notificationStore().setNotification(
-              'Catalog Online',
-              tCatalog.name + ' has come online'
-            )
-        } else if (tCatalog.online && Date.now() - tCatalog.lastSeen > 1 * 60 * 1000){
+          notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
+        } else if (tCatalog.online && Date.now() - tCatalog.lastSeen > 1 * 60 * 1000) {
           tCatalog.online = false
-            notificationStore().setNotification(
-              'Catalog Offline',
-              tCatalog.name + ' has gone offline'
-            )
+          notificationStore().setNotification(
+            'Catalog Offline',
+            tCatalog.name + ' has gone offline'
+          )
         }
       })
 
