@@ -97,12 +97,9 @@ export const catalogStore = defineStore('catalog', {
                 }
 
                 this.catalogs.push(catalog)
-                if (c.catalog == 'synadiahub' && init) {
-                  this.setCatalogSelected(c.catalog)
-                }
               }
-              this.shares_init = true
             })
+            this.shares_init = true
           }
         })
         .catch((err) => console.error('nats shares err: ', err))
