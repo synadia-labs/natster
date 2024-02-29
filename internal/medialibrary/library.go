@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"mime"
 	"os"
 	"path"
 	"path/filepath"
@@ -20,6 +21,7 @@ type MediaLibrary struct {
 	RootDir      string        `json:"root_dir"`
 	Description  string        `json:"description"`
 	LastModified int64         `json:"last_modified"`
+	CatalogFile  string        `json:"-"`
 	Entries      []*MediaEntry `json:"entries"`
 }
 
@@ -45,7 +47,8 @@ func Load(name string) (*MediaLibrary, error) {
 	if err != nil {
 		return nil, err
 	}
-	bytes, err := os.ReadFile(path.Join(natsterHome, fmt.Sprintf("%s.json", name)))
+	catalogFile := path.Join(natsterHome, fmt.Sprintf("%s.json", name))
+	bytes, err := os.ReadFile(catalogFile)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +61,25 @@ func Load(name string) (*MediaLibrary, error) {
 		library.LastModified = time.Now().UTC().Unix()
 		_ = library.Save()
 	}
+	library.CatalogFile = catalogFile
 	return &library, nil
+}
+
+func (library *MediaLibrary) Reload() error {
+	slog.Info("Reloading library", slog.String("path", library.CatalogFile))
+	bytes, err := os.ReadFile(library.CatalogFile)
+	if err != nil {
+		return err
+	}
+	var l MediaLibrary
+	err = json.Unmarshal(bytes, &l)
+	if err != nil {
+		return err
+	}
+	library.Entries = l.Entries
+	library.Description = l.Description
+	library.LastModified = time.Now().UTC().Unix()
+	return nil
 }
 
 func (library *MediaLibrary) Save() error {
@@ -127,6 +148,7 @@ func (library *MediaLibrary) AddFile(path string, size int64) error {
 		Hash:        hash,
 		ByteSize:    size,
 		Description: "Auto-imported library entry",
+		MimeType:    mime.TypeByExtension(filepath.Ext(path)),
 	}
 	library.Entries = append(library.Entries, &entry)
 
