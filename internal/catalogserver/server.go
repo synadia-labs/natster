@@ -84,19 +84,16 @@ func (srv *CatalogServer) startCatalogMonitor() {
 		log.Warn("Failed to create a file system watcher for the catalog. Data will not live update", err)
 		return
 	}
+	srv.catalogWatcher = watcher
 	// Start listening for events.
 	go srv.watchLoop(watcher)
 
 	_ = watcher.Add(srv.library.RootDir)
+	_ = watcher.Add(srv.library.CatalogFile)
 
 	for _, entry := range srv.library.Entries {
 		theDir := filepath.Dir(entry.Path)
-		_ = watcher.Add(theDir)
-	}
-
-	if err != nil {
-		log.Warn("Failed to watch catalog root directory", err)
-		return
+		_ = watcher.Add(filepath.Join(srv.library.RootDir, theDir))
 	}
 
 }
@@ -130,6 +127,7 @@ func (srv *CatalogServer) watchLoop(w *fsnotify.Watcher) {
 				log.Info("File system event",
 					log.String("op", e.Op.String()),
 					log.String("name", e.Name))
+
 				if e.Op.Has(fsnotify.Create) {
 					// naive way of waiting until the file has finished writing before we get the
 					// hash and byte size. If you need to write a file that takes longer than this
@@ -140,15 +138,36 @@ func (srv *CatalogServer) watchLoop(w *fsnotify.Watcher) {
 					if err != nil {
 						continue
 					}
-					_ = srv.library.AddFile(e.Name, info.Size())
+					if info.IsDir() {
+						log.Info("Detected new directory")
+						w.Add(e.Name)
+					} else {
+						_ = srv.library.AddFile(e.Name, info.Size())
+					}
 				}
 				if e.Op.Has(fsnotify.Rename) {
 					// this .Name should be the previous name, which is no longer watched
 					// the new one should show up in a create (?)
-					_ = srv.library.RemoveFile(e.Name)
+					info, err := os.Stat(e.Name)
+					if err != nil {
+						continue
+					}
+					if !info.IsDir() {
+						_ = srv.library.RemoveFile(e.Name)
+					}
 				}
 				if e.Op.Has(fsnotify.Remove) {
-					_ = srv.library.RemoveFile(e.Name)
+					info, err := os.Stat(e.Name)
+					if err != nil {
+						continue
+					}
+					if !info.IsDir() {
+						_ = srv.library.RemoveFile(e.Name)
+					}
+				}
+				if e.Op.Has(fsnotify.Write) && e.Name == srv.library.CatalogFile {
+					log.Info("Detected change to library catalog file")
+					_ = srv.library.Reload()
 				}
 			}
 		}
