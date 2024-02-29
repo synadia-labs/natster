@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -122,7 +123,7 @@ func (library *MediaLibrary) AddFile(path string, size int64) error {
 		return err
 	}
 	entry := MediaEntry{
-		Path:        path,
+		Path:        strings.TrimPrefix(path, library.RootDir),
 		Hash:        hash,
 		ByteSize:    size,
 		Description: "Auto-imported library entry",
