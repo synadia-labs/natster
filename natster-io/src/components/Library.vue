@@ -5,7 +5,7 @@
       <div
         v-for="(files, directory) in getFilesByDirectory(catalog.files)"
         :key="directory"
-        :id="'accordion-' + catalog.name + directory"
+        :id="'accordion-' + normalizeString(catalog.name + directory)"
         data-accordion="collapse"
       >
         <Directory :catalog="catalog" :directory="directory" :files="files" />
@@ -63,5 +63,9 @@ function getFilesByDirectory(files: File[]) {
   })
 
   return dm
+}
+
+function normalizeString(instring) {
+  return instring.replace(/[^a-zA-Z]/g, '')
 }
 </script>

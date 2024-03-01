@@ -1,6 +1,7 @@
 interface Catalog {
   selected: bool
   description: string
+  image: string
   online: bool
   lastSeen: Date
   to: string

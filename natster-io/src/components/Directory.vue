@@ -2,21 +2,21 @@
   <div class="relative flex justify-between gap-x-6 py-5">
     <div
       class="flex min-w-0 gap-x-4"
-      :id="'accordion-heading-' + catalog.name + directory"
+      :id="'accordion-heading-' + normalizeString(catalog.name + directory)"
       data-accordion="collapse"
       data-active-classes="dark:bg-gray-900 text-gray-900 dark:text-white"
       data-inactive-classes="text-gray-500 dark:text-gray-400"
     >
       <img
         class="h-12 w-12 flex-none rounded-full bg-gray-50"
-        :src="catalogImage(catalog.name)"
+        :src="catalogImage(catalog)"
         alt=""
       />
       <div class="min-w-0 flex-auto">
         <p class="text-sm font-semibold leading-6 text-gray-900">
           {{ directory == 'root' ? '/' : directory }}
         </p>
-        <p class="mt-1 flex text-xs leading-5 text-gray-500">{{ files.length }} files</p>
+        <p class="mt-1 flex text-xs leading-5 text-gray-500">{{ files.length != 1 ? files.length + ' files' : files.length + ' file'}}</p>
       </div>
     </div>
     <div class="flex shrink-0 items-center gap-x-4">
@@ -29,8 +29,8 @@
       <button
         type="button"
         aria-expanded="false"
-        :data-accordion-target="'#accordion-flush-' + catalog.name + directory"
-        :aria-controls="'accordion-flush-' + catalog.name + directory"
+        :data-accordion-target="'#accordion-flush-' + normalizeString(catalog.name + directory)"
+        :aria-controls="'accordion-flush-' + normalizeString(catalog.name + directory)"
       >
         <svg
           data-accordion-icon
@@ -45,9 +45,9 @@
     </div>
   </div>
   <div
-    :id="'accordion-flush-' + catalog.name + directory"
+    :id="'accordion-flush-' + normalizeString(catalog.name + directory)"
     class="hidden"
-    :aria-labelledby="'accordion-heading-' + catalog.name + directory"
+    :aria-labelledby="'accordion-heading-' + normalizeString(catalog.name + directory)"
   >
     <ul role="list" class="divide-y divide-gray-100">
       <FileComp v-for="file in files" :key="file.hash" :catalog="catalog" :file="file" />
@@ -71,7 +71,17 @@ const props = defineProps<{
   files: File[]
 }>()
 
-function catalogImage(name) {
-  return 'https://ui-avatars.com/api/?name=+' + name
+function catalogImage(cat) {
+console.log(cat.image)
+  if (cat.image == undefined || cat.image == '') {
+    return 'https://ui-avatars.com/api/?name=+' + cat.name
+  } else {
+    return cat.image
+  }
 }
+
+function normalizeString(instring) {
+  return instring.replace(/[^a-zA-Z]/g, '')
+}
+
 </script>

@@ -1,19 +1,24 @@
 <template>
-  <li :key="file.hash" class="flex items-center justify-between gap-x-6 py-5 pl-10 pr-3">
+  <li :key="file.hash" class="flex items-center justify-between gap-x-6 py-5 pl-16">
     <div class="min-w-0">
       <div class="flex items-start gap-x-3">
         <p class="text-sm font-semibold leading-6 text-gray-900">{{ getFileName(file.path) }}</p>
       </div>
       <div class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
-        <p class="whitespace-nowrap">{{ file.mime_type}}</p>
-        <svg viewBox="0 0 2 2" class="h-0.5 w-0.5 fill-current">
-          <circle cx="1" cy="1" r="1" />
-        </svg>
-        <p class="truncate">{{ formatBytes(file.byte_size)}}</p>
+        <span class="whitespace-nowrap">{{file.hash.substring(0,4)}}...{{ file.hash.substring(file.hash.length -8 ,file.hash.length) }}</span>
       </div>
     </div>
     <div class="flex flex-none items-center gap-x-4">
-      <Menu as="div" class="relative flex-none">
+    <div class="min-w-0">
+      <div class="flex justify-end gap-x-3">
+        <p class="text-sm leading-6 text-gray-900">{{ file.description }}</p>
+      </div>
+      <div class="mt-1 flex items-center justify-end gap-x-2 text-xs leading-5 text-gray-500">
+        <p class="whitespace-nowrap">{{ file.mime_type }} | {{ formatBytes(file.byte_size)}}</p>
+      </div>
+    </div>
+
+      <Menu as="div" class="relative inline-block flex-none z-10">
         <div>
           <MenuButton class="-m-2.5 block p-2.5 text-gray-500 hover:text-gray-900">
             <span class="sr-only">Open options</span>

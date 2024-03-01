@@ -7,8 +7,10 @@ import (
 )
 
 type CatalogSummary struct {
-	Name    string         `json:"name"`
-	Entries []CatalogEntry `json:"entries"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Image       string         `json:"image,omitempty"`
+	Entries     []CatalogEntry `json:"entries"`
 }
 
 // It might feel like a good idea to just use the internal medialibrary.MediaEntry here

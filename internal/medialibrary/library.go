@@ -20,6 +20,7 @@ type MediaLibrary struct {
 	Name         string        `json:"name"`
 	RootDir      string        `json:"root_dir"`
 	Description  string        `json:"description"`
+	ImageLink    string        `json:"image,omitempty"`
 	LastModified int64         `json:"last_modified"`
 	CatalogFile  string        `json:"-"`
 	Entries      []*MediaEntry `json:"entries"`

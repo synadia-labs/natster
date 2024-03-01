@@ -67,7 +67,10 @@ export const catalogStore = defineStore('catalog', {
             natsStore()
               .connection.request('natster.catalog.' + cat.name + '.get', '', { timeout: 5000 })
               .then((m) => {
-                item.files.push(...JSONCodec().decode(m.data).data.entries)
+                let msg = JSONCodec().decode(m.data)
+                item.description = msg.data.description
+                item.image = msg.data.image
+                item.files.push(...msg.data.entries)
                 item.selected = true
               })
               .catch((err) => {
@@ -91,7 +94,6 @@ export const catalogStore = defineStore('catalog', {
               if (c.to_account === uStore.getAccount) {
                 const catalog: Catalog = {
                   selected: false,
-                  description: 'PLACEHOLDER',
                   to: c.to_account,
                   from: c.from_account,
                   name: c.catalog,
