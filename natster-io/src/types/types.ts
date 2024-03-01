@@ -1,5 +1,6 @@
 interface Catalog {
   selected: bool
+  description: string
   online: bool
   lastSeen: Date
   to: string
@@ -18,4 +19,4 @@ interface File {
   path: string
 }
 
-export { Catalog }
+export { Catalog, File }
