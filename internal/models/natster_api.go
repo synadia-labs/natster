@@ -9,6 +9,7 @@ import (
 type CatalogSummary struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
+	Image       string         `json:"image,omitempty"`
 	Entries     []CatalogEntry `json:"entries"`
 }
 

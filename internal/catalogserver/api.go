@@ -90,6 +90,7 @@ func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
 		catalogSummary := models.CatalogSummary{
 			Name:        srv.library.Name,
 			Description: srv.library.Description,
+			Image:       srv.library.ImageLink,
 			Entries:     convertEntries(catalog),
 		}
 		catalogRaw := models.NewApiResultPass(catalogSummary)
