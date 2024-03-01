@@ -72,7 +72,6 @@ const props = defineProps<{
 }>()
 
 function catalogImage(cat) {
-console.log(cat.image)
   if (cat.image == undefined || cat.image == '') {
     return 'https://ui-avatars.com/api/?name=+' + cat.name
   } else {
