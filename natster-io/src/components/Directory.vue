@@ -49,7 +49,9 @@
     class="hidden"
     :aria-labelledby="'accordion-heading-' + catalog.name + directory"
   >
-    <FileComp v-for="file in files" :key="file.hash" :catalog="catalog" :file="file" />
+    <ul role="list" class="divide-y divide-gray-100">
+      <FileComp v-for="file in files" :key="file.hash" :catalog="catalog" :file="file" />
+    </ul>
   </div>
 </template>
 

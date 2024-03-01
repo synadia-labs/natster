@@ -150,10 +150,6 @@ export const catalogStore = defineStore('catalog', {
         for await (const m of sub) {
           await new Promise((r) => setTimeout(r, 1000))
           let decrypted = xkey.open(m.data, sender_xkey)
-          // let decrypted = Array.from(xkey.open(m.data, sender_xkey))
-          // fileArray = [...decrypted]
-          // console.log("decrypted: ", decrypted)
-          // console.log("fileArray: ", fileArray)
           tfStore.showTextFile(fileName, new TextDecoder().decode(decrypted))
         }
         console.log('subscription closed')
@@ -171,7 +167,6 @@ export const catalogStore = defineStore('catalog', {
           let data = JSONCodec().decode(m.data)
           console.log('data: ', data)
           sender_xkey = data.data.sender_xkey
-          fileArray = new Array(data.data.total_bytes)
         })
         .catch((err) => {
           console.error('nats requestCatalogFiles err: ', err)
