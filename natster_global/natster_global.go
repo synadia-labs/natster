@@ -2,13 +2,21 @@ package main
 
 import (
 	"context"
+	"fmt"
 	log "log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/synadia-labs/natster/internal/globalservice"
+)
+
+var (
+	VERSION = "dev"
+	COMMIT  = ""
+	DATE    = time.Now().Format(time.RFC822)
 )
 
 func main() {
@@ -31,6 +39,8 @@ func main() {
 		panic(err)
 	}
 	setupSignalHandlers(srv)
+
+	fmt.Printf("Global Service started.\nVersion: %s\nCommit: %s\nBuildDate: %s", VERSION, COMMIT, DATE)
 
 	<-ctxx.Done()
 
