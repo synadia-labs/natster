@@ -9,7 +9,7 @@
     >
       <img
         class="h-12 w-12 flex-none rounded-full bg-gray-50"
-        :src="catalogImage(catalog.name)"
+        :src="catalogImage(catalog)"
         alt=""
       />
       <div class="min-w-0 flex-auto">
@@ -71,11 +71,17 @@ const props = defineProps<{
   files: File[]
 }>()
 
-function catalogImage(name) {
-  return 'https://ui-avatars.com/api/?name=+' + name
+function catalogImage(cat) {
+console.log(cat.image)
+  if (cat.image == undefined || cat.image == '') {
+    return 'https://ui-avatars.com/api/?name=+' + cat.name
+  } else {
+    return cat.image
+  }
 }
 
 function normalizeString(instring) {
   return instring.replace(/[^a-zA-Z]/g, '')
 }
+
 </script>
