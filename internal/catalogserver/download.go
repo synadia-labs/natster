@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -79,9 +80,11 @@ func (srv *CatalogServer) transmitChunkedFile(
 	chunks uint,
 	resp models.DownloadResponse) {
 
-	f, err := os.Open(entry.Path)
+	realPath := filepath.Join(srv.library.RootDir, entry.Path)
+	f, err := os.Open(realPath)
 	if err != nil {
-		slog.Error("Error reading file '%s': %s", entry.Path, err.Error())
+		slog.Error("Error reading file", slog.String("path", realPath), slog.Any("error", err))
+		return
 	}
 	r := bufio.NewReader(f)
 	buf := make([]byte, 0, chunkSizeBytes)
