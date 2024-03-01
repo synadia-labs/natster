@@ -16,7 +16,7 @@
         <p class="text-sm font-semibold leading-6 text-gray-900">
           {{ directory == 'root' ? '/' : directory }}
         </p>
-        <p class="mt-1 flex text-xs leading-5 text-gray-500">{{ files.length }} files</p>
+        <p class="mt-1 flex text-xs leading-5 text-gray-500">{{ files.length != 1 ? files.length + ' files' : files.length + ' file'}}</p>
       </div>
     </div>
     <div class="flex shrink-0 items-center gap-x-4">
