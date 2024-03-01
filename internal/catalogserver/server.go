@@ -168,6 +168,7 @@ func (srv *CatalogServer) watchLoop(w *fsnotify.Watcher) {
 				if e.Op.Has(fsnotify.Write) && e.Name == srv.library.CatalogFile {
 					log.Info("Detected change to library catalog file")
 					_ = srv.library.Reload()
+					_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library)
 				}
 			}
 		}
