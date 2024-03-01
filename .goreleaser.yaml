@@ -1,0 +1,52 @@
+version: 1
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - 
+    id: "natster"
+    main: "./natster"
+    binary: "natster"
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - 7
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows 
+        goarch: arm
+    ldflags:
+      - -s -w --X main.VERSION={{.Version}} -X main.COMMIT={{.Commit}} -X main.DATE={{.Date}}
+      - -extldflags "-static"
+
+archives:
+  - id: binaries
+    format: binary
+    name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    allow_different_binary_count: true
+
+nfpms:
+  - id: linux_packages
+    homepage: https://natster.io
+    maintainer: Synadia Communications
+    description: |-
+      Natster - A peer-to-multipeer media sharing application built with nothing but NATS
+    license: Apache 2.0
+    formats:
+      - deb 
+      - rpm
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

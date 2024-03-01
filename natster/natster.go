@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/choria-io/fisk"
 	"github.com/fatih/color"
@@ -10,7 +11,9 @@ import (
 )
 
 var (
-	VERSION = "0.1.0"
+	VERSION = "dev"
+	COMMIT  = "none"
+	DATE    = time.Now().Format(time.RFC822)
 
 	Opts         = &models.Options{}
 	HubOpts      = &models.HubOptions{}
@@ -28,7 +31,7 @@ func main() {
 	ncli := fisk.New("natster", help)
 	ncli.Author("Synadia Communications")
 	ncli.UsageWriter(os.Stdout)
-	ncli.Version(fmt.Sprintf("v%s", VERSION))
+	ncli.Version(fmt.Sprintf("v%s [%s] | BuiltOn: %s", VERSION, COMMIT, DATE))
 	ncli.HelpFlag.Short('h')
 	ncli.WithCheats().CheatCommand.Hidden()
 
