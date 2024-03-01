@@ -13,7 +13,7 @@
       </div>
     </div>
     <div class="flex flex-none items-center gap-x-4">
-      <Menu as="div" class="relative flex-none">
+      <Menu as="div" class="relative inline-block flex-none z-10">
         <div>
           <MenuButton class="-m-2.5 block p-2.5 text-gray-500 hover:text-gray-900">
             <span class="sr-only">Open options</span>
