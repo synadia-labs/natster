@@ -13,7 +13,7 @@
       <div class="flex justify-end gap-x-3">
         <p class="text-sm leading-6 text-gray-900">{{ file.description }}</p>
       </div>
-      <div class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
+      <div class="mt-1 flex items-center justify-end gap-x-2 text-xs leading-5 text-gray-500">
         <p class="whitespace-nowrap">{{ file.mime_type }} | {{ formatBytes(file.byte_size)}}</p>
       </div>
     </div>
