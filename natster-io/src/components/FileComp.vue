@@ -82,7 +82,7 @@ import { onMounted } from 'vue'
 import { initFlowbite } from 'flowbite'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon, ArrowDownTrayIcon, FolderOpenIcon } from '@heroicons/vue/20/solid'
-import File from './File.vue'
+import type File from '../types/types'
 
 onMounted(() => {
   initFlowbite()
