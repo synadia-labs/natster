@@ -8,7 +8,20 @@
         :id="'accordion-' + normalizeString(catalog.name + directory)"
         data-accordion="collapse"
       >
-        <Directory :catalog="catalog" :directory="directory" :files="files" />
+        <Directory
+          v-if="directory != 'root'"
+          :catalog="catalog"
+          :directory="directory"
+          :files="files"
+        />
+        <FileComp
+          v-else
+          v-for="file in files"
+          :key="file.hash"
+          :catalog="catalog"
+          :file="file"
+          :image="true"
+        />
       </div>
     </div>
   </div>
@@ -24,6 +37,7 @@ import { catalogStore } from '../stores/catalog'
 import type { File } from '../types/types.ts'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon, ArrowDownTrayIcon, FolderOpenIcon } from '@heroicons/vue/20/solid'
+import FileComp from './FileComp.vue'
 
 import SelectLibrary from './SelectLibrary.vue'
 import Directory from './Directory.vue'

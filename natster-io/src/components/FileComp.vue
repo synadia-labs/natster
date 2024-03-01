@@ -1,22 +1,35 @@
 <template>
-  <li :key="file.hash" class="flex items-center justify-between gap-x-6 py-5 pl-16">
-    <div class="min-w-0">
+  <li
+    :key="file.hash"
+    :class="[image ? '' : 'pl-16', 'flex items-center justify-between gap-x-4 py-5']"
+  >
+    <img
+      v-if="image"
+      class="h-12 w-12 flex-none rounded-full bg-gray-50"
+      :src="catalogImage(catalog)"
+      alt=""
+    />
+    <div class="min-w-0 flex-auto">
       <div class="flex items-start gap-x-3">
-        <p class="text-sm font-semibold leading-6 text-gray-900">{{ getFileName(file.path) }}</p>
+        <p class="text-sm font-semibold text-gray-900">{{ getFileName(file.path) }}</p>
       </div>
       <div class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
-        <span class="whitespace-nowrap">{{file.hash.substring(0,4)}}...{{ file.hash.substring(file.hash.length -8 ,file.hash.length) }}</span>
+        <span class="whitespace-nowrap"
+          >{{ file.hash.substring(0, 4) }}...{{
+            file.hash.substring(file.hash.length - 8, file.hash.length)
+          }}</span
+        >
       </div>
     </div>
     <div class="flex flex-none items-center gap-x-4">
-    <div class="min-w-0">
-      <div class="flex justify-end gap-x-3">
-        <p class="text-sm leading-6 text-gray-900">{{ file.description }}</p>
+      <div class="min-w-0">
+        <div class="flex justify-end gap-x-3">
+          <p class="text-sm leading-6 text-gray-900">{{ file.description }}</p>
+        </div>
+        <div class="mt-1 flex items-center justify-end gap-x-2 text-xs leading-5 text-gray-500">
+          <p class="whitespace-nowrap">{{ file.mime_type }} | {{ formatBytes(file.byte_size) }}</p>
+        </div>
       </div>
-      <div class="mt-1 flex items-center justify-end gap-x-2 text-xs leading-5 text-gray-500">
-        <p class="whitespace-nowrap">{{ file.mime_type }} | {{ formatBytes(file.byte_size)}}</p>
-      </div>
-    </div>
 
       <Menu as="div" class="relative inline-block flex-none z-10">
         <div>
@@ -98,6 +111,7 @@ onMounted(() => {
 const props = defineProps<{
   file: File
   catalog: String
+  image?: String
 }>()
 
 function getFileName(filepath) {
@@ -114,5 +128,13 @@ function formatBytes(bytes, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+}
+
+function catalogImage(cat) {
+  if (cat.image == undefined || cat.image == '') {
+    return 'https://ui-avatars.com/api/?name=+' + cat.name
+  } else {
+    return cat.image
+  }
 }
 </script>
