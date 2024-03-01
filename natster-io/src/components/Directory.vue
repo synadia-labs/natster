@@ -16,7 +16,9 @@
         <p class="text-sm font-semibold leading-6 text-gray-900">
           {{ directory == 'root' ? catalog.name + '/' : directory }}
         </p>
-        <p class="mt-1 flex text-xs leading-5 text-gray-500">{{ files.length != 1 ? files.length + ' files' : files.length + ' file'}}</p>
+        <p class="mt-1 flex text-xs leading-5 text-gray-500">
+          {{ files.length != 1 ? files.length + ' files' : files.length + ' file' }}
+        </p>
       </div>
     </div>
     <div class="flex shrink-0 items-center gap-x-4">
@@ -82,5 +84,4 @@ function catalogImage(cat) {
 function normalizeString(instring) {
   return instring.replace(/[^a-zA-Z]/g, '')
 }
-
 </script>
