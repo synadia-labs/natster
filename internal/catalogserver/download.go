@@ -113,6 +113,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 			slog.Info("Completed transcoding", "path", path)
 		}()
 
+		time.Sleep(time.Millisecond * 5)
 		path = tmppath
 
 		var err error
