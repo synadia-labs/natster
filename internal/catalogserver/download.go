@@ -96,7 +96,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 	if strings.EqualFold(strings.ToLower(entry.MimeType), mimeTypeVideoMP4) {
 		id, _ := uuid.NewUUID()
 		tmppath := filepath.Join(os.TempDir(), fmt.Sprintf("%s.mp4", id))
-		chunks = chunks + uint(math.RoundToEven(float64(chunks)*1.05)) // HACK expand total possible chunks by 5% so we iterate enough to read the entire fragmented file
+		chunks = chunks + uint(math.RoundToEven(float64(chunks)*.05)) // HACK expand total possible chunks by 5% so we iterate enough to read the entire fragmented file
 		transcoding = true
 
 		slog.Info("Transcoding mp4", slog.Uint64("chunks", uint64(chunks)), slog.String("path", path))
