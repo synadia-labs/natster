@@ -5,7 +5,7 @@
         <p class="text-sm font-semibold leading-6 text-gray-900">{{ getFileName(file.path) }}</p>
       </div>
       <div class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
-        <p class="whitespace-nowrap">{{ file.hash }}</p>
+        <span class="whitespace-nowrap">{{file.hash.substring(0,4)}}...{{ file.hash.substring(file.hash.length -8 ,file.hash.length) }}</span>
       </div>
     </div>
     <div class="flex flex-none items-center gap-x-4">
