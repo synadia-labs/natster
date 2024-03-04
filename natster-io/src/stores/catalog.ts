@@ -6,6 +6,7 @@ import { connect, jwtAuthenticator, JSONCodec } from 'nats.ws'
 import type { Catalog, File } from '../types/types.ts'
 import { fileStore } from './file'
 import { notificationStore } from './notification'
+import { saveAs } from 'file-saver'
 
 export const catalogStore = defineStore('catalog', {
   state: () => ({
@@ -137,6 +138,51 @@ export const catalogStore = defineStore('catalog', {
         })
         .catch((err) => console.error('nats ping err: ', err))
     },
+    async downloadFile(fileName, catalog, hash, mimeType) {
+      const fStore = fileStore()
+
+      let xkey = createCurve()
+      this.xkey_seed = new TextDecoder().decode(xkey.getSeed())
+      this.xkey_pub = xkey.getPublicKey()
+
+      var fileArray
+      const nStore = natsStore()
+      const sub = nStore.connection.subscribe('natster.media.' + catalog + '.' + hash)
+      ;(async () => {
+        for await (const m of sub) {
+          const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
+          const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+          const senderXKey = m.headers.get('x-natster-sender-xkey')
+         
+          let decrypted = xkey.open(m.data, senderXKey)
+          fileArray.push(decrypted)
+
+          if (chunkIdx === totalChunks - 1) {
+            sub.unsubscribe()
+          }
+        }
+
+        var blob = new Blob(fileArray, { type: mimeType })
+        saveAs(blob, fileName)
+      })()
+
+      const dl_request = {
+        hash: hash,
+        transcode: false,
+        target_xkey: this.xkey_pub
+      }
+      await nStore.connection
+        .request('natster.catalog.' + catalog + '.download', JSON.stringify(dl_request), {
+          timeout: 5000
+        })
+        .then((m) => {
+          let data = JSONCodec().decode(m.data)
+          fileArray = new Array()
+        })
+        .catch((err) => {
+          console.error('nats requestCatalogFiles err: ', err)
+        })
+    },
     async viewFile(fileName, catalog, hash, mimeType) {
       const fStore = fileStore()
 
@@ -148,26 +194,21 @@ export const catalogStore = defineStore('catalog', {
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog + '.' + hash)
       ;(async () => {
-        let timeout;
+        let timeout
         for await (const m of sub) {
           const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
           const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
           const senderXKey = m.headers.get('x-natster-sender-xkey')
           let decrypted = xkey.open(m.data, senderXKey)
-          // let decrypted = Array.from(xkey.open(m.data, sender_xkey))
-          // fileArray = [...decrypted]
-          // console.log("decrypted: ", decrypted)
-          // console.log("fileArray: ", fileArray)
-          console.log(`chunk #${chunkIdx}: ${decrypted?.byteLength} bytes`)
 
           if (mimeType.toLowerCase().indexOf('video/') === 0) {
             if (timeout) {
               clearTimeout(timeout)
-              timeout = null;
+              timeout = null
             }
 
             fStore.render(fileName, mimeType, decrypted)
-            
+
             timeout = setTimeout(() => {
               fStore.endStream()
               timeout = null
@@ -187,6 +228,7 @@ export const catalogStore = defineStore('catalog', {
 
       const dl_request = {
         hash: hash,
+        transcode: true,
         target_xkey: this.xkey_pub
       }
       await nStore.connection
@@ -195,8 +237,6 @@ export const catalogStore = defineStore('catalog', {
         })
         .then((m) => {
           let data = JSONCodec().decode(m.data)
-          // console.log('data: ', data)
-          // sender_xkey = data.data.sender_xkey
           fileArray = new Array(data.data.total_bytes)
         })
         .catch((err) => {

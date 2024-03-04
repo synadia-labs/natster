@@ -11,26 +11,36 @@
     />
     <div class="min-w-0 flex-auto">
       <div class="flex items-start gap-x-3">
-        <p class="text-sm font-semibold text-gray-900">{{ file.description == 'Auto-imported library entry' ? getFileName(file.path) : file.description }}</p>
+        <p class="text-sm font-semibold text-gray-900">
+          {{
+            file.description == 'Auto-imported library entry'
+              ? getFileName(file.path)
+              : file.description
+          }}
+        </p>
       </div>
       <div class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
-        <span class="whitespace-nowrap"
-          >
+        <span class="whitespace-nowrap">
           {{ formatBytes(file.byte_size) }} | {{ file.mime_type }}
-        </span
-        >
+        </span>
       </div>
     </div>
     <div class="flex flex-none items-center gap-x-4">
       <div class="min-w-0">
         <div class="flex justify-end gap-x-3">
-          <p class="text-sm leading-6 text-gray-900">{{ file.description == 'Auto-imported library entry' ? file.description : getFileName(file.path) }}</p>
+          <p class="text-sm leading-6 text-gray-900">
+            {{
+              file.description == 'Auto-imported library entry'
+                ? file.description
+                : getFileName(file.path)
+            }}
+          </p>
         </div>
         <div class="mt-1 flex items-center justify-end gap-x-2 text-xs leading-5 text-gray-500">
           <p class="whitespace-nowrap">
-          {{ file.hash.substring(0, 4) }}...{{
-            file.hash.substring(file.hash.length - 8, file.hash.length)
-          }}
+            {{ file.hash.substring(0, 4) }}...{{
+              file.hash.substring(file.hash.length - 8, file.hash.length)
+            }}
           </p>
         </div>
       </div>
@@ -57,12 +67,18 @@
             <div class="px-1 py-1">
               <MenuItem v-slot="{ active }">
                 <button
-                  :disabled="isDisabled"
+                  :disabled="false"
+                  @click.prevent="
+                    cStore.downloadFile(
+                      getFileName(file.path),
+                      catalog.name,
+                      file.hash,
+                      file.mime_type
+                    )
+                  "
                   :class="[
-                    active && !isDisabled
-                      ? 'bg-violet-500 text-white'
-                      : 'text-gray-400 cursor-not-allowed',
-                    'group flex w-full items-center rounded-md px-2 py-2 text-sm disabled:bg-blue-100'
+                    active ? 'bg-violet-500 text-white' : 'text-gray-900',
+                    'group flex w-full items-center rounded-md px-2 py-2 text-sm'
                   ]"
                 >
                   <ArrowDownTrayIcon
@@ -75,7 +91,9 @@
               </MenuItem>
               <MenuItem v-slot="{ active }">
                 <button
-                  @click.prevent="cStore.viewFile(getFileName(file.path), catalog.name, file.hash, file.mime_type)"
+                  @click.prevent="
+                    cStore.viewFile(getFileName(file.path), catalog.name, file.hash, file.mime_type)
+                  "
                   :class="[
                     active ? 'bg-violet-500 text-white' : 'text-gray-900',
                     'group flex w-full items-center rounded-md px-2 py-2 text-sm'

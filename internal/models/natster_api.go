@@ -26,6 +26,7 @@ type CatalogEntry struct {
 
 type DownloadRequest struct {
 	Hash       string `json:"hash"`
+	Transcode  bool   `json:"transcode"`
 	TargetXkey string `json:"target_xkey"`
 }
 

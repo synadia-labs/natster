@@ -15,7 +15,7 @@ export const natsStore = defineStore('nats', {
       if (uStore.nkey != '' && uStore.jwt != '') {
         try {
           const conn = await connect({
-            debug: false,
+            debug: window.location.hostname !== 'natster.io',
             ignoreClusterUpdates: true,
             servers: this.servers,
             reconnect: true,

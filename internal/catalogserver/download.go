@@ -75,7 +75,7 @@ func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
 		}
 		_ = m.Respond(models.NewApiResultPass(resp))
 
-		go srv.transmitChunkedFile(senderKp, tokens[0], req, f, chunks, resp)
+		go srv.transmitChunkedFile(senderKp, tokens[0], req, f, chunks, resp, req.Transcode)
 	}
 }
 
@@ -85,7 +85,8 @@ func (srv *CatalogServer) transmitChunkedFile(
 	request models.DownloadRequest,
 	entry *medialibrary.MediaEntry,
 	chunks uint,
-	resp models.DownloadResponse) {
+	resp models.DownloadResponse,
+	transcode bool) {
 
 	path := filepath.Join(srv.library.RootDir, entry.Path)
 
@@ -93,7 +94,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 	transcodingInProgress := false
 	var fileInfo os.FileInfo
 
-	if strings.EqualFold(strings.ToLower(entry.MimeType), mimeTypeVideoMP4) {
+	if transcode && strings.EqualFold(strings.ToLower(entry.MimeType), mimeTypeVideoMP4) {
 		id, _ := uuid.NewUUID()
 		tmppath := filepath.Join(os.TempDir(), fmt.Sprintf("%s.mp4", id))
 		chunks = chunks + uint(math.RoundToEven(float64(chunks)*.05)) // HACK expand total possible chunks by 5% so we iterate enough to read the entire fragmented file

@@ -17,7 +17,7 @@ export const fileStore = defineStore('file', {
     videoSourceBuffer: null,
 
     appendCount: 0,
-    appendInterval: null,
+    appendInterval: null
   }),
   actions: {
     endStream() {
@@ -39,9 +39,11 @@ export const fileStore = defineStore('file', {
           this.codec = 'avc1.640028,mp4a.40.2' //'avc1.42C028,mp4a.40.2' // FIXME-- read this from headers and pass it in to render()
           console.log(MediaSource.isTypeSupported(`video/mp4; codecs="${this.codec}"`))
 
-          const _data = data;
-          this.mediaSource.addEventListener("sourceopen", () => {
-            this.videoSourceBuffer = this.mediaSource.addSourceBuffer(`video/mp4; codecs="${this.codec}"`)
+          const _data = data
+          this.mediaSource.addEventListener('sourceopen', () => {
+            this.videoSourceBuffer = this.mediaSource.addSourceBuffer(
+              `video/mp4; codecs="${this.codec}"`
+            )
 
             this.videoSourceBuffer.addEventListener('updatestart', (e) => {
               // console.log(e)
@@ -64,10 +66,10 @@ export const fileStore = defineStore('file', {
             })
           })
 
-          this.mediaSource.addEventListener("sourceended", (e) => {
-            this.mediaSource = null;
-            this.audioSourceBuffer = null;
-            this.videoSourceBuffer = null;
+          this.mediaSource.addEventListener('sourceended', (e) => {
+            this.mediaSource = null
+            this.audioSourceBuffer = null
+            this.videoSourceBuffer = null
 
             if (this.appendInterval) {
               clearInterval(this.appendInterval)
@@ -77,18 +79,22 @@ export const fileStore = defineStore('file', {
             this.buffer = []
           })
 
-          this.mediaSource.addEventListener("sourceclose", (e) => {
+          this.mediaSource.addEventListener('sourceclose', (e) => {
             // console.log(e)
           })
 
-          this.mediaSource.addEventListener("error", (e) => {
+          this.mediaSource.addEventListener('error', (e) => {
             // console.log(e)
           })
         }
 
         this.appendInterval = setInterval(() => {
-          if (this.videoSourceBuffer && !this.videoSourceBuffer.updating && this.buffer.length > 0) {
-            this.videoSourceBuffer.appendBuffer(this.buffer.shift());
+          if (
+            this.videoSourceBuffer &&
+            !this.videoSourceBuffer.updating &&
+            this.buffer.length > 0
+          ) {
+            this.videoSourceBuffer.appendBuffer(this.buffer.shift())
 
             this.appendCount++
             // console.log(`append count: ${this.appendCount}`)
@@ -122,6 +128,6 @@ export const fileStore = defineStore('file', {
       this.title = ''
 
       console.log('reset!')
-    },
+    }
   }
 })
