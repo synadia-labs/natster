@@ -225,8 +225,6 @@ export const catalogStore = defineStore('catalog', {
               timeout = setTimeout(() => {
                 fStore.endStream()
                 timeout = null
-  
-                sub.unsubscribe()
               }, 5000)
             } else {
               fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
