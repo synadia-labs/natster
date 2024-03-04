@@ -68,70 +68,64 @@ export const fileStore = defineStore('file', {
 
           this.mediaSource.addEventListener('sourceclose', (e) => {})
           this.mediaSource.addEventListener('error', (e) => {})
+
+          this.appendInterval = setInterval(() => {
+            if (this.videoSourceBuffer && !this.videoSourceBuffer.updating && this.buffer.length > 0) {
+              this.videoSourceBuffer.appendBuffer(this.buffer.shift())
+  
+              this.appendCount++
+            }
+          }, 10)
         }
-
-        this.appendInterval = setInterval(() => {
-          if (
-            this.videoSourceBuffer &&
-            !this.videoSourceBuffer.updating &&
-            this.buffer.length > 0
-          ) {
-            this.videoSourceBuffer.appendBuffer(this.buffer.shift())
-
-            this.appendCount++
-          }
-        }, 10)
 
         this.buffer.push(data)
       } else if (mimeType.toLowerCase() === 'audio/mpeg') {
-        this.mediaSource = new MediaSource()
-        this.mediaUrl = URL.createObjectURL(this.mediaSource)
-        console.log(MediaSource.isTypeSupported(`audio/mpeg`))
+        if (!this.mediaSource && !this.mediaUrl && !this.audioSourceBuffer) {
+          this.mediaSource = new MediaSource()
+          this.mediaUrl = URL.createObjectURL(this.mediaSource)
+          console.log(MediaSource.isTypeSupported(`audio/mpeg`))
 
-        this.mediaSource.addEventListener('sourceopen', () => {
-          this.audioSourceBuffer = this.mediaSource.addSourceBuffer(`audio/mpeg`)
-          this.audioSourceBuffer.addEventListener('error', (e) => {
-            console.log(e)
+          this.mediaSource.addEventListener('sourceopen', () => {
+            this.audioSourceBuffer = this.mediaSource.addSourceBuffer(`audio/mpeg`)
+            this.audioSourceBuffer.addEventListener('error', (e) => {
+              console.log(e)
+            })
+
+            this.audioSourceBuffer.addEventListener('abort', (e) => {
+              console.log(e)
+            })
+            this.audioSourceBuffer.addEventListener('updatestart', (e) => {
+              console.log(e)
+            })
+            this.audioSourceBuffer.addEventListener('update', (e) => {
+              console.log(e)
+            })
+            this.audioSourceBuffer.addEventListener('updateend', (e) => {
+              console.log(e)
+            })
           })
 
-          this.audioSourceBuffer.addEventListener('abort', (e) => {
-            console.log(e)
+          this.mediaSource.addEventListener('sourceended', (e) => {
+            this.mediaSource = null
+            this.audioSourceBuffer = null
+            this.videoSourceBuffer = null
+
+            if (this.appendInterval) {
+              clearInterval(this.appendInterval)
+              this.appendInterval = null
+            }
+
+            this.buffer = []
           })
-          this.audioSourceBuffer.addEventListener('updatestart', (e) => {
-            console.log(e)
-          })
-          this.audioSourceBuffer.addEventListener('update', (e) => {
-            console.log(e)
-          })
-          this.audioSourceBuffer.addEventListener('updateend', (e) => {
-            console.log(e)
-          })
-        })
 
-        this.mediaSource.addEventListener('sourceended', (e) => {
-          this.mediaSource = null
-          this.audioSourceBuffer = null
-          this.videoSourceBuffer = null
+          this.appendInterval = setInterval(() => {
+            if (this.audioSourceBuffer && !this.audioSourceBuffer.updating && this.buffer.length > 0) {
+              this.audioSourceBuffer.appendBuffer(this.buffer.shift())
 
-          if (this.appendInterval) {
-            clearInterval(this.appendInterval)
-            this.appendInterval = null
-          }
-
-          this.buffer = []
-        })
-
-        this.appendInterval = setInterval(() => {
-          if (
-            this.audioSourceBuffer &&
-            !this.audioSourceBuffer.updating &&
-            this.buffer.length > 0
-          ) {
-            this.audioSourceBuffer.appendBuffer(this.buffer.shift())
-
-            this.appendCount++
-          }
-        }, 10)
+              this.appendCount++
+            }
+          }, 10)
+        }
 
         this.buffer.push(data)
       } else {
