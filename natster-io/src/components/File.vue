@@ -55,7 +55,7 @@
                     </p>
 
                     <video
-                      v-if="!!mediaUrl"
+                      v-if="!!mediaUrl && mimeType.toLowerCase() == 'video/mp4'"
                       id="video"
                       :type="mimeType"
                       :src="mediaUrl"
@@ -64,6 +64,10 @@
                       autoplay
                       controls
                     ></video>
+                    <AudioPlayer
+                      v-if="!!mediaUrl && mimeType.toLowerCase() == 'audio/mpeg'"
+                      :option="getAudioOptions(mediaUrl, title, '')"
+                    />
                   </div>
                 </div>
               </div>
@@ -89,6 +93,8 @@ import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { InformationCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import AudioPlayer from 'vue3-audio-player'
+import 'vue3-audio-player/dist/style.css'
 
 import { fileStore } from '../stores/file'
 const fStore = fileStore()
@@ -105,6 +111,14 @@ watch(mimeType, (newVal, oldVal) => {
     console.log('video incoming')
   }
 })
+
+function getAudioOptions(inSrc, inTitle, inCover) {
+  return {
+    src: inSrc,
+    title: inTitle,
+    coverImage: inCover
+  }
+}
 
 watch(mediaUrl, (newVal, oldVal) => {
   if (!!newVal) {

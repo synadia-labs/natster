@@ -39,31 +39,18 @@ export const fileStore = defineStore('file', {
           this.codec = 'avc1.640028,mp4a.40.2' //'avc1.42C028,mp4a.40.2' // FIXME-- read this from headers and pass it in to render()
           console.log(MediaSource.isTypeSupported(`video/mp4; codecs="${this.codec}"`))
 
-          const _data = data
           this.mediaSource.addEventListener('sourceopen', () => {
             this.videoSourceBuffer = this.mediaSource.addSourceBuffer(
               `video/mp4; codecs="${this.codec}"`
             )
-
-            this.videoSourceBuffer.addEventListener('updatestart', (e) => {
-              // console.log(e)
-            })
-
-            this.videoSourceBuffer.addEventListener('update', (e) => {
-              // console.log(e)
-            })
-
-            this.videoSourceBuffer.addEventListener('updateend', (e) => {
-              // console.log(e)
-            })
-
             this.videoSourceBuffer.addEventListener('error', (e) => {
               console.log(e)
             })
 
-            this.videoSourceBuffer.addEventListener('abort', (e) => {
-              // console.log(e)
-            })
+            this.videoSourceBuffer.addEventListener('abort', (e) => {})
+            this.videoSourceBuffer.addEventListener('updatestart', (e) => {})
+            this.videoSourceBuffer.addEventListener('update', (e) => {})
+            this.videoSourceBuffer.addEventListener('updateend', (e) => {})
           })
 
           this.mediaSource.addEventListener('sourceended', (e) => {
@@ -79,13 +66,8 @@ export const fileStore = defineStore('file', {
             this.buffer = []
           })
 
-          this.mediaSource.addEventListener('sourceclose', (e) => {
-            // console.log(e)
-          })
-
-          this.mediaSource.addEventListener('error', (e) => {
-            // console.log(e)
-          })
+          this.mediaSource.addEventListener('sourceclose', (e) => {})
+          this.mediaSource.addEventListener('error', (e) => {})
         }
 
         this.appendInterval = setInterval(() => {
@@ -97,12 +79,53 @@ export const fileStore = defineStore('file', {
             this.videoSourceBuffer.appendBuffer(this.buffer.shift())
 
             this.appendCount++
-            // console.log(`append count: ${this.appendCount}`)
           }
         }, 10)
 
         this.buffer.push(data)
-        // console.log(`buffer length: ${this.buffer.length}`)
+      } else if (mimeType.toLowerCase() === 'audio/mpeg') {
+        this.mediaSource = new MediaSource()
+        this.mediaUrl = URL.createObjectURL(this.mediaSource)
+        console.log(MediaSource.isTypeSupported(`audio/mpeg`))
+
+        this.mediaSource.addEventListener('sourceopen', () => {
+          this.audioSourceBuffer = this.mediaSource.addSourceBuffer(`audio/mpeg`)
+          this.audioSourceBuffer.addEventListener('error', (e) => {
+            console.log(e)
+          })
+
+          this.audioSourceBuffer.addEventListener('abort', (e) => {})
+          this.audioSourceBuffer.addEventListener('updatestart', (e) => {})
+          this.audioSourceBuffer.addEventListener('update', (e) => {})
+          this.audioSourceBuffer.addEventListener('updateend', (e) => {})
+        })
+
+        this.mediaSource.addEventListener('sourceended', (e) => {
+          this.mediaSource = null
+          this.audioSourceBuffer = null
+          this.videoSourceBuffer = null
+
+          if (this.appendInterval) {
+            clearInterval(this.appendInterval)
+            this.appendInterval = null
+          }
+
+          this.buffer = []
+        })
+
+        this.appendInterval = setInterval(() => {
+          if (
+            this.audioSourceBuffer &&
+            !this.audioSourceBuffer.updating &&
+            this.buffer.length > 0
+          ) {
+            this.audioSourceBuffer.appendBuffer(this.buffer.shift())
+
+            this.appendCount++
+          }
+        }, 10)
+
+        this.buffer.push(data)
       } else {
         this.body = data
       }

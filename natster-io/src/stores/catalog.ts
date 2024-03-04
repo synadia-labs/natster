@@ -153,7 +153,7 @@ export const catalogStore = defineStore('catalog', {
           const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
           const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
           const senderXKey = m.headers.get('x-natster-sender-xkey')
-         
+
           let decrypted = xkey.open(m.data, senderXKey)
           fileArray.push(decrypted)
 
