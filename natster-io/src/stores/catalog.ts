@@ -151,7 +151,7 @@ export const catalogStore = defineStore('catalog', {
         let timeout;
         for await (const m of sub) {
           const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
-          // const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+          const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
           const senderXKey = m.headers.get('x-natster-sender-xkey')
           let decrypted = xkey.open(m.data, senderXKey)
           // let decrypted = Array.from(xkey.open(m.data, sender_xkey))
@@ -176,6 +176,10 @@ export const catalogStore = defineStore('catalog', {
             }, 5000)
           } else {
             fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
+
+            if (chunkIdx === totalChunks - 1) {
+              sub.unsubscribe()
+            }
           }
         }
         console.log('subscription closed')
