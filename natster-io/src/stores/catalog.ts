@@ -148,6 +148,7 @@ export const catalogStore = defineStore('catalog', {
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog + '.' + hash)
       ;(async () => {
+        let timeout;
         for await (const m of sub) {
           const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
           // const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
@@ -160,7 +161,19 @@ export const catalogStore = defineStore('catalog', {
           console.log(`chunk #${chunkIdx}: ${decrypted?.byteLength} bytes`)
 
           if (mimeType.toLowerCase().indexOf('video/') === 0) {
+            if (timeout) {
+              clearTimeout(timeout)
+              timeout = null;
+            }
+
             fStore.render(fileName, mimeType, decrypted)
+            
+            timeout = setTimeout(() => {
+              fStore.endStream()
+              timeout = null
+
+              sub.unsubscribe()
+            }, 5000)
           } else {
             fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
           }

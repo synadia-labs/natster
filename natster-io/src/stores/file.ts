@@ -4,6 +4,7 @@ export const fileStore = defineStore('file', {
   state: () => ({
     body: null,
     buffer: [],
+    loading: true,
     title: '',
     show: false,
     mimeType: null,
@@ -11,14 +12,20 @@ export const fileStore = defineStore('file', {
 
     mediaSource: null,
     mediaUrl: null,
-    updatingBuffer: false,
 
     audioSourceBuffer: null,
     videoSourceBuffer: null,
 
-    appendCount: 0
+    appendCount: 0,
+    appendInterval: null,
   }),
   actions: {
+    endStream() {
+      if (this.mediaSource) {
+        this.mediaSource.endOfStream()
+        console.log('stream ended')
+      }
+    },
     render(title, mimeType, data) {
       this.title = title
       this.show = true
@@ -37,17 +44,15 @@ export const fileStore = defineStore('file', {
             this.videoSourceBuffer = this.mediaSource.addSourceBuffer(`video/mp4; codecs="${this.codec}"`)
 
             this.videoSourceBuffer.addEventListener('updatestart', (e) => {
-              // this.updatingBuffer = true;
-              console.log(e)
+              // console.log(e)
             })
 
             this.videoSourceBuffer.addEventListener('update', (e) => {
-              console.log(e)
+              // console.log(e)
             })
 
             this.videoSourceBuffer.addEventListener('updateend', (e) => {
-              // this.updatingBuffer = false;
-              console.log(e)
+              // console.log(e)
             })
 
             this.videoSourceBuffer.addEventListener('error', (e) => {
@@ -55,38 +60,68 @@ export const fileStore = defineStore('file', {
             })
 
             this.videoSourceBuffer.addEventListener('abort', (e) => {
-              console.log(e)
+              // console.log(e)
             })
           })
 
           this.mediaSource.addEventListener("sourceended", (e) => {
-            console.log(e)
+            this.mediaSource = null;
+            this.audioSourceBuffer = null;
+            this.videoSourceBuffer = null;
+
+            if (this.appendInterval) {
+              clearInterval(this.appendInterval)
+              this.appendInterval = null
+            }
+
+            this.buffer = []
           })
 
           this.mediaSource.addEventListener("sourceclose", (e) => {
-            console.log(e)
+            // console.log(e)
           })
 
           this.mediaSource.addEventListener("error", (e) => {
-            console.log(e)
+            // console.log(e)
           })
         }
 
-        let interval = null
-        interval = setInterval(() => {
+        this.appendInterval = setInterval(() => {
           if (this.videoSourceBuffer && !this.videoSourceBuffer.updating && this.buffer.length > 0) {
             this.videoSourceBuffer.appendBuffer(this.buffer.shift());
 
             this.appendCount++
-            console.log(`append count: ${this.appendCount}`)
+            // console.log(`append count: ${this.appendCount}`)
           }
         }, 10)
 
         this.buffer.push(data)
-        console.log(`buffer length: ${this.buffer.length}`)
+        // console.log(`buffer length: ${this.buffer.length}`)
       } else {
         this.body = data
       }
-    }
+    },
+    reset() {
+      if (this.appendInterval) {
+        clearInterval(this.appendInterval)
+        this.appendInterval = null
+      }
+
+      this.body = null
+      this.buffer = []
+      this.codec = null
+      this.loading = true
+      this.mediaSource = null
+      this.mediaUrl = null
+      this.mimeType = null
+
+      this.audioSourceBuffer = null
+      this.videoSourceBuffer = null
+
+      this.show = false
+      this.title = ''
+
+      console.log('reset!')
+    },
   }
 })
