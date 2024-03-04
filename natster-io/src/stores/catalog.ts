@@ -201,8 +201,7 @@ export const catalogStore = defineStore('catalog', {
           const senderXKey = m.headers.get('x-natster-sender-xkey')
           let decrypted = xkey.open(m.data, senderXKey)
 
-          if (mimeType.toLowerCase().indexOf('video/') === 0 || mimeType.toLowerCase() == 'audio/mpeg')
-           {
+          if (mimeType.toLowerCase().indexOf('video/') === 0) {
             if (timeout) {
               clearTimeout(timeout)
               timeout = null
@@ -216,9 +215,22 @@ export const catalogStore = defineStore('catalog', {
 
               sub.unsubscribe()
             }, 5000)
-          } 
-          else {
-            fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
+          } else {
+            if (mimeType.toLowerCase() === 'audio/mpeg') {
+              if (timeout) {
+                clearTimeout(timeout)
+                timeout = null
+              }
+
+              timeout = setTimeout(() => {
+                fStore.endStream()
+                timeout = null
+  
+                sub.unsubscribe()
+              }, 5000)
+            } else {
+              fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
+            }
 
             if (chunkIdx === totalChunks - 1) {
               sub.unsubscribe()
