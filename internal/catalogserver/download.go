@@ -6,15 +6,20 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nkeys"
 	"github.com/synadia-labs/natster/internal/medialibrary"
 	"github.com/synadia-labs/natster/internal/models"
+
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
 const (
@@ -22,6 +27,8 @@ const (
 	headerChunkIndex  = "x-natster-chunk-idx"
 	headerSenderXkey  = "x-natster-sender-xkey"
 	headerTotalChunks = "x-natster-total-chunks"
+
+	mimeTypeVideoMP4 = "video/mp4"
 )
 
 func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
@@ -80,11 +87,49 @@ func (srv *CatalogServer) transmitChunkedFile(
 	chunks uint,
 	resp models.DownloadResponse) {
 
-	realPath := filepath.Join(srv.library.RootDir, entry.Path)
-	f, err := os.Open(realPath)
+	path := filepath.Join(srv.library.RootDir, entry.Path)
+
+	transcoding := false // this means we are streaming, not that transcoding is actively running
+	transcodingInProgress := false
+	var fileInfo os.FileInfo
+
+	if strings.EqualFold(strings.ToLower(entry.MimeType), mimeTypeVideoMP4) {
+		id, _ := uuid.NewUUID()
+		tmppath := filepath.Join(os.TempDir(), fmt.Sprintf("%s.mp4", id))
+		chunks = chunks + uint(math.RoundToEven(float64(chunks)*.05)) // HACK expand total possible chunks by 5% so we iterate enough to read the entire fragmented file
+		transcoding = true
+
+		slog.Info("Transcoding mp4", slog.Uint64("chunks", uint64(chunks)), slog.String("path", path))
+
+		go func() {
+			transcodingInProgress = true
+			err := ffmpeg.Input(path).
+				Output(tmppath, ffmpeg.KwArgs{"movflags": "frag_keyframe+empty_moov+default_base_moof"}).Run()
+			if err != nil {
+				slog.Error("Error transcoding mp4 '%s': %s", entry.Path, err.Error())
+			}
+			transcodingInProgress = false
+
+			slog.Info("Completed transcoding", "path", path)
+		}()
+
+		defer func() {
+			_ = os.Remove(tmppath)
+		}()
+
+		time.Sleep(time.Millisecond * 5)
+		path = tmppath
+
+		var err error
+		fileInfo, err = os.Stat(path)
+		for err != nil {
+			fileInfo, err = os.Stat(path)
+		}
+	}
+
+	f, err := os.Open(path)
 	if err != nil {
-		slog.Error("Error reading file", slog.String("path", realPath), slog.Any("error", err))
-		return
+		slog.Error("Error reading file '%s': %s", path, err.Error())
 	}
 	r := bufio.NewReader(f)
 	buf := make([]byte, 0, chunkSizeBytes)
@@ -92,9 +137,40 @@ func (srv *CatalogServer) transmitChunkedFile(
 	// Axxx.natster.media.kevvbuzz.xxxxxx
 	targetSubject := fmt.Sprintf("%s.natster.media.%s.%s", targetAccount, srv.library.Name, request.Hash)
 
-	for i := 0; i < int(chunks); i++ {
+	x := 0
+	z := 0
+
+	for i := 0; i < int(chunks) || transcoding; i++ {
+		if transcoding && transcodingInProgress {
+			fi, _ := os.Stat(path)
+			if fi.Size() == fileInfo.Size() && z == 0 {
+				slog.Info("size is the same as the last attempt...", slog.Int64("filesize", fi.Size()))
+
+				if transcodingInProgress {
+					time.Sleep(time.Millisecond * 50)
+				}
+				fileInfo = fi
+				z++
+				continue
+			} else {
+				z = 0
+			}
+
+			fileInfo = fi
+
+			if fileInfo.Size() < chunkSizeBytes {
+				slog.Info("cannot read chunk yet", slog.Int64("filesize", fi.Size()))
+				continue
+			}
+			slog.Info("transcoding still in progress...", slog.Int64("filesize", fi.Size()))
+		}
+
 		n, err := r.Read(buf[:cap(buf)])
 		buf = buf[:n]
+
+		x += n
+		slog.Info("read bytes of chunk...", slog.Int("bytes", n), slog.Int("total_bytes", x))
+
 		if n == 0 {
 			if err == nil {
 				continue

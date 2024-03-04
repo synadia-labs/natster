@@ -1,6 +1,6 @@
 <template>
   <Notification />
-  <TextFile />
+  <File />
   <TransitionRoot as="template" :show="sidebarOpen">
     <Dialog as="div" class="relative z-50 lg:hidden" @close="sidebarOpen = false">
       <TransitionChild
@@ -124,7 +124,7 @@ import TopBar from '../components/TopBar.vue'
 import Avatar from '../components/Avatar.vue'
 import Notification from '../components/Notification.vue'
 import Catalogs from '../components/Catalogs.vue'
-import TextFile from '../components/TextFile.vue'
+import File from '../components/File.vue'
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 import { userStore } from '../stores/user'

@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="show">
-    <Dialog as="div" class="relative z-10" @close="show = false">
+    <Dialog as="div" class="relative z-10" @close="close()">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -33,7 +33,7 @@
                 <button
                   type="button"
                   class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  @click="show = false"
+                  @click="close()"
                 >
                   <span class="sr-only">Close</span>
                   <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -50,9 +50,20 @@
                     title
                   }}</DialogTitle>
                   <div class="mt-2">
-                    <p class="text-sm text-gray-500">
+                    <p v-if="!!body" class="text-sm text-gray-500">
                       {{ body }}
                     </p>
+
+                    <video
+                      v-if="!!mediaUrl"
+                        id="video"
+                        :type="mimeType"
+                        :src="mediaUrl"
+                        width="640"
+                        height="360"
+                        autoplay
+                        controls
+                    ></video>
                   </div>
                 </div>
               </div>
@@ -60,7 +71,7 @@
                 <button
                   type="button"
                   class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                  @click="show = false"
+                  @click="close()"
                 >
                   Close
                 </button>
@@ -74,12 +85,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { InformationCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
-import { textFileStore } from '../stores/textfile'
-const tfStore = textFileStore()
-const { body, title, show } = storeToRefs(tfStore)
+import { fileStore } from '../stores/file'
+const fStore = fileStore()
+const { body, title, show, mimeType, mediaUrl } = storeToRefs(fStore)
+
+
+function close() {
+  console.log('reset')
+  fStore.reset()
+}
+
+watch(
+  mimeType,
+  (newVal, oldVal) => {
+    console.log(`mime type changed... ${newVal}`)
+    if (!!newVal && newVal.toLowerCase().indexOf('video/') === 0) {
+      console.log('video incoming')
+    }
+  }
+)
+
+watch(
+  mediaUrl,
+  (newVal, oldVal) => {
+    if (!!newVal) {
+      setTimeout(() => {
+        // document.querySelector('video').play() // HACK
+      }, 100)
+    }
+  }
+)
 </script>
