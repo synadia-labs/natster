@@ -217,22 +217,13 @@ export const catalogStore = defineStore('catalog', {
             }, 5000)
           } else {
             if (mimeType.toLowerCase() === 'audio/mpeg') {
-              if (timeout) {
-                clearTimeout(timeout)
-                timeout = null
-              }
-
-              timeout = setTimeout(() => {
-                fStore.endStream()
-                timeout = null
-              }, 5000)
-
               fStore.render(fileName, mimeType, decrypted)
             } else {
               fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
             }
 
             if (chunkIdx === totalChunks - 1) {
+              fStore.endStream()
               sub.unsubscribe()
             }
           }

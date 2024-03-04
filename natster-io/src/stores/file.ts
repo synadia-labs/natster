@@ -17,13 +17,21 @@ export const fileStore = defineStore('file', {
     videoSourceBuffer: null,
 
     appendCount: 0,
-    appendInterval: null
+    appendInterval: null,
+    streamEndInterval: null,
   }),
   actions: {
     endStream() {
       if (this.mediaSource) {
-        this.mediaSource.endOfStream()
-        console.log('stream ended')
+        this.streamEndInterval = setInterval(() => {
+          if (this.buffer.length === 0) {
+            clearInterval(this.streamEndInterval)
+            this.streamEndInterval = null
+
+            this.mediaSource.endOfStream()
+            console.log('stream ended')
+          }
+        }, 100)
       }
     },
     render(title, mimeType, data) {
@@ -72,7 +80,6 @@ export const fileStore = defineStore('file', {
           this.appendInterval = setInterval(() => {
             if (this.videoSourceBuffer && !this.videoSourceBuffer.updating && this.buffer.length > 0) {
               this.videoSourceBuffer.appendBuffer(this.buffer.shift())
-  
               this.appendCount++
             }
           }, 10)
@@ -118,11 +125,20 @@ export const fileStore = defineStore('file', {
             this.buffer = []
           })
 
+          const re = /sourcebuffer is full/i // FIXME? how does this work across browsers?
+
           this.appendInterval = setInterval(() => {
             if (this.audioSourceBuffer && !this.audioSourceBuffer.updating && this.buffer.length > 0) {
-              this.audioSourceBuffer.appendBuffer(this.buffer.shift())
+              const _data = this.buffer.shift()
 
-              this.appendCount++
+              try {
+                this.audioSourceBuffer.appendBuffer(_data)
+                this.appendCount++
+              } catch (e) {
+                if (e.toString().match(re)) {
+                  this.buffer.unshift(_data)
+                }
+              }
             }
           }, 10)
         }
@@ -136,6 +152,11 @@ export const fileStore = defineStore('file', {
       if (this.appendInterval) {
         clearInterval(this.appendInterval)
         this.appendInterval = null
+      }
+
+      if (this.streamEndInterval) {
+        clearInterval(this.streamEndInterval)
+        this.streamEndInterval = null
       }
 
       this.body = null
