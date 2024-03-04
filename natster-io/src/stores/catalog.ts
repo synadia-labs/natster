@@ -147,7 +147,7 @@ export const catalogStore = defineStore('catalog', {
 
       var fileArray
       const nStore = natsStore()
-      const sub = nStore.connection.subscribe('natster.media.' + catalog + '.' + hash)
+      const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
       ;(async () => {
         for await (const m of sub) {
           const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
@@ -172,7 +172,7 @@ export const catalogStore = defineStore('catalog', {
         target_xkey: this.xkey_pub
       }
       await nStore.connection
-        .request('natster.catalog.' + catalog + '.download', JSON.stringify(dl_request), {
+        .request('natster.catalog.' + catalog.name + '.download', JSON.stringify(dl_request), {
           timeout: 5000
         })
         .then((m) => {
@@ -183,7 +183,7 @@ export const catalogStore = defineStore('catalog', {
           console.error('nats requestCatalogFiles err: ', err)
         })
     },
-    async viewFile(fileName, catalog, hash, mimeType) {
+    async viewFile(fileName, fileDescription, catalog, hash, mimeType) {
       const fStore = fileStore()
 
       let xkey = createCurve()
@@ -192,7 +192,7 @@ export const catalogStore = defineStore('catalog', {
 
       var fileArray
       const nStore = natsStore()
-      const sub = nStore.connection.subscribe('natster.media.' + catalog + '.' + hash)
+      const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
       ;(async () => {
         let timeout
         for await (const m of sub) {
@@ -207,7 +207,7 @@ export const catalogStore = defineStore('catalog', {
               timeout = null
             }
 
-            fStore.render(fileName, mimeType, decrypted)
+            fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
 
             timeout = setTimeout(() => {
               fStore.endStream()
@@ -217,9 +217,15 @@ export const catalogStore = defineStore('catalog', {
             }, 5000)
           } else {
             if (mimeType.toLowerCase() === 'audio/mpeg') {
-              fStore.render(fileName, mimeType, decrypted)
+              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
             } else {
-              fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
+              fStore.render(
+                fileName,
+                fileDescription,
+                mimeType,
+                new TextDecoder().decode(decrypted),
+                catalog
+              )
             }
 
             if (chunkIdx === totalChunks - 1) {
@@ -237,7 +243,7 @@ export const catalogStore = defineStore('catalog', {
         target_xkey: this.xkey_pub
       }
       await nStore.connection
-        .request('natster.catalog.' + catalog + '.download', JSON.stringify(dl_request), {
+        .request('natster.catalog.' + catalog.name + '.download', JSON.stringify(dl_request), {
           timeout: 5000
         })
         .then((m) => {

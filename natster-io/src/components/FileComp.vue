@@ -69,12 +69,7 @@
                 <button
                   :disabled="false"
                   @click.prevent="
-                    cStore.downloadFile(
-                      getFileName(file.path),
-                      catalog.name,
-                      file.hash,
-                      file.mime_type
-                    )
+                    cStore.downloadFile(getFileName(file.path), catalog, file.hash, file.mime_type)
                   "
                   :class="[
                     active ? 'bg-violet-500 text-white' : 'text-gray-900',
@@ -92,7 +87,13 @@
               <MenuItem v-slot="{ active }">
                 <button
                   @click.prevent="
-                    cStore.viewFile(getFileName(file.path), catalog.name, file.hash, file.mime_type)
+                    cStore.viewFile(
+                      getFileName(file.path),
+                      file.description,
+                      catalog,
+                      file.hash,
+                      file.mime_type
+                    )
                   "
                   :class="[
                     active ? 'bg-violet-500 text-white' : 'text-gray-900',

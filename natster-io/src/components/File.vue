@@ -40,36 +40,39 @@
                 </button>
               </div>
               <div class="sm:flex sm:items-start">
-                <div
-                  class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10"
-                >
-                  <InformationCircleIcon class="h-6 w-6 text-blue-400" aria-hidden="true" />
-                </div>
                 <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                  <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">{{
-                    title
-                  }}</DialogTitle>
+                  <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
+                    {{ catalog.name }} | {{ title }}</DialogTitle
+                  >
                   <div class="mt-2">
                     <p v-if="!!body" class="text-sm text-gray-500">
                       {{ body }}
                     </p>
-
-                    <video
-                      v-if="!!mediaUrl && mimeType.toLowerCase() == 'video/mp4'"
-                      id="video"
-                      :type="mimeType"
-                      :src="mediaUrl"
-                      width="640"
-                      height="360"
-                      autoplay
-                      controls
-                    ></video>
-                    <AudioPlayer
-                      v-if="!!mediaUrl && mimeType.toLowerCase() == 'audio/mpeg'"
-                      :option="getAudioOptions(mediaUrl, title, '')"
-                    />
                   </div>
                 </div>
+              </div>
+              <div class="relative">
+                <video
+                  v-if="!!mediaUrl && mimeType.toLowerCase() == 'video/mp4'"
+                  id="video"
+                  :type="mimeType"
+                  :src="mediaUrl"
+                  width="640"
+                  height="360"
+                  autoplay
+                  controls
+                ></video>
+                <AudioPlayer
+                  v-if="!!mediaUrl && mimeType.toLowerCase() == 'audio/mpeg'"
+                  :option="
+                    getAudioOptions(
+                      mediaUrl,
+                      description == '' ? title : description,
+                      catalog.image
+                    )
+                  "
+                  :title="title"
+                />
               </div>
               <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                 <button
@@ -98,7 +101,7 @@ import 'vue3-audio-player/dist/style.css'
 
 import { fileStore } from '../stores/file'
 const fStore = fileStore()
-const { body, title, show, mimeType, mediaUrl } = storeToRefs(fStore)
+const { body, title, show, mimeType, mediaUrl, catalog, description } = storeToRefs(fStore)
 
 function close() {
   console.log('reset')

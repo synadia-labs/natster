@@ -5,7 +5,9 @@ export const fileStore = defineStore('file', {
     body: null,
     buffer: [],
     loading: true,
+    catalog: null,
     title: '',
+    description: '',
     show: false,
     mimeType: null,
     codec: null,
@@ -18,7 +20,7 @@ export const fileStore = defineStore('file', {
 
     appendCount: 0,
     appendInterval: null,
-    streamEndInterval: null,
+    streamEndInterval: null
   }),
   actions: {
     endStream() {
@@ -34,10 +36,12 @@ export const fileStore = defineStore('file', {
         }, 100)
       }
     },
-    render(title, mimeType, data) {
+    render(title, description, mimeType, data, catalog) {
       this.title = title
       this.show = true
       this.mimeType = mimeType
+      this.catalog = catalog
+      this.description = description
 
       if (mimeType.toLowerCase().indexOf('video/') === 0) {
         if (!this.mediaSource && !this.mediaUrl && !this.videoSourceBuffer) {
@@ -78,7 +82,11 @@ export const fileStore = defineStore('file', {
           this.mediaSource.addEventListener('error', (e) => {})
 
           this.appendInterval = setInterval(() => {
-            if (this.videoSourceBuffer && !this.videoSourceBuffer.updating && this.buffer.length > 0) {
+            if (
+              this.videoSourceBuffer &&
+              !this.videoSourceBuffer.updating &&
+              this.buffer.length > 0
+            ) {
               this.videoSourceBuffer.appendBuffer(this.buffer.shift())
               this.appendCount++
             }
@@ -128,7 +136,11 @@ export const fileStore = defineStore('file', {
           const re = /sourcebuffer is full/i // FIXME? how does this work across browsers?
 
           this.appendInterval = setInterval(() => {
-            if (this.audioSourceBuffer && !this.audioSourceBuffer.updating && this.buffer.length > 0) {
+            if (
+              this.audioSourceBuffer &&
+              !this.audioSourceBuffer.updating &&
+              this.buffer.length > 0
+            ) {
               const _data = this.buffer.shift()
 
               try {
