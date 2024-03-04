@@ -113,6 +113,10 @@ func (srv *CatalogServer) transmitChunkedFile(
 			slog.Info("Completed transcoding", "path", path)
 		}()
 
+		defer func() {
+			_ = os.Remove(tmppath)
+		}()
+
 		time.Sleep(time.Millisecond * 5)
 		path = tmppath
 
@@ -190,10 +194,6 @@ func (srv *CatalogServer) transmitChunkedFile(
 			slog.Error("Failed to transmit chunk", err)
 			break
 		}
-	}
-
-	if transcoding {
-		_ = os.Remove(path)
 	}
 }
 
