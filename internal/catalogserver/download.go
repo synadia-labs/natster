@@ -191,6 +191,10 @@ func (srv *CatalogServer) transmitChunkedFile(
 			break
 		}
 	}
+
+	if transcoding {
+		_ = os.Remove(path)
+	}
 }
 
 func (srv *CatalogServer) transmitChunk(index int, targetSubject string, request models.DownloadRequest, buf []byte, resp models.DownloadResponse) error {
