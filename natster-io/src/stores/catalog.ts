@@ -226,6 +226,8 @@ export const catalogStore = defineStore('catalog', {
                 fStore.endStream()
                 timeout = null
               }, 5000)
+
+              fStore.render(fileName, mimeType, decrypted)
             } else {
               fStore.render(fileName, mimeType, new TextDecoder().decode(decrypted))
             }
