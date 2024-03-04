@@ -94,10 +94,18 @@ export const fileStore = defineStore('file', {
             console.log(e)
           })
 
-          this.audioSourceBuffer.addEventListener('abort', (e) => {})
-          this.audioSourceBuffer.addEventListener('updatestart', (e) => {})
-          this.audioSourceBuffer.addEventListener('update', (e) => {})
-          this.audioSourceBuffer.addEventListener('updateend', (e) => {})
+          this.audioSourceBuffer.addEventListener('abort', (e) => {
+            console.log(e)
+          })
+          this.audioSourceBuffer.addEventListener('updatestart', (e) => {
+            console.log(e)
+          })
+          this.audioSourceBuffer.addEventListener('update', (e) => {
+            console.log(e)
+          })
+          this.audioSourceBuffer.addEventListener('updateend', (e) => {
+            console.log(e)
+          })
         })
 
         this.mediaSource.addEventListener('sourceended', (e) => {
