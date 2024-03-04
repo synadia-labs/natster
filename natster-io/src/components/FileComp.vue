@@ -11,23 +11,27 @@
     />
     <div class="min-w-0 flex-auto">
       <div class="flex items-start gap-x-3">
-        <p class="text-sm font-semibold text-gray-900">{{ getFileName(file.path) }}</p>
+        <p class="text-sm font-semibold text-gray-900">{{ file.description == 'Auto-imported library entry' ? getFileName(file.path) : file.description }}</p>
       </div>
       <div class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
         <span class="whitespace-nowrap"
-          >{{ file.hash.substring(0, 4) }}...{{
-            file.hash.substring(file.hash.length - 8, file.hash.length)
-          }}</span
+          >
+          {{ formatBytes(file.byte_size) }} | {{ file.mime_type }}
+        </span
         >
       </div>
     </div>
     <div class="flex flex-none items-center gap-x-4">
       <div class="min-w-0">
         <div class="flex justify-end gap-x-3">
-          <p class="text-sm leading-6 text-gray-900">{{ file.description }}</p>
+          <p class="text-sm leading-6 text-gray-900">{{ file.description == 'Auto-imported library entry' ? file.description : getFileName(file.path) }}</p>
         </div>
         <div class="mt-1 flex items-center justify-end gap-x-2 text-xs leading-5 text-gray-500">
-          <p class="whitespace-nowrap">{{ file.mime_type }} | {{ formatBytes(file.byte_size) }}</p>
+          <p class="whitespace-nowrap">
+          {{ file.hash.substring(0, 4) }}...{{
+            file.hash.substring(file.hash.length - 8, file.hash.length)
+          }}
+          </p>
         </div>
       </div>
 
