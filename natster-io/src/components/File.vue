@@ -56,13 +56,13 @@
 
                     <video
                       v-if="!!mediaUrl"
-                        id="video"
-                        :type="mimeType"
-                        :src="mediaUrl"
-                        width="640"
-                        height="360"
-                        autoplay
-                        controls
+                      id="video"
+                      :type="mimeType"
+                      :src="mediaUrl"
+                      width="640"
+                      height="360"
+                      autoplay
+                      controls
                     ></video>
                   </div>
                 </div>
@@ -94,30 +94,23 @@ import { fileStore } from '../stores/file'
 const fStore = fileStore()
 const { body, title, show, mimeType, mediaUrl } = storeToRefs(fStore)
 
-
 function close() {
   console.log('reset')
   fStore.reset()
 }
 
-watch(
-  mimeType,
-  (newVal, oldVal) => {
-    console.log(`mime type changed... ${newVal}`)
-    if (!!newVal && newVal.toLowerCase().indexOf('video/') === 0) {
-      console.log('video incoming')
-    }
+watch(mimeType, (newVal, oldVal) => {
+  console.log(`mime type changed... ${newVal}`)
+  if (!!newVal && newVal.toLowerCase().indexOf('video/') === 0) {
+    console.log('video incoming')
   }
-)
+})
 
-watch(
-  mediaUrl,
-  (newVal, oldVal) => {
-    if (!!newVal) {
-      setTimeout(() => {
-        // document.querySelector('video').play() // HACK
-      }, 100)
-    }
+watch(mediaUrl, (newVal, oldVal) => {
+  if (!!newVal) {
+    setTimeout(() => {
+      // document.querySelector('video').play() // HACK
+    }, 100)
   }
-)
+})
 </script>
