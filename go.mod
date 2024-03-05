@@ -16,7 +16,7 @@ require (
 	github.com/jellydator/ttlcache/v3 v3.1.1
 	github.com/mdp/qrterminal/v3 v3.2.0
 	github.com/nats-io/jsm.go v0.1.1-0.20231031093634-09b45b142881
-	github.com/nats-io/nats.go v1.32.0
+	github.com/nats-io/nats.go v1.33.1
 	github.com/nats-io/nkeys v0.4.7
 	github.com/synadia-io/control-plane-sdk-go v0.3.2
 	github.com/u2takey/ffmpeg-go v0.5.0
