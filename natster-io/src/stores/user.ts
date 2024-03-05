@@ -1,10 +1,6 @@
 import { defineStore } from 'pinia'
 import { jwtDecode } from 'jwt-decode'
 import { useAuth0 } from '@auth0/auth0-vue'
-import { natsStore } from './nats'
-import type { Catalog } from '../types/types.ts'
-import { JSONCodec, StringCodec } from 'nats.ws'
-import { fileStore } from './file'
 
 export const userStore = defineStore('user', {
   state: () => ({
@@ -21,17 +17,20 @@ export const userStore = defineStore('user', {
     pending_imports: 0
   }),
   actions: {
-    setJWT(jwt) {
+    setJWT(jwt: string) {
       this.jwt = jwt
       localStorage.setItem('natster_jwt', jwt)
     },
-    setNkey(nkey) {
+    setNkey(nkey: string) {
       this.nkey = nkey
       localStorage.setItem('natster_nkey', nkey)
     },
-    setOauthId(id) {
+    setOauthId(id: string) {
       this.oauth_id = id
       localStorage.setItem('natster_oauth_id', id)
+    },
+    setCatalogOnline(online: boolean) {
+      this.catalog_online = online
     }
   },
   getters: {

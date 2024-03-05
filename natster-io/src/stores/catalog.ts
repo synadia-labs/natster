@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { userStore } from './user'
 import { natsStore } from './nats'
 import { createCurve } from 'nkeys.js'
-import { connect, jwtAuthenticator, JSONCodec } from 'nats.ws'
+import { jwtAuthenticator, JSONCodec } from 'nats.ws'
 import type { Catalog, File } from '../types/types.ts'
 import { fileStore } from './file'
 import { notificationStore } from './notification'
@@ -20,20 +20,21 @@ export const catalogStore = defineStore('catalog', {
     subscribeToHeartbeats() {
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.global-events.>')
-      ;(async () => {
-        for await (const msg of sub) {
-          let m = JSONCodec().decode(msg.data)
-          this.setOnlineAndCatalogRevision(m.catalog, m.revision)
-        }
-        console.log('subscription closed')
-      })()
+        ; (async () => {
+          for await (const msg of sub) {
+            let m = JSONCodec().decode(msg.data)
+            this.setOnlineAndCatalogRevision(m.catalog, m.revision)
+          }
+          console.log('subscription closed')
+        })()
     },
     setOnlineAndCatalogRevision(inCat, rev) {
       const nStore = notificationStore()
       var d = new Date(0)
       d.setUTCSeconds(rev)
-      this.catalogs.forEach(async function (c, i) {
+      this.catalogs.forEach(async function(c, i) {
         if (c.name == inCat) {
+          c.pending_invite = false
           c.lastSeen = Date.now()
           if (c.status != rev) {
             c.status = rev
@@ -58,7 +59,7 @@ export const catalogStore = defineStore('catalog', {
     },
     setCatalogSelected(cat) {
       let selectedDiff = 0
-      this.catalogs.forEach(async function (item, index) {
+      this.catalogs.forEach(async function(item, index) {
         if (cat.name == item.name) {
           if (item.selected) {
             selectedDiff = -1
@@ -111,7 +112,13 @@ export const catalogStore = defineStore('catalog', {
             this.shares_init = true
           }
         })
-        .catch((err) => console.error('nats shares err: ', err))
+        .catch(() => {
+          notificationStore().setNotification(
+            'Unable to connect',
+            'There is an issue with your connection'
+          )
+          this.shares_init = true
+        })
     },
     async getLocalInbox() {
       const uStore = userStore()
@@ -136,7 +143,13 @@ export const catalogStore = defineStore('catalog', {
             this.pending_init = true
           }
         })
-        .catch((err) => console.error('nats ping err: ', err))
+        .catch((err) => {
+          notificationStore().setNotification(
+            'Not running Natster Catalog',
+            'You do not appear to be running a natster catalog'
+          )
+          this.pending_init = true
+        })
     },
     async downloadFile(fileName, catalog, hash, mimeType) {
       const fStore = fileStore()
@@ -148,23 +161,23 @@ export const catalogStore = defineStore('catalog', {
       var fileArray
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
-      ;(async () => {
-        for await (const m of sub) {
-          const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
-          const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
-          const senderXKey = m.headers.get('x-natster-sender-xkey')
+        ; (async () => {
+          for await (const m of sub) {
+            const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
+            const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+            const senderXKey = m.headers.get('x-natster-sender-xkey')
 
-          let decrypted = xkey.open(m.data, senderXKey)
-          fileArray.push(decrypted)
+            let decrypted = xkey.open(m.data, senderXKey)
+            fileArray.push(decrypted)
 
-          if (chunkIdx === totalChunks - 1) {
-            sub.unsubscribe()
+            if (chunkIdx === totalChunks - 1) {
+              sub.unsubscribe()
+            }
           }
-        }
 
-        var blob = new Blob(fileArray, { type: mimeType })
-        saveAs(blob, fileName)
-      })()
+          var blob = new Blob(fileArray, { type: mimeType })
+          saveAs(blob, fileName)
+        })()
 
       const dl_request = {
         hash: hash,
@@ -193,30 +206,29 @@ export const catalogStore = defineStore('catalog', {
       var fileArray
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
-      ;(async () => {
-        let timeout
-        for await (const m of sub) {
-          const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
-          const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
-          const senderXKey = m.headers.get('x-natster-sender-xkey')
-          let decrypted = xkey.open(m.data, senderXKey)
+        ; (async () => {
+          let timeout
+          for await (const m of sub) {
+            const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
+            const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+            const senderXKey = m.headers.get('x-natster-sender-xkey')
+            let decrypted = xkey.open(m.data, senderXKey)
 
-          if (mimeType.toLowerCase().indexOf('video/') === 0) {
-            if (timeout) {
-              clearTimeout(timeout)
-              timeout = null
-            }
+            if (mimeType.toLowerCase().indexOf('video/') === 0) {
+              if (timeout) {
+                clearTimeout(timeout)
+                timeout = null
+              }
 
-            fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
+              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
 
-            timeout = setTimeout(() => {
-              fStore.endStream()
-              timeout = null
+              timeout = setTimeout(() => {
+                fStore.endStream()
+                timeout = null
 
-              sub.unsubscribe()
-            }, 5000)
-          } else {
-            if (mimeType.toLowerCase() === 'audio/mpeg') {
+                sub.unsubscribe()
+              }, 5000)
+            } else if (mimeType.toLowerCase() === 'audio/mpeg') {
               fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
             } else {
               fStore.render(
@@ -233,9 +245,8 @@ export const catalogStore = defineStore('catalog', {
               sub.unsubscribe()
             }
           }
-        }
-        console.log('subscription closed')
-      })()
+          console.log('subscription closed')
+        })()
 
       const dl_request = {
         hash: hash,
@@ -269,17 +280,28 @@ export const catalogStore = defineStore('catalog', {
       return state.shares_init && state.pending_init
     },
     getImportedCatalogs(state) {
-      state.catalogs.forEach(function (tCatalog, index) {
-        state.pending_catalogs.forEach(function (tPending, index) {
+      state.catalogs.forEach(function(tCatalog) {
+        if (tCatalog.from == 'AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC') {
+          tCatalog.pending_invite = false // synadiahub is never pending
+          return
+        }
+        state.pending_catalogs.forEach(function(tPending) {
           if (tCatalog.name === tPending.name) {
             tCatalog.pending_invite = true
           }
+
         })
 
         if (!tCatalog.online && Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
+          if (tCatalog.from == userStore().getAccount) {
+            userStore().setCatalogOnline(true)
+          }
           tCatalog.online = true
           notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
         } else if (tCatalog.online && Date.now() - tCatalog.lastSeen > 1 * 60 * 1000) {
+          if (tCatalog.from == userStore().getAccount) {
+            userStore().setCatalogOnline(false)
+          }
           tCatalog.online = false
           notificationStore().setNotification(
             'Catalog Offline',
