@@ -24,7 +24,7 @@ func New(nc *nats.Conn) *GlobalService {
 	}
 }
 
-func (srv *GlobalService) Start() error {
+func (srv *GlobalService) Start(version, commit, date string) error {
 	err := srv.startApiSubscriptions()
 	if err != nil {
 		return err
@@ -36,6 +36,26 @@ func (srv *GlobalService) Start() error {
 	}
 
 	_, err = srv.createOrReuseOtcBucket()
+	if err != nil {
+		return err
+	}
+
+	_, err = srv.createOrReuseCatalogProjectionBucket()
+	if err != nil {
+		return err
+	}
+
+	_, err = srv.createOrReuseAccountProjectionBucket()
+	if err != nil {
+		return err
+	}
+
+	err = srv.createOrReuseCatalogProjectionConsumer()
+	if err != nil {
+		return err
+	}
+
+	err = srv.createOrReuseAccountProjectionConsumer()
 	if err != nil {
 		return err
 	}
@@ -54,7 +74,12 @@ func (srv *GlobalService) Start() error {
 	})
 
 	go srv.hbCache.Start()
-	slog.Info("Natster Global Service Started")
+
+	slog.Info("Natster Global Service Started",
+		slog.String("version", version),
+		slog.String("commit", commit),
+		slog.String("date", date),
+	)
 	return nil
 }
 

@@ -266,6 +266,27 @@ func ImportCatalog(ctx *fisk.ParseContext) error {
 	return nil
 }
 
+func UnshareCatalog(ctx *fisk.ParseContext) error {
+	if len(ShareOpts.AccountKey) != 56 ||
+		!strings.HasPrefix(ShareOpts.AccountKey, "A") {
+		return errors.New("target is not a properly formed account public key")
+	}
+
+	ShareOpts.Name = strings.ToLower(ShareOpts.Name)
+	err := publishCatalogUnshared()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Stopped sharing catalog '%s' with target '%s'. Note: Natster makes no guarantees that the target account exists.\n",
+		ShareOpts.Name,
+		ShareOpts.AccountKey,
+	)
+	fmt.Println("If this catalog wasn't shared with the target or has already been unshared, this operation will have no effect.")
+
+	return nil
+}
+
 func ShareCatalog(ctx *fisk.ParseContext) error {
 
 	if len(ShareOpts.AccountKey) != 56 ||
@@ -322,6 +343,29 @@ func NewCatalog(ctx *fisk.ParseContext) error {
 		return err
 	}
 	fmt.Printf("New catalog created: %s\n", HubOpts.Name)
+	return nil
+}
+
+func publishCatalogUnshared() error {
+	ctx, _ := loadContext()
+	client, err := globalservice.NewClientWithCredsPath(ctx.CredsPath)
+	if err != nil {
+		slog.Error(
+			"Failed to connect to NGS",
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+	err = client.PublishEvent(models.CatalogUnsharedEventType, ShareOpts.Name, ShareOpts.AccountKey, nil)
+	if err != nil {
+		slog.Error(
+			"Failed to publish catalog unshared event",
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+	client.Drain()
+
 	return nil
 }
 

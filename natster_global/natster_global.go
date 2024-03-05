@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	log "log/slog"
 	"os"
 	"os/signal"
@@ -34,13 +33,11 @@ func main() {
 
 	ctxx := context.Background()
 	srv := globalservice.New(nc)
-	err = srv.Start()
+	err = srv.Start(VERSION, COMMIT, DATE)
 	if err != nil {
 		panic(err)
 	}
 	setupSignalHandlers(srv)
-
-	fmt.Printf("Global Service started.\nVersion: %s\nCommit: %s\nBuildDate: %s", VERSION, COMMIT, DATE)
 
 	<-ctxx.Done()
 

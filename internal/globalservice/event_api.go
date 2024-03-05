@@ -3,10 +3,8 @@ package globalservice
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -20,49 +18,49 @@ const (
 
 // Returns the total number of accounts in which developers have run `natster init`
 func (srv *GlobalService) GetTotalInitializedAccounts() (uint64, error) {
-	subject := fmt.Sprintf("natster.events.*.*.*.%s", models.NatsterInitializedEventType)
-	return srv.countFilteredEvents(subject)
+	js, _ := jetstream.New(srv.nc)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	kv, err := js.KeyValue(ctx, accountProjectionBucketName)
+	if err != nil {
+		slog.Error("Failed to locate key value bucket", slog.Any("error", err), slog.String("bucket", accountProjectionBucketName))
+		return 0, err
+	}
+	status, err := kv.Status(ctx)
+	if err != nil {
+		slog.Error("Couldn't obtain status of key value bucket", slog.Any("error", err), slog.String("bucket", accountProjectionBucketName))
+		return 0, err
+	}
+
+	// NOTE: this number will only be accurate if we're only keeping the latest version (e.g. no history)
+	// in the kv bucket
+	return status.Values(), nil
 }
 
+// This number is currently inaccurate due to the "unshare" feature. TODO: we can fix this when we add a global
+// stats projection
 func (srv *GlobalService) GetTotalSharedCatalogs() (uint64, error) {
 	subject := fmt.Sprintf("natster.events.*.*.*.%s", models.CatalogSharedEventType)
 	return srv.countFilteredEvents(subject)
 }
 
-func (srv *GlobalService) GetBoundContext(accountKey string) (*models.ContextBoundEvent, error) {
-	subject := fmt.Sprintf("natster.events.%s.none.none.%s", accountKey, models.ContextBoundEventType)
-	js, err := jetstream.New(srv.nc)
-	if err != nil {
-		return nil, err
-	}
-
+// Retrieves the most recent bound context by loading the account projection
+func (srv *GlobalService) GetBoundContext(myAccountKey string) (*models.ContextBoundEvent, error) {
+	js, _ := jetstream.New(srv.nc)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-
-	s, err := js.Stream(ctx, streamName)
+	kv, err := js.KeyValue(ctx, accountProjectionBucketName)
 	if err != nil {
+		slog.Error("Failed to locate key value bucket", slog.Any("error", err), slog.String("bucket", accountProjectionBucketName))
 		return nil, err
 	}
+	myAccount, err := loadAccount(kv, myAccountKey)
 	if err != nil {
-		return nil, err
-	}
-
-	msg, err := s.GetLastMsgForSubject(ctx, subject)
-	if err != nil {
-		return nil, err
-	}
-	if msg == nil {
-		return nil, errors.New("context bound event not found")
-	}
-
-	var discoveredContext models.ContextBoundEvent
-	err = json.Unmarshal(msg.Data, &discoveredContext)
-	if err != nil {
-		slog.Error("Deserialization failure of context bound event", err)
+		slog.Error("Failed to load source account for catalog query", slog.Any("error", err))
 		return nil, err
 	}
 
-	return &discoveredContext, nil
+	return myAccount.BoundContext, nil
 }
 
 func (srv *GlobalService) GetOAuthIdForAccount(accountKey string) (*string, error) {
@@ -114,43 +112,41 @@ func (srv *GlobalService) GetBoundContextByOAuth(oauthId string) (*models.Natste
 
 }
 
+// Reads the account projection for the given querying account and returns a flattened list
+// of directional shares to and from this account
 func (srv *GlobalService) GetMyCatalogs(myAccountKey string) ([]models.CatalogShareSummary, error) {
-	subject := fmt.Sprintf("natster.events.*.*.*.%s", models.CatalogSharedEventType)
-	js, err := jetstream.New(srv.nc)
-	if err != nil {
-		return nil, err
-	}
 
-	ctx := context.Background()
-	opts := make([]jetstream.StreamInfoOpt, 0)
-	opts = append(opts, jetstream.WithSubjectFilter(subject))
-	s, err := js.Stream(ctx, streamName)
+	js, _ := jetstream.New(srv.nc)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	kv, err := js.KeyValue(ctx, accountProjectionBucketName)
 	if err != nil {
+		slog.Error("Failed to locate key value bucket", slog.Any("error", err), slog.String("bucket", accountProjectionBucketName))
 		return nil, err
 	}
-	streamInfo, err := s.Info(ctx, opts...)
+	myAccount, err := loadAccount(kv, myAccountKey)
 	if err != nil {
+		slog.Error("Failed to load source account for catalog query", slog.Any("error", err))
 		return nil, err
 	}
-
 	summaries := make([]models.CatalogShareSummary, 0)
-	for k := range streamInfo.State.Subjects {
-		tokens := strings.Split(k, ".")
-		from := tokens[2]
-		to := tokens[3]
-		catalog := tokens[4]
-		online := srv.IsCatalogOnline(catalog)
-		rev := srv.CatalogRevision(catalog)
-
-		if from == myAccountKey || to == myAccountKey {
-			summaries = append(summaries, models.CatalogShareSummary{
-				FromAccount:   from,
-				ToAccount:     to,
-				Catalog:       catalog,
-				CatalogOnline: online,
-				Revision:      rev,
-			})
-		}
+	for _, outShare := range myAccount.OutShares {
+		summaries = append(summaries, models.CatalogShareSummary{
+			FromAccount:   myAccountKey,
+			ToAccount:     outShare.Account,
+			Catalog:       outShare.Catalog,
+			CatalogOnline: srv.IsCatalogOnline(outShare.Catalog),
+			Revision:      srv.CatalogRevision(outShare.Catalog),
+		})
+	}
+	for _, inShare := range myAccount.InShares {
+		summaries = append(summaries, models.CatalogShareSummary{
+			FromAccount:   inShare.Account,
+			ToAccount:     myAccountKey,
+			Catalog:       inShare.Catalog,
+			CatalogOnline: srv.IsCatalogOnline(inShare.Catalog),
+			Revision:      srv.CatalogRevision(inShare.Catalog),
+		})
 	}
 
 	return summaries, nil

@@ -26,6 +26,9 @@ func handleStats(srv *GlobalService) func(m *nats.Msg) {
 		if err != nil {
 			return
 		}
+
+		// TODO: replace this calculation with a global stats projection so we
+		// can just query it
 		shareCount, err := srv.GetTotalSharedCatalogs()
 		if err != nil {
 			return

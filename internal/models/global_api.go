@@ -3,6 +3,7 @@ package models
 const (
 	NatsterInitializedEventType = "natster_initialized"
 	CatalogSharedEventType      = "catalog_shared"
+	CatalogUnsharedEventType    = "catalog_unshared"
 	ContextBoundEventType       = "context_bound"
 )
 
