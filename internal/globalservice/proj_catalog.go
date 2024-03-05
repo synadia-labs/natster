@@ -152,6 +152,8 @@ func (srv *GlobalService) updateCatalogProjection(msg jetstream.Msg) {
 	_, err = kv.Put(ctx, catalog, projBytes)
 	if err != nil {
 		slog.Error("Failed to write projection", slog.Any("error", err))
+		_ = msg.Nak()
+		return
 	}
 
 	_ = msg.Ack()

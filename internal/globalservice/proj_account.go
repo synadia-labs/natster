@@ -134,8 +134,6 @@ func (srv *GlobalService) updateAccountProjection(msg jetstream.Msg) {
 	case models.ContextBoundEventType:
 		recordContextBinding(msg, from, kv)
 	}
-
-	_ = msg.Ack()
 }
 
 func recordContextBinding(msg jetstream.Msg, account string, kv jetstream.KeyValue) {
