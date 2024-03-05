@@ -36,6 +36,19 @@ func NewClientWithCredsPath(credsPath string) (*Client, error) {
 	return NewClient(nc), nil
 }
 
+func (c *Client) ValidateCatalogName(catalog string) (*models.CatalogNameValidationResult, error) {
+	res, err := c.nc.Request("natster.global.catalogs.validatename", []byte(catalog), 2*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var apiResult models.TypedApiResult[models.CatalogNameValidationResult]
+	err = json.Unmarshal(res.Data, &apiResult)
+	if err != nil {
+		return nil, err
+	}
+	return &apiResult.Data, nil
+}
+
 func (c *Client) Whoami() (*models.WhoamiResponse, error) {
 	res, err := c.nc.Request("natster.global.whoami", []byte{}, 1*time.Second)
 	if err != nil {

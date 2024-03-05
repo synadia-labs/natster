@@ -3,6 +3,7 @@ package models
 const (
 	NatsterInitializedEventType = "natster_initialized"
 	CatalogSharedEventType      = "catalog_shared"
+	CatalogUnsharedEventType    = "catalog_unshared"
 	ContextBoundEventType       = "context_bound"
 )
 
@@ -26,6 +27,11 @@ type NatsterInitializedEvent struct {
 	AccountId   string `json:"account_id"`
 	AccountName string `json:"account_name"`
 	AccountKey  string `json:"account_key"`
+}
+
+type CatalogNameValidationResult struct {
+	Valid   bool   `json:"valid"`
+	Message string `json:"message"`
 }
 
 // Occurs when someone with an OAuth ID claims a one-time code, resulting in a binding

@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
@@ -14,8 +13,8 @@ const (
 	streamSubject = "natster.events.*.*.*.*"
 	maxBytes      = 1_073_741_824 // 1 gib
 
-	otcBucketName = "NATSTER_CODES"
-	otcTimeoutMinutes
+	otcBucketName     = "NATSTER_CODES"
+	otcTimeoutMinutes = 5
 )
 
 // Stream pattern
@@ -35,7 +34,7 @@ func (srv *GlobalService) createOrReuseEventStream() error {
 
 	_, err := js.Stream(ctx, streamName)
 	if err != nil {
-		_, err = createStream(srv.nc, js)
+		_, err = createStream(js)
 		if err != nil {
 			return err
 		}
@@ -69,7 +68,7 @@ func (srv *GlobalService) createOrReuseOtcBucket() (jetstream.KeyValue, error) {
 	return kv, nil
 }
 
-func createStream(nc *nats.Conn, js jetstream.JetStream) (jetstream.Stream, error) {
+func createStream(js jetstream.JetStream) (jetstream.Stream, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 

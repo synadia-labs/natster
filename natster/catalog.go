@@ -266,6 +266,27 @@ func ImportCatalog(ctx *fisk.ParseContext) error {
 	return nil
 }
 
+func UnshareCatalog(ctx *fisk.ParseContext) error {
+	if len(ShareOpts.AccountKey) != 56 ||
+		!strings.HasPrefix(ShareOpts.AccountKey, "A") {
+		return errors.New("target is not a properly formed account public key")
+	}
+
+	ShareOpts.Name = strings.ToLower(ShareOpts.Name)
+	err := publishCatalogUnshared()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Stopped sharing catalog '%s' with target '%s'. Note: Natster makes no guarantees that the target account exists.\n",
+		ShareOpts.Name,
+		ShareOpts.AccountKey,
+	)
+	fmt.Println("If this catalog wasn't shared with the target or has already been unshared, this operation will have no effect.")
+
+	return nil
+}
+
 func ShareCatalog(ctx *fisk.ParseContext) error {
 
 	if len(ShareOpts.AccountKey) != 56 ||
@@ -273,8 +294,29 @@ func ShareCatalog(ctx *fisk.ParseContext) error {
 		return errors.New("target is not a properly formed account public key")
 	}
 
+	nctx, err := loadContext()
+	if err != nil {
+		return err
+	}
+	client, err := globalservice.NewClientWithCredsPath(nctx.CredsPath)
+	if err != nil {
+		slog.Error(
+			"Failed to connect to NGS",
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+	validationResult, err := client.ValidateCatalogName(ShareOpts.Name)
+	if err != nil {
+		return err
+	}
+	if !validationResult.Valid {
+		fmt.Printf("The catalog named '%s' cannot be shared: %s\n", ShareOpts.Name, validationResult.Message)
+		return nil
+	}
+
 	ShareOpts.Name = strings.ToLower(ShareOpts.Name)
-	err := publishCatalogShared()
+	err = publishCatalogShared()
 	if err != nil {
 		return err
 	}
@@ -306,6 +348,23 @@ func NewCatalog(ctx *fisk.ParseContext) error {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(io.Discard, nil)))
 
 	HubOpts.Name = strings.ToLower(HubOpts.Name)
+
+	nctx, _ := loadContext()
+	client, err := globalservice.NewClientWithCredsPath(nctx.CredsPath)
+	// skip this check if we can't talk to NGS
+	if err == nil {
+		validationResult, err := client.ValidateCatalogName(HubOpts.Name)
+		if err == nil {
+			if !validationResult.Valid {
+				fmt.Printf("The new catalog '%s' failed validation, and will not be shareable outside your account: %s\n. Catalog not created.\n",
+					HubOpts.Name,
+					validationResult.Message,
+				)
+				return nil
+			}
+		}
+	}
+
 	lib, err := medialibrary.New(HubOpts.RootPath, HubOpts.Name, HubOpts.Description)
 	if err != nil {
 		fmt.Printf("Failed to initialize media catalog: %s\n", err)
@@ -322,6 +381,29 @@ func NewCatalog(ctx *fisk.ParseContext) error {
 		return err
 	}
 	fmt.Printf("New catalog created: %s\n", HubOpts.Name)
+	return nil
+}
+
+func publishCatalogUnshared() error {
+	ctx, _ := loadContext()
+	client, err := globalservice.NewClientWithCredsPath(ctx.CredsPath)
+	if err != nil {
+		slog.Error(
+			"Failed to connect to NGS",
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+	err = client.PublishEvent(models.CatalogUnsharedEventType, ShareOpts.Name, ShareOpts.AccountKey, nil)
+	if err != nil {
+		slog.Error(
+			"Failed to publish catalog unshared event",
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+	client.Drain()
+
 	return nil
 }
 
