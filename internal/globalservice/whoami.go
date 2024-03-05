@@ -50,7 +50,7 @@ func handleGetContext(srv *GlobalService) func(m *nats.Msg) {
 			return
 		}
 		if nctx == nil {
-			slog.Error("No such context")
+			// no need to log this, as it'll ultimately be the most common case
 			_ = m.Respond(models.NewApiResultFail("Not Found", 404))
 			return
 		}

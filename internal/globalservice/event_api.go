@@ -72,6 +72,8 @@ func (srv *GlobalService) GetOAuthIdForAccount(accountKey string) (*string, erro
 	return &discoveredContext.OAuthIdentity, nil
 }
 
+// TODO: this needs to be converted to use a projection rather than running through the
+// event stream every time
 func (srv *GlobalService) GetBoundContextByOAuth(oauthId string) (*models.NatsterContext, error) {
 	subject := fmt.Sprintf("natster.events.*.*.*.%s", models.ContextBoundEventType)
 	js, err := jetstream.New(srv.nc)
@@ -105,11 +107,14 @@ func (srv *GlobalService) GetBoundContextByOAuth(oauthId string) (*models.Natste
 			ch <- &discoveredContext.BoundContext
 		}
 	})
-	discoveredContext := <-ch
-	cc.Stop()
-
-	return discoveredContext, nil
-
+	select {
+	case discoveredContext := <-ch:
+		cc.Stop()
+		return discoveredContext, nil
+	case <-time.After(1300 * time.Millisecond):
+		cc.Stop()
+		return nil, nil
+	}
 }
 
 // Reads the account projection for the given querying account and returns a flattened list
