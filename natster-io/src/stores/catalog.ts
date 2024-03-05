@@ -34,6 +34,7 @@ export const catalogStore = defineStore('catalog', {
       d.setUTCSeconds(rev)
       this.catalogs.forEach(async function(c, i) {
         if (c.name == inCat) {
+          c.pending_invite = false
           c.lastSeen = Date.now()
           if (c.status != rev) {
             c.status = rev
