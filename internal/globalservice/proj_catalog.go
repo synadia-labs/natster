@@ -4,16 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/synadia-labs/natster/internal/models"
 )
 
 const (
 	catalogProjectionBucketName = "PROJ_CATALOG"
+)
+
+var (
+	isAlpha = regexp.MustCompile(`^[A-Za-z0-9]+$`).MatchString
 )
 
 type catalogProjection struct {
@@ -157,4 +163,53 @@ func (srv *GlobalService) updateCatalogProjection(msg jetstream.Msg) {
 	}
 
 	_ = msg.Ack()
+}
+
+func (srv *GlobalService) AllCatalogs() ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	js, _ := jetstream.New(srv.nc)
+	kv, err := js.KeyValue(ctx, catalogProjectionBucketName)
+	if err != nil {
+		slog.Error("Failed to locate catalog projection bucket", slog.Any("error", err))
+		return nil, err
+	}
+	keysLister, err := kv.ListKeys(ctx)
+	if err != nil {
+		slog.Error("Failed to get key listing channel", slog.Any("error", err))
+		return nil, err
+	}
+
+	keys := make([]string, 0)
+	for k := range keysLister.Keys() {
+		keys = append(keys, k)
+	}
+
+	return keys, nil
+}
+
+func handleValidateName(srv *GlobalService) func(m *nats.Msg) {
+	return func(m *nats.Msg) {
+		candidateName := string(m.Data)
+		allKeys, err := srv.AllCatalogs()
+		if err != nil {
+			slog.Error("Failed to query list of all catalogs", slog.Any("error", err))
+			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
+			return
+		}
+		inUse := slices.Contains(allKeys, candidateName)
+		res := models.CatalogNameValidationResult{
+			Valid:   true,
+			Message: "",
+		}
+		if inUse {
+			res.Valid = false
+			res.Message = "Catalog name has already been shared"
+		}
+		if !isAlpha(candidateName) {
+			res.Valid = false
+			res.Message = "Catalog name must contain only numbers and letters if it is to be made shareable"
+		}
+		_ = m.Respond(models.NewApiResultPass(res))
+	}
 }

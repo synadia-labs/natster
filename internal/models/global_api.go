@@ -29,6 +29,11 @@ type NatsterInitializedEvent struct {
 	AccountKey  string `json:"account_key"`
 }
 
+type CatalogNameValidationResult struct {
+	Valid   bool   `json:"valid"`
+	Message string `json:"message"`
+}
+
 // Occurs when someone with an OAuth ID claims a one-time code, resulting in a binding
 // between the context originally submitted with the code and the OAuth ID, which in turn
 // allows that web user to access their natster resources

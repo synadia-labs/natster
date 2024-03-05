@@ -37,6 +37,10 @@ func (srv *GlobalService) startApiSubscriptions() error {
 		"*.natster.global.context.get", "globalservice",
 		handleGetContext(srv))
 
+	_, _ = srv.nc.QueueSubscribe(
+		"*.natster.global.catalogs.validatename", "globalservice",
+		handleValidateName(srv))
+
 	return nil
 }
 
