@@ -134,10 +134,9 @@ watch(mediaUrl, (newVal, oldVal) => {
 
 <style>
 .audio__player-play {
-    display: block;
+  display: block;
   margin-left: auto;
   margin-right: auto;
   width: 55%;
 }
 </style>
-
