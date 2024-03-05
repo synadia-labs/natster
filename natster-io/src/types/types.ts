@@ -1,13 +1,13 @@
 interface Catalog {
-  selected: bool
+  selected: boolean
   description: string
   image: string
-  online: bool
+  online: boolean
   lastSeen: Date
   to: string
   from: string
   name: string
-  pending_invite: bool
+  pending_invite: boolean
   files: File[]
   status: Date
 }

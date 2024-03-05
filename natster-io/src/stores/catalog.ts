@@ -101,7 +101,7 @@ export const catalogStore = defineStore('catalog', {
                   name: c.catalog,
                   online: c.catalog_online,
                   lastSeen: Date.now(),
-                  pending_invite: c.from_account == 'AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC' ? false : true, // synadiahub is never pending
+                  pending_invite: false,
                   status: c.revision,
                   files: []
                 }
@@ -280,17 +280,28 @@ export const catalogStore = defineStore('catalog', {
       return state.shares_init && state.pending_init
     },
     getImportedCatalogs(state) {
-      state.catalogs.forEach(function(tCatalog, index) {
-        state.pending_catalogs.forEach(function(tPending, index) {
+      state.catalogs.forEach(function(tCatalog) {
+        if (tCatalog.from == 'AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC') {
+          tCatalog.pending_invite = false // synadiahub is never pending
+          return
+        }
+        state.pending_catalogs.forEach(function(tPending) {
           if (tCatalog.name === tPending.name) {
             tCatalog.pending_invite = true
           }
+
         })
 
         if (!tCatalog.online && Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
+          if (tCatalog.from == userStore().getAccount) {
+            userStore().setCatalogOnline(true)
+          }
           tCatalog.online = true
           notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
         } else if (tCatalog.online && Date.now() - tCatalog.lastSeen > 1 * 60 * 1000) {
+          if (tCatalog.from == userStore().getAccount) {
+            userStore().setCatalogOnline(false)
+          }
           tCatalog.online = false
           notificationStore().setNotification(
             'Catalog Offline',
