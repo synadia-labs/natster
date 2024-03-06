@@ -104,7 +104,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 		cmd := exec.Command("ffprobe", "-show_format", "-of", "json", path)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			slog.Error("Error reading mp4 metadata '%s': %s", entry.Path, err.Error())
+			slog.Error("Error reading mp4 metadata", slog.String("path", entry.Path), err.Error())
 		} else {
 			transcode = !strings.Contains(string(out), natsterFragmentedKey)
 		}
@@ -123,7 +123,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 					Output(tmppath, ffmpeg.KwArgs{"movflags": "frag_keyframe+empty_moov+default_base_moof"}).
 					Run()
 				if err != nil {
-					slog.Error("Error transcoding mp4 '%s': %s", entry.Path, err.Error())
+					slog.Error("Error transcoding mp4", slog.String("path", entry.Path), err.Error())
 				}
 				transcodingInProgress = false
 
@@ -147,7 +147,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 
 	f, err := os.Open(path)
 	if err != nil {
-		slog.Error("Error reading file '%s': %s", path, err.Error())
+		slog.Error("Error reading file", slog.String("path": path), err.Error())
 	}
 	r := bufio.NewReader(f)
 	buf := make([]byte, 0, chunkSizeBytes)
