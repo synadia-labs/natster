@@ -208,11 +208,14 @@ export const catalogStore = defineStore('catalog', {
       const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
         ; (async () => {
           let timeout
+          let lastChunkReceivedTimestamp: number
+
           for await (const m of sub) {
             const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
             const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
             const senderXKey = m.headers.get('x-natster-sender-xkey')
-            let decrypted = xkey.open(m.data, senderXKey)
+            const decrypted = xkey.open(m.data, senderXKey)
+            lastChunkReceivedTimestamp = Date.now()
 
             if (mimeType.toLowerCase().indexOf('video/') === 0) {
               if (timeout) {
@@ -223,10 +226,18 @@ export const catalogStore = defineStore('catalog', {
               fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
 
               timeout = setTimeout(() => {
-                fStore.endStream()
-                timeout = null
-
-                sub.unsubscribe()
+                if (chunkIdx >= totalChunks - 1) {
+                  // HACK-- x-natster-total-chunks is inflated when streaming video/mp4
+                  // HACK-- this branch prevents slow streams from being canceled early... i.e., while we are still transcoding
+                  fStore.endStream()
+                  timeout = null
+  
+                  sub.unsubscribe()
+                } else {
+                  // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
+                  // TODO-- navigator.connection.addEventListener('change', () => { // prevent/cancel streams })
+                  console.log(`WARNING-- no packet received since ${lastChunkReceivedTimestamp}`)
+                }
               }, 5000)
             } else if (mimeType.toLowerCase() === 'audio/mpeg') {
               fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)

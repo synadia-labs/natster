@@ -94,7 +94,7 @@ func handleOtcGenerate(srv *GlobalService) func(m *nats.Msg) {
 
 		resp := models.OtcGenerateResponse{
 			Code:         otc,
-			ClaimUrl:     fmt.Sprintf("https://natster.io/%s", otc),
+			ClaimUrl:     fmt.Sprintf("https://natster.io/#/%s", otc),
 			ValidMinutes: tokenValidTimeMinutes,
 		}
 
