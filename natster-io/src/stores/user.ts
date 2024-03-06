@@ -14,6 +14,8 @@ export const userStore = defineStore('user', {
     xkey_seed: '',
     xkey_pub: '',
     catalog_online: false,
+    last_seen_ts: new Date(0),
+    ping: false,
     pending_imports: 0
   }),
   actions: {
@@ -31,9 +33,22 @@ export const userStore = defineStore('user', {
     },
     setCatalogOnline(online: boolean) {
       this.catalog_online = online
+    },
+    setPendingInvites(pending) {
+      this.pending_imports = pending
+    },
+    setLastSeenTS(ts: Date) {
+      this.last_seen_ts = ts
     }
   },
   getters: {
+    getLastSeen(state) {
+      return state.last_seen_ts
+    },
+    getCatalogOnline(state) {
+      state.ping
+      return (Date.now() - new Date(state.last_seen_ts).getTime() < (1 * 60 * 1000))
+    },
     getJWT(state) {
       return state.jwt !== '' ? state.jwt : localStorage.getItem('natster_jwt')
     },

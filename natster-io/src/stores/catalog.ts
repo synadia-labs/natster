@@ -28,6 +28,18 @@ export const catalogStore = defineStore('catalog', {
           console.log('subscription closed')
         })()
     },
+    subscribeToLocalHeartbeats() {
+      const nStore = natsStore()
+      const uStore = userStore()
+
+      const sub = nStore.connection.subscribe('natster.local-events.heartbeat')
+        ; (async () => {
+          for await (const msg of sub) {
+            uStore.setLastSeenTS(new Date(Date.now()))
+          }
+          console.log('subscription closed')
+        })()
+    },
     setOnlineAndCatalogRevision(inCat, rev) {
       const nStore = notificationStore()
       var d = new Date(0)
@@ -128,8 +140,10 @@ export const catalogStore = defineStore('catalog', {
         .then((msg) => {
           let m = JSONCodec().decode(msg.data)
           if (m.code == 200) {
-            uStore.catalog_online = true
-            uStore.pending_imports = m.data.unimported_shares.length
+            uStore.setLastSeenTS(Date.now())
+            uStore.ping = !uStore.ping
+
+            uStore.setPendingInvites(m.data.unimported_shares.length)
             m.data.unimported_shares.forEach((c, i) => {
               if (c.to_account === uStore.getAccount) {
                 const catalog: Catalog = {
@@ -152,8 +166,6 @@ export const catalogStore = defineStore('catalog', {
         })
     },
     async downloadFile(fileName, catalog, hash, mimeType) {
-      const fStore = fileStore()
-
       let xkey = createCurve()
       this.xkey_seed = new TextDecoder().decode(xkey.getSeed())
       this.xkey_pub = xkey.getPublicKey()
@@ -231,7 +243,7 @@ export const catalogStore = defineStore('catalog', {
                   // HACK-- this branch prevents slow streams from being canceled early... i.e., while we are still transcoding
                   fStore.endStream()
                   timeout = null
-  
+
                   sub.unsubscribe()
                 } else {
                   // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
@@ -291,8 +303,10 @@ export const catalogStore = defineStore('catalog', {
       return state.shares_init && state.pending_init
     },
     getImportedCatalogs(state) {
+      const uStore = userStore()
       state.catalogs.forEach(function(tCatalog) {
         if (tCatalog.from == 'AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC') {
+          uStore.ping = !uStore.ping
           tCatalog.pending_invite = false // synadiahub is never pending
           return
         }
@@ -300,19 +314,13 @@ export const catalogStore = defineStore('catalog', {
           if (tCatalog.name === tPending.name) {
             tCatalog.pending_invite = true
           }
-
         })
 
+        // Toggles catalogs avaialability
         if (!tCatalog.online && Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
-          if (tCatalog.from == userStore().getAccount) {
-            userStore().setCatalogOnline(true)
-          }
           tCatalog.online = true
           notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
         } else if (tCatalog.online && Date.now() - tCatalog.lastSeen > 1 * 60 * 1000) {
-          if (tCatalog.from == userStore().getAccount) {
-            userStore().setCatalogOnline(false)
-          }
           tCatalog.online = false
           notificationStore().setNotification(
             'Catalog Offline',
