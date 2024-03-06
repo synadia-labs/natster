@@ -77,11 +77,11 @@ const props = defineProps({
 
 watch(() => uStore.getCatalogOnline, (newVal) => {
   if (newVal) {
-    notificationStore().setNotification('Catalog Online', 'Your has come online')
+    notificationStore().setNotification('Catalog Online', 'Your catalog has come online')
   } else {
     notificationStore().setNotification(
       'Catalog Offline',
-      'Your has gone offline'
+      'Your catalog has gone offline'
     )
   }
 })
