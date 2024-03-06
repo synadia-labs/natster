@@ -17,7 +17,18 @@ func (srv *CatalogServer) startApiSubscriptions() error {
 
 	_, err := srv.nc.QueueSubscribe(
 		fmt.Sprintf("*.natster.catalog.%s.get", srv.library.Name), "natstercatalog",
-		handleCatalogGet(srv))
+		handleCatalogGet(srv, false))
+	if err != nil {
+		log.Error(
+			"Failed to subscribe to catalog get",
+			log.String("library", srv.library.Name),
+		)
+		return err
+	}
+
+	_, err = srv.nc.QueueSubscribe(
+		fmt.Sprintf("natster.catalog.%s.get", srv.library.Name), "natstercatalog",
+		handleCatalogGet(srv, true))
 	if err != nil {
 		log.Error(
 			"Failed to subscribe to catalog get",
@@ -28,7 +39,18 @@ func (srv *CatalogServer) startApiSubscriptions() error {
 
 	_, err = srv.nc.QueueSubscribe(
 		fmt.Sprintf("*.natster.catalog.%s.download", srv.library.Name), "natstercatalog",
-		handleDownloadRequest(srv))
+		handleDownloadRequest(srv, false))
+	if err != nil {
+		log.Error(
+			"Failed to subscribe to catalog item download",
+			log.String("library", srv.library.Name),
+		)
+		return err
+	}
+
+	_, err = srv.nc.QueueSubscribe(
+		fmt.Sprintf("natster.catalog.%s.download", srv.library.Name), "natstercatalog",
+		handleDownloadRequest(srv, true))
 	if err != nil {
 		log.Error(
 			"Failed to subscribe to catalog item download",
@@ -68,11 +90,14 @@ func (srv *CatalogServer) isClientAllowed(accountKey string) bool {
 	return allowed
 }
 
-func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
+func handleCatalogGet(srv *CatalogServer, local bool) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
 		tokens := strings.Split(m.Subject, ".")
-		// TODO: should we cache this?
-		allowed := srv.isClientAllowed(tokens[0])
+
+		allowed := true
+		if !local {
+			allowed = srv.isClientAllowed(tokens[0])
+		}
 
 		if !allowed { // is this account on the sharing list?
 			_ = m.Respond(models.NewApiResultFail("Forbidden", 403))
@@ -94,14 +119,6 @@ func handleCatalogGet(srv *CatalogServer) func(m *nats.Msg) {
 			Entries:     convertEntries(catalog),
 		}
 		catalogRaw := models.NewApiResultPass(catalogSummary)
-		if err != nil {
-			log.Error(
-				"Failed to serialize the catalog",
-				log.String("error", err.Error()),
-			)
-			return
-		}
-
 		m.Respond(catalogRaw)
 	}
 }

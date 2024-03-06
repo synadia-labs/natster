@@ -31,7 +31,7 @@ const (
 	mimeTypeVideoMP4 = "video/mp4"
 )
 
-func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
+func handleDownloadRequest(srv *CatalogServer, local bool) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
 		// *.natster.catalog.%s.download
 		tokens := strings.Split(m.Subject, ".")
@@ -43,17 +43,19 @@ func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
 			_ = m.Respond(models.NewApiResultFail(err.Error(), 400))
 			return
 		}
-		if !srv.isClientAllowed(tokens[0]) {
-			slog.Debug("Request to download file from unauthorized client",
-				slog.String("hash", req.Hash),
-				slog.String("account", tokens[0]),
-				slog.String("target_xkey", req.TargetXkey),
-			)
-			_ = m.Respond(models.NewApiResultFail("Forbidden", 403))
-			return
+		if !local {
+			if !srv.isClientAllowed(tokens[0]) {
+				slog.Debug("Request to download file from unauthorized client",
+					slog.String("hash", req.Hash),
+					slog.String("account", tokens[0]),
+					slog.String("target_xkey", req.TargetXkey),
+				)
+				_ = m.Respond(models.NewApiResultFail("Forbidden", 403))
+				return
+			}
 		}
 
-		slog.Info("Receiving request for file download",
+		slog.Info("Received request for file download",
 			slog.String("hash", req.Hash))
 
 		f := srv.library.FindByHash(req.Hash)
@@ -75,7 +77,7 @@ func handleDownloadRequest(srv *CatalogServer) func(m *nats.Msg) {
 		}
 		_ = m.Respond(models.NewApiResultPass(resp))
 
-		go srv.transmitChunkedFile(senderKp, tokens[0], req, f, chunks, resp, req.Transcode)
+		go srv.transmitChunkedFile(senderKp, tokens[0], req, f, chunks, resp, req.Transcode, local)
 	}
 }
 
@@ -86,7 +88,8 @@ func (srv *CatalogServer) transmitChunkedFile(
 	entry *medialibrary.MediaEntry,
 	chunks uint,
 	resp models.DownloadResponse,
-	transcode bool) {
+	transcode bool,
+	local bool) {
 
 	path := filepath.Join(srv.library.RootDir, entry.Path)
 
@@ -135,8 +138,13 @@ func (srv *CatalogServer) transmitChunkedFile(
 	r := bufio.NewReader(f)
 	buf := make([]byte, 0, chunkSizeBytes)
 
-	// Axxx.natster.media.kevvbuzz.xxxxxx
-	targetSubject := fmt.Sprintf("%s.natster.media.%s.%s", targetAccount, srv.library.Name, request.Hash)
+	// Axxx.natster.media.kevvbuzz.xxxxxx or natster.media.kevbuzz.xxxx
+	targetSubject := ""
+	if local {
+		targetSubject = fmt.Sprintf("natster.media.%s.%s", srv.library.Name, request.Hash)
+	} else {
+		targetSubject = fmt.Sprintf("%s.natster.media.%s.%s", targetAccount, srv.library.Name, request.Hash)
+	}
 
 	x := 0
 	z := 0
@@ -190,7 +198,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 			slog.Error("Encryption failure", err)
 			break
 		}
-		err = srv.transmitChunk(i, targetSubject, request, sealed, resp)
+		err = srv.transmitChunk(i, targetSubject, sealed, resp)
 		if err != nil {
 			slog.Error("Failed to transmit chunk", err)
 			break
@@ -198,7 +206,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 	}
 }
 
-func (srv *CatalogServer) transmitChunk(index int, targetSubject string, request models.DownloadRequest, buf []byte, resp models.DownloadResponse) error {
+func (srv *CatalogServer) transmitChunk(index int, targetSubject string, buf []byte, resp models.DownloadResponse) error {
 
 	m := nats.NewMsg(targetSubject)
 	m.Header.Add(headerChunkIndex, strconv.Itoa(index))
