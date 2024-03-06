@@ -3,6 +3,7 @@ package globalservice
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"regexp"
 	"slices"
@@ -165,6 +166,34 @@ func (srv *GlobalService) updateCatalogProjection(msg jetstream.Msg) {
 	_ = msg.Ack()
 }
 
+func (srv *GlobalService) GetCatalog(catalog string) (*catalogProjection, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	js, _ := jetstream.New(srv.nc)
+	kv, err := js.KeyValue(ctx, catalogProjectionBucketName)
+	if err != nil {
+		slog.Error("Failed to locate catalog projection bucket", slog.Any("error", err))
+		return nil, err
+	}
+	var projection catalogProjection
+	entry, err := kv.Get(ctx, catalog)
+	if err != nil {
+		if errors.Is(err, nats.ErrKeyNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	err = json.Unmarshal(entry.Value(), &projection)
+	if err != nil {
+		slog.Error("Corrupt projection", slog.Any("error", err))
+		return nil, err
+	}
+
+	return &projection, nil
+
+}
+
 func (srv *GlobalService) AllCatalogs() ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -190,25 +219,27 @@ func (srv *GlobalService) AllCatalogs() ([]string, error) {
 
 func handleValidateName(srv *GlobalService) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
+		accountKey := extractAccountKey(m.Subject)
 		candidateName := string(m.Data)
-		allKeys, err := srv.AllCatalogs()
+
+		catalog, err := srv.GetCatalog(candidateName)
 		if err != nil {
-			slog.Error("Failed to query list of all catalogs", slog.Any("error", err))
+			slog.Error("Failed to query catalog", slog.Any("error", err))
 			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
 			return
 		}
-		inUse := slices.Contains(allKeys, candidateName)
+
+		if catalog != nil && catalog.Owner != accountKey {
+			_ = m.Respond(models.NewApiResultPass(models.CatalogNameValidationResult{
+				Valid:   false,
+				Message: "Another account has already shared a catalog with this name",
+			}))
+			return
+		}
+
 		res := models.CatalogNameValidationResult{
 			Valid:   true,
 			Message: "",
-		}
-		if inUse {
-			res.Valid = false
-			res.Message = "Catalog name has already been shared"
-		}
-		if !isAlpha(candidateName) {
-			res.Valid = false
-			res.Message = "Catalog name must contain only numbers and letters if it is to be made shareable"
 		}
 		_ = m.Respond(models.NewApiResultPass(res))
 	}
