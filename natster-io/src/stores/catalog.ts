@@ -225,6 +225,7 @@ export const catalogStore = defineStore('catalog', {
           for await (const m of sub) {
             const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
             const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+            const transcoding = parseInt(m.headers.get('x-natster-transcoding'))
             const senderXKey = m.headers.get('x-natster-sender-xkey')
             const decrypted = xkey.open(m.data, senderXKey)
             lastChunkReceivedTimestamp = Date.now()
@@ -237,20 +238,22 @@ export const catalogStore = defineStore('catalog', {
 
               fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
 
-              timeout = setTimeout(() => {
-                if (chunkIdx >= totalChunks - 1) {
-                  // HACK-- x-natster-total-chunks is inflated when streaming video/mp4
-                  // HACK-- this branch prevents slow streams from being canceled early... i.e., while we are still transcoding
-                  fStore.endStream()
-                  timeout = null
-
-                  sub.unsubscribe()
-                } else {
-                  // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
-                  // TODO-- navigator.connection.addEventListener('change', () => { // prevent/cancel streams })
-                  console.log(`WARNING-- no packet received since ${lastChunkReceivedTimestamp}`)
-                }
-              }, 5000)
+              if (transcoding) {
+                timeout = setTimeout(() => {
+                  if (chunkIdx >= totalChunks - 1) {
+                    // HACK-- x-natster-total-chunks is lower than the actual number of chunks when transcoding video/mp4 on-the-fly
+                    // HACK-- this branch prevents slow streams from being canceled early while we are still transcoding
+                    fStore.endStream()
+                    timeout = null
+    
+                    sub.unsubscribe()
+                  } else {
+                    // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
+                    // TODO-- navigator.connection.addEventListener('change', () => { // prevent/cancel streams })
+                    console.log(`WARNING-- no packet received since ${lastChunkReceivedTimestamp}`)
+                  }
+                }, 5000)
+              }
             } else if (mimeType.toLowerCase() === 'audio/mpeg') {
               fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
             } else {
@@ -263,7 +266,7 @@ export const catalogStore = defineStore('catalog', {
               )
             }
 
-            if (chunkIdx === totalChunks - 1) {
+            if (!transcoding && chunkIdx === totalChunks - 1) {
               fStore.endStream()
               sub.unsubscribe()
             }

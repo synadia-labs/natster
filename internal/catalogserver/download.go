@@ -28,6 +28,7 @@ const (
 	headerChunkIndex  = "x-natster-chunk-idx"
 	headerSenderXkey  = "x-natster-sender-xkey"
 	headerTotalChunks = "x-natster-total-chunks"
+	headerTranscoding = "x-natster-transcoding"
 
 	mimeTypeVideoMP4     = "video/mp4"
 	natsterFragmentedKey = "io.natster.fragmented"
@@ -211,7 +212,8 @@ func (srv *CatalogServer) transmitChunkedFile(
 			slog.Error("Encryption failure", err)
 			break
 		}
-		err = srv.transmitChunk(i, targetSubject, sealed, resp)
+
+		err = srv.transmitChunk(i, transcoding, targetSubject, sealed, resp)
 		if err != nil {
 			slog.Error("Failed to transmit chunk", err)
 			break
@@ -219,12 +221,17 @@ func (srv *CatalogServer) transmitChunkedFile(
 	}
 }
 
-func (srv *CatalogServer) transmitChunk(index int, targetSubject string, buf []byte, resp models.DownloadResponse) error {
+func (srv *CatalogServer) transmitChunk(index int, transcoding bool, targetSubject string, buf []byte, resp models.DownloadResponse) error {
 
 	m := nats.NewMsg(targetSubject)
 	m.Header.Add(headerChunkIndex, strconv.Itoa(index))
 	m.Header.Add(headerSenderXkey, resp.SenderXKey)
 	m.Header.Add(headerTotalChunks, strconv.Itoa(int(resp.TotalChunks)))
+
+	if transcoding {
+		m.Header.Add(headerTranscoding, strconv.FormatBool(transcoding))
+	}
+
 	m.Data = buf
 
 	err := srv.nc.PublishMsg(m)
