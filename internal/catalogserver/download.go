@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -23,12 +24,14 @@ import (
 )
 
 const (
-	chunkSizeBytes    = 2048
+	chunkSizeBytes    = 4096
 	headerChunkIndex  = "x-natster-chunk-idx"
 	headerSenderXkey  = "x-natster-sender-xkey"
 	headerTotalChunks = "x-natster-total-chunks"
+	headerTranscoding = "x-natster-transcoding"
 
-	mimeTypeVideoMP4 = "video/mp4"
+	mimeTypeVideoMP4     = "video/mp4"
+	natsterFragmentedKey = "io.natster.fragmented"
 )
 
 func handleDownloadRequest(srv *CatalogServer, local bool) func(m *nats.Msg) {
@@ -39,7 +42,7 @@ func handleDownloadRequest(srv *CatalogServer, local bool) func(m *nats.Msg) {
 		var req models.DownloadRequest
 		err := json.Unmarshal(m.Data, &req)
 		if err != nil {
-			slog.Error("Failed to deserialize download request", err)
+			slog.Warn("Failed to deserialize download request", slog.String("error", err.Error()))
 			_ = m.Respond(models.NewApiResultFail(err.Error(), 400))
 			return
 		}
@@ -97,43 +100,54 @@ func (srv *CatalogServer) transmitChunkedFile(
 	transcodingInProgress := false
 	var fileInfo os.FileInfo
 
-	if transcode && strings.EqualFold(strings.ToLower(entry.MimeType), mimeTypeVideoMP4) {
-		id, _ := uuid.NewUUID()
-		tmppath := filepath.Join(os.TempDir(), fmt.Sprintf("%s.mp4", id))
-		chunks = chunks + uint(math.RoundToEven(float64(chunks)*.05)) // HACK expand total possible chunks by 5% so we iterate enough to read the entire fragmented file
-		transcoding = true
+	if strings.EqualFold(strings.ToLower(entry.MimeType), mimeTypeVideoMP4) {
+		cmd := exec.Command("ffprobe", "-show_format", "-of", "json", path)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			slog.Warn("Error reading mp4 metadata", slog.String("path", entry.Path), slog.String("error", err.Error()))
+		} else {
+			transcode = !strings.Contains(string(out), natsterFragmentedKey)
+		}
 
-		slog.Info("Transcoding mp4", slog.Uint64("chunks", uint64(chunks)), slog.String("path", path))
+		if transcode {
+			id, _ := uuid.NewUUID()
+			tmppath := filepath.Join(os.TempDir(), fmt.Sprintf("%s.mp4", id))
+			chunks = chunks + uint(math.RoundToEven(float64(chunks)*.05)) // HACK expand total possible chunks by 5% so we iterate enough to read the entire fragmented file
+			transcoding = true
 
-		go func() {
-			transcodingInProgress = true
-			err := ffmpeg.Input(path).
-				Output(tmppath, ffmpeg.KwArgs{"movflags": "frag_keyframe+empty_moov+default_base_moof"}).Run()
-			if err != nil {
-				slog.Error("Error transcoding mp4 '%s': %s", entry.Path, err.Error())
-			}
-			transcodingInProgress = false
+			slog.Info("Transcoding mp4", slog.Uint64("chunks", uint64(chunks)), slog.String("path", path))
 
-			slog.Info("Completed transcoding", "path", path)
-		}()
+			go func() {
+				transcodingInProgress = true
+				err := ffmpeg.Input(path).
+					Output(tmppath, ffmpeg.KwArgs{"movflags": "frag_keyframe+empty_moov+default_base_moof"}).
+					Run()
+				if err != nil {
+					slog.Warn("Error transcoding mp4", slog.String("path", entry.Path), slog.String("error", err.Error()))
+				}
+				transcodingInProgress = false
 
-		defer func() {
-			_ = os.Remove(tmppath)
-		}()
+				slog.Info("Completed transcoding", "path", path)
+			}()
 
-		time.Sleep(time.Millisecond * 5)
-		path = tmppath
+			defer func() {
+				_ = os.Remove(tmppath)
+			}()
 
-		var err error
-		fileInfo, err = os.Stat(path)
-		for err != nil {
+			time.Sleep(time.Millisecond * 5) // allow enough time for tmppath to exist
+			path = tmppath
+
+			var err error
 			fileInfo, err = os.Stat(path)
+			for err != nil {
+				fileInfo, err = os.Stat(path)
+			}
 		}
 	}
 
 	f, err := os.Open(path)
 	if err != nil {
-		slog.Error("Error reading file '%s': %s", path, err.Error())
+		slog.Warn("Error reading file", slog.String("path", path), slog.String("error", err.Error()))
 	}
 	r := bufio.NewReader(f)
 	buf := make([]byte, 0, chunkSizeBytes)
@@ -187,31 +201,37 @@ func (srv *CatalogServer) transmitChunkedFile(
 			if err == io.EOF {
 				break
 			}
-			slog.Error("File read error during chunk transmission", err)
+			slog.Warn("File read error during chunk transmission", slog.String("error", err.Error()))
 		}
 		if err != nil && err != io.EOF {
-			slog.Error("File read error during chunk transmission", err)
+			slog.Warn("File read error during chunk transmission", slog.String("error", err.Error()))
 			break
 		}
 		sealed, err := senderKp.Seal(buf, request.TargetXkey)
 		if err != nil {
-			slog.Error("Encryption failure", err)
+			slog.Warn("Encryption failure", slog.String("error", err.Error()))
 			break
 		}
-		err = srv.transmitChunk(i, targetSubject, sealed, resp)
+
+		err = srv.transmitChunk(i, transcoding, targetSubject, sealed, resp)
 		if err != nil {
-			slog.Error("Failed to transmit chunk", err)
+			slog.Warn("Failed to transmit chunk", slog.String("error", err.Error()))
 			break
 		}
 	}
 }
 
-func (srv *CatalogServer) transmitChunk(index int, targetSubject string, buf []byte, resp models.DownloadResponse) error {
+func (srv *CatalogServer) transmitChunk(index int, transcoding bool, targetSubject string, buf []byte, resp models.DownloadResponse) error {
 
 	m := nats.NewMsg(targetSubject)
 	m.Header.Add(headerChunkIndex, strconv.Itoa(index))
 	m.Header.Add(headerSenderXkey, resp.SenderXKey)
 	m.Header.Add(headerTotalChunks, strconv.Itoa(int(resp.TotalChunks)))
+
+	if transcoding {
+		m.Header.Add(headerTranscoding, strconv.FormatBool(transcoding))
+	}
+
 	m.Data = buf
 
 	err := srv.nc.PublishMsg(m)
