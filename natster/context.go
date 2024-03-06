@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/choria-io/fisk"
@@ -67,6 +68,22 @@ func loadContext() (*models.NatsterContext, error) {
 		return nil, err
 	}
 	return &context, nil
+}
+
+func getLocalLibraries() ([]string, error) {
+	home, err := getNatsterHome()
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(home)
+	if err != nil {
+		return nil, err
+	}
+	libraries := make([]string, 0)
+	for _, entry := range entries {
+		libraries = append(libraries, strings.ToLower(entry.Name()))
+	}
+	return libraries, nil
 }
 
 func writeContext(ctx models.NatsterContext) error {
