@@ -224,9 +224,9 @@ export const catalogStore = defineStore('catalog', {
 
           for await (const m of sub) {
             const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
-            const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
-            const transcoding = parseInt(m.headers.get('x-natster-transcoding'))
             const senderXKey = m.headers.get('x-natster-sender-xkey')
+            const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+            const transcoding = m.headers.get('x-natster-transcoding') && m.headers.get('x-natster-transcoding') === 'true'
             const decrypted = xkey.open(m.data, senderXKey)
             lastChunkReceivedTimestamp = Date.now()
 
