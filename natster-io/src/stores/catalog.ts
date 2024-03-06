@@ -27,9 +27,34 @@ export const catalogStore = defineStore('catalog', {
             let m = JSONCodec().decode(msg.data)
             this.setOnlineAndCatalogRevision(m.catalog, m.revision)
             uStore.togglePing()
+
+            this.scrubCatalogs()
           }
           console.log('subscription closed')
         })()
+    },
+    scrubCatalogs() {
+      const disableCat = (catalog) => {
+        this.setCatalogSelected(catalog)
+      }
+
+      this.catalogs.forEach(function(tCatalog) {
+
+        // Toggles catalogs avaialability
+        if (!tCatalog.online && Date.now() - new Date(tCatalog.lastSeen).getTime() < 1 * 60 * 1000) {
+          tCatalog.online = true
+          notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
+        } else if (tCatalog.online && Date.now() - new Date(tCatalog.lastSeen).getTime() > 1 * 60 * 1000) {
+          tCatalog.online = false
+          notificationStore().setNotification(
+            'Catalog Offline',
+            tCatalog.name + ' has gone offline'
+          )
+          if (tCatalog.selected) {
+            disableCat(tCatalog)
+          }
+        }
+      })
     },
     subscribeToLocalHeartbeats() {
       const nStore = natsStore()
@@ -71,8 +96,9 @@ export const catalogStore = defineStore('catalog', {
                     'Catalog failed to respond',
                     'The catalog ' + c.name + ' failed to respond. Moving offline until it heartbeats.'
                   )
-                  c.selected = false
-                  c.files = [] as File[]
+                  if (c.selected) {
+                    this.setCatalogSelected(c)
+                  }
                   c.online = false
                 })
             }
@@ -80,32 +106,44 @@ export const catalogStore = defineStore('catalog', {
         }
       })
     },
-    setCatalogSelected(cat) {
-      let selectedDiff = 0
-      this.catalogs.forEach(async function(item, index) {
+    setCatalogSelected(cat: Catalog) {
+      const setDiff = (inDiff) => {
+        this.numSelected += inDiff
+      }
+
+      const nStore = notificationStore()
+      this.catalogs.forEach(async function(item) {
         if (cat.name == item.name) {
           if (item.selected) {
-            selectedDiff = -1
             item.files = [] as File[]
             item.selected = false
+            setDiff(-1)
           } else {
             natsStore()
               .connection.request('natster.catalog.' + cat.name + '.get', '', { timeout: 5000 })
               .then((m) => {
                 let msg = JSONCodec().decode(m.data)
-                item.description = msg.data.description
-                item.image = msg.data.image
-                item.files.push(...msg.data.entries)
-                item.selected = true
+                if (msg.code == 200) {
+                  item.description = msg.data.description
+                  item.image = msg.data.image
+                  item.files.push(...msg.data.entries)
+                  item.selected = true
+                  setDiff(1)
+                }
               })
               .catch((err) => {
-                console.error('nats requestCatalogFiles err: ', err)
+                nStore.setNotification(
+                  'Catalog failed to respond',
+                  'The catalog ' + item.name + ' failed to respond. Moving offline until it heartbeats.'
+                )
+                item.selected = false
+                item.files = [] as File[]
+                item.online = false
+                item.lastSeen = new Date(0)
               })
-            selectedDiff = 1
           }
         }
       })
-      this.numSelected += selectedDiff
     },
     async getShares() {
       const nStore = natsStore()
@@ -160,7 +198,7 @@ export const catalogStore = defineStore('catalog', {
               lastSeen: Date.now(),
               pending_invite: false,
               status: m.data.revision,
-              files: []
+              files: [] as File[]
             }
             this.catalogs.push(catalog)
 
@@ -341,17 +379,6 @@ export const catalogStore = defineStore('catalog', {
           }
         })
 
-        // Toggles catalogs avaialability
-        if (!tCatalog.online && Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
-          tCatalog.online = true
-          notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
-        } else if (tCatalog.online && Date.now() - tCatalog.lastSeen > 1 * 60 * 1000) {
-          tCatalog.online = false
-          notificationStore().setNotification(
-            'Catalog Offline',
-            tCatalog.name + ' has gone offline'
-          )
-        }
       })
 
       return state.catalogs.filter((c) => !c.pending_invite)
