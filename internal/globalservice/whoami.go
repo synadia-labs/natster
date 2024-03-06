@@ -3,8 +3,10 @@ package globalservice
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/nats-io/nkeys"
 	"github.com/synadia-io/control-plane-sdk-go/syncp"
 	"github.com/synadia-labs/natster/internal/models"
@@ -16,8 +18,23 @@ func handleWhoAmi(srv *GlobalService) func(m *nats.Msg) {
 		oauth, err := srv.GetOAuthIdForAccount(accountKey)
 		if err != nil {
 			slog.Error("Failed to query OAuth ID for account", err)
-			_ = m.Respond(models.NewApiResultFail("Not Found", 404))
+			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
 			return
+		}
+		js, _ := jetstream.New(srv.nc)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		kv, err := js.KeyValue(ctx, accountProjectionBucketName)
+		if err != nil {
+			slog.Error("Failed to get key value store", slog.Any("error", err))
+			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
+			return
+		}
+		initialized := int64(0)
+		act, err := loadAccount(kv, accountKey)
+		if err == nil {
+			initialized = act.InitializedAt
 		}
 		// Note: a non-error but nil oauth is valid - just means it hasn't been context
 		// bound yet
@@ -25,6 +42,7 @@ func handleWhoAmi(srv *GlobalService) func(m *nats.Msg) {
 		resp := models.WhoamiResponse{
 			AccountKey:    accountKey,
 			OAuthIdentity: oauth,
+			Initialized:   initialized,
 		}
 		_ = m.Respond(models.NewApiResultPass(resp))
 	}

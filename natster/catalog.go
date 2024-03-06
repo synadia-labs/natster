@@ -298,6 +298,11 @@ func ShareCatalog(ctx *fisk.ParseContext) error {
 	if err != nil {
 		return err
 	}
+	if nctx.AccountPublicKey == ShareOpts.AccountKey {
+		fmt.Println("You cannot share catalogs with yourself.")
+		return nil
+	}
+
 	client, err := globalservice.NewClientWithCredsPath(nctx.CredsPath)
 	if err != nil {
 		slog.Error(
