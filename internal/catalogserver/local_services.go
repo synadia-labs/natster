@@ -16,6 +16,9 @@ const (
 )
 
 type inboxResponse struct {
+	Catalog          string                       `json:"catalog"`
+	AccountKey       string                       `json:"account_key"`
+	Revision         int64                        `json:"revision"`
 	UnimportedShares []models.CatalogShareSummary `json:"unimported_shares"`
 }
 
@@ -64,7 +67,11 @@ func (srv *CatalogServer) getInbox(scpClient *syncp.APIClient, scpContext contex
 			inboxCatalogs = append(inboxCatalogs, catalog)
 		}
 	}
+
 	return &inboxResponse{
+		Catalog:          srv.library.Name,
+		AccountKey:       srv.nctx.AccountPublicKey,
+		Revision:         srv.library.LastModified,
 		UnimportedShares: inboxCatalogs,
 	}, nil
 }
