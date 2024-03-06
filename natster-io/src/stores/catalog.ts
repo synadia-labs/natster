@@ -19,11 +19,14 @@ export const catalogStore = defineStore('catalog', {
   actions: {
     subscribeToHeartbeats() {
       const nStore = natsStore()
+      const uStore = userStore()
+
       const sub = nStore.connection.subscribe('natster.global-events.>')
         ; (async () => {
           for await (const msg of sub) {
             let m = JSONCodec().decode(msg.data)
             this.setOnlineAndCatalogRevision(m.catalog, m.revision)
+            uStore.togglePing()
           }
           console.log('subscription closed')
         })()
@@ -34,8 +37,10 @@ export const catalogStore = defineStore('catalog', {
 
       const sub = nStore.connection.subscribe('natster.local-events.heartbeat')
         ; (async () => {
-          for await (const msg of sub) {
+          for await (const m of sub) {
+            let msg = JSONCodec().decode(m.data)
             uStore.setLastSeenTS(new Date(Date.now()))
+            this.setOnlineAndCatalogRevision(msg.catalog, msg.revision)
           }
           console.log('subscription closed')
         })()
@@ -96,7 +101,7 @@ export const catalogStore = defineStore('catalog', {
       })
       this.numSelected += selectedDiff
     },
-    async getShares(init) {
+    async getShares() {
       const nStore = natsStore()
       const uStore = userStore()
       await nStore.connection
@@ -140,10 +145,23 @@ export const catalogStore = defineStore('catalog', {
         .then((msg) => {
           let m = JSONCodec().decode(msg.data)
           if (m.code == 200) {
-            uStore.setLastSeenTS(Date.now())
-            uStore.ping = !uStore.ping
+            const catalog: Catalog = {
+              selected: false,
+              to: m.data.account_key,
+              from: m.data.account_key,
+              name: m.data.catalog,
+              online: true,
+              lastSeen: Date.now(),
+              pending_invite: false,
+              status: m.data.revision,
+              files: []
+            }
+            this.catalogs.push(catalog)
 
+            uStore.setLastSeenTS(Date.now())
             uStore.setPendingInvites(m.data.unimported_shares.length)
+            uStore.togglePing()
+
             m.data.unimported_shares.forEach((c, i) => {
               if (c.to_account === uStore.getAccount) {
                 const catalog: Catalog = {
@@ -306,10 +324,8 @@ export const catalogStore = defineStore('catalog', {
       return state.shares_init && state.pending_init
     },
     getImportedCatalogs(state) {
-      const uStore = userStore()
       state.catalogs.forEach(function(tCatalog) {
         if (tCatalog.from == 'AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC') {
-          uStore.ping = !uStore.ping
           tCatalog.pending_invite = false // synadiahub is never pending
           return
         }

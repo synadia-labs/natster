@@ -39,6 +39,9 @@ export const userStore = defineStore('user', {
     },
     setLastSeenTS(ts: Date) {
       this.last_seen_ts = ts
+    },
+    togglePing() {
+      this.ping = !this.ping
     }
   },
   getters: {
