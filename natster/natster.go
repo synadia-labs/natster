@@ -101,8 +101,6 @@ func main() {
 	weblogin := auth.Command("web", "Authenticate with one time code")
 	weblogin.Flag("qrcode", "Displays QR code in terminal of login link").Default("false").UnNegatableBoolVar(&WebLoginOpts.DisplayQR)
 	weblogin.Action(WebLogin)
-	login := auth.Command("login", "Associate OAuth ID with natster account")
-	login.Action(OauthLogin)
 
 	claim := ncli.Command("claim", "Claims an OTC code. For testing only - Can only be done from the natster.io account").Hidden()
 	claim.Arg("code", "Previously generated one-time code").Required().StringVar(&ClaimOpts.Code)

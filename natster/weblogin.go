@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 
 	"github.com/choria-io/fisk"
 	"github.com/mdp/qrterminal/v3"
@@ -34,8 +36,21 @@ func WebLogin(ctx *fisk.ParseContext) error {
 		response.ValidMinutes,
 		response.ClaimUrl,
 	)
+
 	if WebLoginOpts.DisplayQR {
 		qrterminal.Generate(response.ClaimUrl, qrterminal.L, os.Stdout)
+	} else {
+		switch runtime.GOOS {
+		case "linux":
+			err = exec.Command("xdg-open", response.ClaimUrl).Start()
+		case "windows":
+			err = exec.Command("rundll32", "url.dll,FileProtocolHandler", response.ClaimUrl).Start()
+		case "darwin":
+			err = exec.Command("open", response.ClaimUrl).Start()
+		}
+		if err != nil {
+			fmt.Println("Failed to automatically open browser. Please do so manually.")
+		}
 	}
 
 	return nil
