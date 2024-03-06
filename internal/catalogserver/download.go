@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	chunkSizeBytes    = 5120
+	chunkSizeBytes    = 2048
 	headerChunkIndex  = "x-natster-chunk-idx"
 	headerSenderXkey  = "x-natster-sender-xkey"
 	headerTotalChunks = "x-natster-total-chunks"
