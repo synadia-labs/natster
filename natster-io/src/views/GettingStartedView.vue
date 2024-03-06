@@ -86,13 +86,13 @@ import VCodeBlock from '@wdns/vue-code-block';
 const natsterImg = new URL('@/assets/natster-horizontal.svg', import.meta.url)
 
 const code = ref(`# Install the Natster CLI
-curl -sSf https://natster.com/install.sh | sh
+curl -sSf https://natster.io/install.sh | sh
 
 # Initialize the Natster with your Synadia Cloud Token
 natster init --token <SYNADIA CLOUD TOKEN>
 
 # Bind your OAuth ID with your Natster Account
-natster auth login
+natster auth web
 `);
 const route = useRoute()
 
