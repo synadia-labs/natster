@@ -69,6 +69,22 @@ func loadContext() (*models.NatsterContext, error) {
 	return &context, nil
 }
 
+func getLocalLibraries() ([]string, error) {
+	home, err := getNatsterHome()
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(home)
+	if err != nil {
+		return nil, err
+	}
+	libraries := make([]string, 0)
+	for _, entry := range entries {
+		libraries = append(libraries, entry.Name())
+	}
+	return libraries, nil
+}
+
 func writeContext(ctx models.NatsterContext) error {
 
 	home, err := getNatsterHome()

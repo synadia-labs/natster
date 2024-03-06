@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -201,6 +202,16 @@ func ImportCatalog(ctx *fisk.ParseContext) error {
 		"baseUrl": baseUrl,
 	})
 	ctxx = context.WithValue(ctxx, syncp.ContextAccessToken, nctx.Token)
+
+	libraries, err := getLocalLibraries()
+	if err != nil {
+		fmt.Printf("Something went wrong reading the contents of the .natster directory: %s\n", err.Error())
+		return err
+	}
+	if slices.Contains(libraries, fmt.Sprintf("%s.json", strings.ToLower(ShareOpts.Name))) {
+		fmt.Printf("You already have a local catalog named '%s'. If you were to import this from somewhere else, it could hinder or break Natster functionality. Skipping import\n", ShareOpts.Name)
+		return nil
+	}
 
 	importName := fmt.Sprintf("natster_%s", ShareOpts.Name)
 	mediaImportName := fmt.Sprintf("natster_%s_media", ShareOpts.Name)
