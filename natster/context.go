@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/choria-io/fisk"
@@ -80,7 +81,7 @@ func getLocalLibraries() ([]string, error) {
 	}
 	libraries := make([]string, 0)
 	for _, entry := range entries {
-		libraries = append(libraries, entry.Name())
+		libraries = append(libraries, strings.ToLower(entry.Name()))
 	}
 	return libraries, nil
 }
