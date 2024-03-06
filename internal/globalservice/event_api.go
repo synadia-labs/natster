@@ -221,6 +221,7 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 	}
 }
 
+// NOTE: this is safe to publish now because we're no longer writing multiple initialized events
 func (srv *GlobalService) publishSynadiaHubAutoShare(targetKey string) error {
 	slog.Info("Detected Natster initialized event, auto-sharing synadia hub.")
 	subject := fmt.Sprintf("natster.events.%s.%s.synadiahub.%s",

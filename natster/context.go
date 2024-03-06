@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/choria-io/fisk"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -23,15 +24,23 @@ func DisplayContext(ctx *fisk.ParseContext) error {
 	}
 
 	idString := "(unlinked)"
+	initializedOn := "(never)"
 	whoami, _ := client.Whoami()
 
-	if whoami != nil && whoami.OAuthIdentity != nil {
-		idString = *whoami.OAuthIdentity
+	if whoami != nil {
+		if whoami.OAuthIdentity != nil {
+			idString = *whoami.OAuthIdentity
+		}
+		if whoami.Initialized > 0 {
+			t := time.Unix(whoami.Initialized, 0)
+			initializedOn = t.Format("2006-01-02 15:04:05")
+		}
 	}
 
 	t := newTableWriter(ctxx.AccountName, "cyan")
 	w := t.writer
 	w.AppendRow(table.Row{"Account", ctxx.AccountPublicKey})
+	w.AppendRow(table.Row{"Initialized At", initializedOn})
 	w.AppendRow(table.Row{"Synadia Cloud Team", ctxx.TeamID})
 	w.AppendRow(table.Row{"Synadia Cloud System", ctxx.SystemID})
 	w.AppendRow(table.Row{"Synadia Cloud User", ctxx.UserID})

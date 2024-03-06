@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/choria-io/fisk"
@@ -185,19 +186,29 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return err
 	}
 	globalClient := globalservice.NewClient(conn)
-	data, _ := json.Marshal(models.NatsterInitializedEvent{
-		AccountId:   newCtx.AccountID,
-		AccountName: newCtx.AccountName,
-		AccountKey:  newCtx.AccountPublicKey,
-	})
-	err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none", data)
+	whoami, err := globalClient.Whoami()
 	if err != nil {
-		fmt.Printf("Failed to contact Natster global service to post initialization event: %s", err)
-		return err
+		fmt.Println("There was a problem querying the global service. You may need to re-run `init`")
+	} else {
+		if whoami.Initialized == 0 {
+			data, _ := json.Marshal(models.NatsterInitializedEvent{
+				AccountId:   newCtx.AccountID,
+				AccountName: newCtx.AccountName,
+				AccountKey:  newCtx.AccountPublicKey,
+			})
+			err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none", data)
+			if err != nil {
+				fmt.Printf("Failed to contact Natster global service to post initialization event: %s", err)
+				return err
+			}
+		} else {
+			t := time.Unix(whoami.Initialized, 0)
+			fmt.Printf("Note: this account was previously initialized on %s\n", t.Format("2006-01-02 15:04:05"))
+		}
 	}
 
 	fmt.Printf("Congratulations! Your account (%s) is ready to serve Natster catalogs!\n", accountName)
-	fmt.Println("You can now use `natster catalog serve` to host a media catalog and `natster catalog share` to share with friends.")
+	fmt.Println("To get started, you'll want to do the following:\n1. `natster catalog new` to create a catalog\n2. `natster catalog serve` to host the media catalog\n3. `natster catalog share` to share with friends.")
 
 	return nil
 }

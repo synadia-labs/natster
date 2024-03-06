@@ -61,6 +61,7 @@ type CatalogShareSummary struct {
 type WhoamiResponse struct {
 	AccountKey    string  `json:"account_key"`
 	OAuthIdentity *string `json:"oauth_id,omitempty"`
+	Initialized   int64   `json:"initialized"`
 }
 
 type ContextQueryResponse struct {

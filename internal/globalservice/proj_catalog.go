@@ -191,6 +191,10 @@ func (srv *GlobalService) AllCatalogs() ([]string, error) {
 func handleValidateName(srv *GlobalService) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
 		candidateName := string(m.Data)
+		res := models.CatalogNameValidationResult{
+			Valid:   true,
+			Message: "",
+		}
 		allKeys, err := srv.AllCatalogs()
 		if err != nil {
 			slog.Error("Failed to query list of all catalogs", slog.Any("error", err))
@@ -198,15 +202,11 @@ func handleValidateName(srv *GlobalService) func(m *nats.Msg) {
 			return
 		}
 		inUse := slices.Contains(allKeys, candidateName)
-		res := models.CatalogNameValidationResult{
-			Valid:   true,
-			Message: "",
-		}
+
 		if inUse {
 			res.Valid = false
 			res.Message = "Catalog name has already been shared"
-		}
-		if !isAlpha(candidateName) {
+		} else if !isAlpha(candidateName) {
 			res.Valid = false
 			res.Message = "Catalog name must contain only numbers and letters if it is to be made shareable"
 		}
