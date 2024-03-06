@@ -134,7 +134,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 				_ = os.Remove(tmppath)
 			}()
 
-			time.Sleep(time.Millisecond * 5)
+			time.Sleep(time.Millisecond * 5) // allow enough time for tmppath to exist
 			path = tmppath
 
 			var err error
