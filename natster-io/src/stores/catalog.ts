@@ -19,14 +19,42 @@ export const catalogStore = defineStore('catalog', {
   actions: {
     subscribeToHeartbeats() {
       const nStore = natsStore()
+      const uStore = userStore()
+
       const sub = nStore.connection.subscribe('natster.global-events.>')
         ; (async () => {
           for await (const msg of sub) {
             let m = JSONCodec().decode(msg.data)
             this.setOnlineAndCatalogRevision(m.catalog, m.revision)
+            uStore.togglePing()
+
+            this.scrubCatalogs()
           }
           console.log('subscription closed')
         })()
+    },
+    scrubCatalogs() {
+      const disableCat = (catalog) => {
+        this.setCatalogSelected(catalog)
+      }
+
+      this.catalogs.forEach(function(tCatalog) {
+
+        // Toggles catalogs avaialability
+        if (!tCatalog.online && Date.now() - new Date(tCatalog.lastSeen).getTime() < 1 * 60 * 1000) {
+          tCatalog.online = true
+          notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
+        } else if (tCatalog.online && Date.now() - new Date(tCatalog.lastSeen).getTime() > 1 * 60 * 1000) {
+          tCatalog.online = false
+          notificationStore().setNotification(
+            'Catalog Offline',
+            tCatalog.name + ' has gone offline'
+          )
+          if (tCatalog.selected) {
+            disableCat(tCatalog)
+          }
+        }
+      })
     },
     subscribeToLocalHeartbeats() {
       const nStore = natsStore()
@@ -34,8 +62,10 @@ export const catalogStore = defineStore('catalog', {
 
       const sub = nStore.connection.subscribe('natster.local-events.heartbeat')
         ; (async () => {
-          for await (const msg of sub) {
+          for await (const m of sub) {
+            let msg = JSONCodec().decode(m.data)
             uStore.setLastSeenTS(new Date(Date.now()))
+            this.setOnlineAndCatalogRevision(msg.catalog, msg.revision)
           }
           console.log('subscription closed')
         })()
@@ -62,41 +92,60 @@ export const catalogStore = defineStore('catalog', {
                   c.files.push(...JSONCodec().decode(m.data).data.entries)
                 })
                 .catch((err) => {
-                  console.error('nats requestCatalogFiles err: ', err)
+                  nStore.setNotification(
+                    'Catalog failed to respond',
+                    'The catalog ' + c.name + ' failed to respond. Moving offline until it heartbeats.'
+                  )
+                  if (c.selected) {
+                    this.setCatalogSelected(c)
+                  }
+                  c.online = false
                 })
             }
           }
         }
       })
     },
-    setCatalogSelected(cat) {
-      let selectedDiff = 0
-      this.catalogs.forEach(async function(item, index) {
+    setCatalogSelected(cat: Catalog) {
+      const setDiff = (inDiff) => {
+        this.numSelected += inDiff
+      }
+
+      const nStore = notificationStore()
+      this.catalogs.forEach(async function(item) {
         if (cat.name == item.name) {
           if (item.selected) {
-            selectedDiff = -1
             item.files = [] as File[]
             item.selected = false
+            setDiff(-1)
           } else {
             natsStore()
               .connection.request('natster.catalog.' + cat.name + '.get', '', { timeout: 5000 })
               .then((m) => {
                 let msg = JSONCodec().decode(m.data)
-                item.description = msg.data.description
-                item.image = msg.data.image
-                item.files.push(...msg.data.entries)
-                item.selected = true
+                if (msg.code == 200) {
+                  item.description = msg.data.description
+                  item.image = msg.data.image
+                  item.files.push(...msg.data.entries)
+                  item.selected = true
+                  setDiff(1)
+                }
               })
               .catch((err) => {
-                console.error('nats requestCatalogFiles err: ', err)
+                nStore.setNotification(
+                  'Catalog failed to respond',
+                  'The catalog ' + item.name + ' failed to respond. Moving offline until it heartbeats.'
+                )
+                item.selected = false
+                item.files = [] as File[]
+                item.online = false
+                item.lastSeen = new Date(0)
               })
-            selectedDiff = 1
           }
         }
       })
-      this.numSelected += selectedDiff
     },
-    async getShares(init) {
+    async getShares() {
       const nStore = natsStore()
       const uStore = userStore()
       await nStore.connection
@@ -140,10 +189,23 @@ export const catalogStore = defineStore('catalog', {
         .then((msg) => {
           let m = JSONCodec().decode(msg.data)
           if (m.code == 200) {
-            uStore.setLastSeenTS(Date.now())
-            uStore.ping = !uStore.ping
+            const catalog: Catalog = {
+              selected: false,
+              to: m.data.account_key,
+              from: m.data.account_key,
+              name: m.data.catalog,
+              online: true,
+              lastSeen: Date.now(),
+              pending_invite: false,
+              status: m.data.revision,
+              files: [] as File[]
+            }
+            this.catalogs.push(catalog)
 
+            uStore.setLastSeenTS(Date.now())
             uStore.setPendingInvites(m.data.unimported_shares.length)
+            uStore.togglePing()
+
             m.data.unimported_shares.forEach((c, i) => {
               if (c.to_account === uStore.getAccount) {
                 const catalog: Catalog = {
@@ -245,7 +307,7 @@ export const catalogStore = defineStore('catalog', {
                     // HACK-- this branch prevents slow streams from being canceled early while we are still transcoding
                     fStore.endStream()
                     timeout = null
-    
+
                     sub.unsubscribe()
                   } else {
                     // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
@@ -306,10 +368,8 @@ export const catalogStore = defineStore('catalog', {
       return state.shares_init && state.pending_init
     },
     getImportedCatalogs(state) {
-      const uStore = userStore()
       state.catalogs.forEach(function(tCatalog) {
         if (tCatalog.from == 'AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC') {
-          uStore.ping = !uStore.ping
           tCatalog.pending_invite = false // synadiahub is never pending
           return
         }
@@ -319,17 +379,6 @@ export const catalogStore = defineStore('catalog', {
           }
         })
 
-        // Toggles catalogs avaialability
-        if (!tCatalog.online && Date.now() - tCatalog.lastSeen < 1 * 60 * 1000) {
-          tCatalog.online = true
-          notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
-        } else if (tCatalog.online && Date.now() - tCatalog.lastSeen > 1 * 60 * 1000) {
-          tCatalog.online = false
-          notificationStore().setNotification(
-            'Catalog Offline',
-            tCatalog.name + ' has gone offline'
-          )
-        }
       })
 
       return state.catalogs.filter((c) => !c.pending_invite)

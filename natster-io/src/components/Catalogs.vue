@@ -37,7 +37,7 @@ const { catalogsInitialized, getImportedCatalogs } = storeToRefs(catalogStore())
 
 watch(connection, () => {
   if (nStore.connection !== null) {
-    cStore.getShares(true)
+    cStore.getShares()
     cStore.getLocalInbox()
     cStore.subscribeToHeartbeats()
     cStore.subscribeToLocalHeartbeats()
