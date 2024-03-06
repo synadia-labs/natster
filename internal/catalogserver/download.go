@@ -42,7 +42,7 @@ func handleDownloadRequest(srv *CatalogServer, local bool) func(m *nats.Msg) {
 		var req models.DownloadRequest
 		err := json.Unmarshal(m.Data, &req)
 		if err != nil {
-			slog.Error("Failed to deserialize download request", err)
+			slog.Warn("Failed to deserialize download request", slog.String("error", err.Error()))
 			_ = m.Respond(models.NewApiResultFail(err.Error(), 400))
 			return
 		}
@@ -104,7 +104,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 		cmd := exec.Command("ffprobe", "-show_format", "-of", "json", path)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			slog.Error("Error reading mp4 metadata", slog.String("path", entry.Path), err.Error())
+			slog.Warn("Error reading mp4 metadata", slog.String("path", entry.Path), slog.String("error", err.Error()))
 		} else {
 			transcode = !strings.Contains(string(out), natsterFragmentedKey)
 		}
@@ -123,7 +123,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 					Output(tmppath, ffmpeg.KwArgs{"movflags": "frag_keyframe+empty_moov+default_base_moof"}).
 					Run()
 				if err != nil {
-					slog.Error("Error transcoding mp4", slog.String("path", entry.Path), err.Error())
+					slog.Warn("Error transcoding mp4", slog.String("path", entry.Path), slog.String("error", err.Error()))
 				}
 				transcodingInProgress = false
 
@@ -147,7 +147,7 @@ func (srv *CatalogServer) transmitChunkedFile(
 
 	f, err := os.Open(path)
 	if err != nil {
-		slog.Error("Error reading file", slog.String("path": path), err.Error())
+		slog.Warn("Error reading file", slog.String("path", path), slog.String("error", err.Error()))
 	}
 	r := bufio.NewReader(f)
 	buf := make([]byte, 0, chunkSizeBytes)
@@ -201,21 +201,21 @@ func (srv *CatalogServer) transmitChunkedFile(
 			if err == io.EOF {
 				break
 			}
-			slog.Error("File read error during chunk transmission", err)
+			slog.Warn("File read error during chunk transmission", slog.String("error", err.Error()))
 		}
 		if err != nil && err != io.EOF {
-			slog.Error("File read error during chunk transmission", err)
+			slog.Warn("File read error during chunk transmission", slog.String("error", err.Error()))
 			break
 		}
 		sealed, err := senderKp.Seal(buf, request.TargetXkey)
 		if err != nil {
-			slog.Error("Encryption failure", err)
+			slog.Warn("Encryption failure", slog.String("error", err.Error()))
 			break
 		}
 
 		err = srv.transmitChunk(i, transcoding, targetSubject, sealed, resp)
 		if err != nil {
-			slog.Error("Failed to transmit chunk", err)
+			slog.Warn("Failed to transmit chunk", slog.String("error", err.Error()))
 			break
 		}
 	}
