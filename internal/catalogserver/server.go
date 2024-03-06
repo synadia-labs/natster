@@ -1,6 +1,7 @@
 package catalogserver
 
 import (
+	"encoding/json"
 	log "log/slog"
 	"os"
 	"path/filepath"
@@ -63,12 +64,14 @@ func (srv *CatalogServer) startHeartbeatEmitter() {
 	ticker := time.NewTicker(heartbeatIntervalSeconds * time.Second)
 	// publish one immediately
 	_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library)
+	srv.publishLocalHeartbeat()
 
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				_ = srv.globalServiceClient.PublishHeartbeat(srv.nctx, srv.library)
+				srv.publishLocalHeartbeat()
 			case <-srv.hbQuit:
 				ticker.Stop()
 				close(srv.hbQuit)
@@ -76,6 +79,16 @@ func (srv *CatalogServer) startHeartbeatEmitter() {
 			}
 		}
 	}()
+}
+
+func (srv *CatalogServer) publishLocalHeartbeat() {
+	hb := models.Heartbeat{
+		AccountKey: srv.nctx.AccountPublicKey,
+		Catalog:    srv.library.Name,
+		Revision:   srv.library.LastModified,
+	}
+	hbBytes, _ := json.Marshal(&hb)
+	_ = srv.nc.Publish("natster.local-events.heartbeat", hbBytes)
 }
 
 func (srv *CatalogServer) startCatalogMonitor() {
