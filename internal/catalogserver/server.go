@@ -2,6 +2,7 @@ package catalogserver
 
 import (
 	"encoding/json"
+	"log/slog"
 	log "log/slog"
 	"os"
 	"path/filepath"
@@ -112,10 +113,20 @@ func (srv *CatalogServer) startCatalogMonitor() {
 }
 
 func (srv *CatalogServer) Stop() error {
+	slog.Info("Stopping catalog server", slog.String("catalog", srv.library.Name))
 	srv.hbQuit <- true
 	if srv.catalogWatcher != nil {
 		_ = srv.catalogWatcher.Close()
 	}
+	hb := models.Heartbeat{
+		AccountKey: srv.nctx.AccountPublicKey,
+		Catalog:    srv.library.Name,
+		Revision:   srv.library.LastModified,
+	}
+	hbBytes, _ := json.Marshal(&hb)
+	_ = srv.nc.Publish("natster.local-events.offline", hbBytes)
+	srv.nc.Drain()
+	time.Sleep(500 * time.Millisecond)
 
 	return nil
 }
