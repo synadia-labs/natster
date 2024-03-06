@@ -67,7 +67,13 @@ export const catalogStore = defineStore('catalog', {
                   c.files.push(...JSONCodec().decode(m.data).data.entries)
                 })
                 .catch((err) => {
-                  console.error('nats requestCatalogFiles err: ', err)
+                  nStore.setNotification(
+                    'Catalog failed to respond',
+                    'The catalog ' + c.name + ' failed to respond. Moving offline until it heartbeats.'
+                  )
+                  c.selected = false
+                  c.files = [] as File[]
+                  c.online = false
                 })
             }
           }
@@ -263,7 +269,7 @@ export const catalogStore = defineStore('catalog', {
                     // HACK-- this branch prevents slow streams from being canceled early while we are still transcoding
                     fStore.endStream()
                     timeout = null
-    
+
                     sub.unsubscribe()
                   } else {
                     // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
