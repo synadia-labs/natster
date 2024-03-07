@@ -73,6 +73,7 @@
                 <AudioPlayer
                   v-if="!!mediaUrl && mimeType.toLowerCase() == 'audio/mpeg'"
                   v-show="!loading"
+                  @loadedmetadata="playAudio(e)"
                   :option="
                     getAudioOptions(
                       mediaUrl,
@@ -116,6 +117,7 @@ const { body, title, show, loading, mimeType, mediaUrl, catalog, description } =
 
 function close() {
   console.log('closing file view')
+  fStore.show = false
   fStore.reset()
 }
 
@@ -132,6 +134,10 @@ function getAudioOptions(inSrc, inTitle, inCover) {
     title: inTitle,
     coverImage: inCover
   }
+}
+
+function playAudio() {
+  document.querySelector('audio').play()
 }
 
 watch(mediaUrl, (newVal, oldVal) => {
