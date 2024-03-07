@@ -52,8 +52,15 @@
                 </div>
               </div>
               <div class="relative">
+                <VueSpinnerAudio 
+                  v-if="loading"
+                  size="80"
+                  class="loading-spinner"
+                />
+
                 <video
                   v-if="!!mediaUrl && mimeType.toLowerCase() == 'video/mp4'"
+                  v-show="!loading"
                   id="video"
                   :type="mimeType"
                   :src="mediaUrl"
@@ -62,6 +69,7 @@
                   autoplay
                   controls
                 ></video>
+                
                 <AudioPlayer
                   v-if="!!mediaUrl && mimeType.toLowerCase() == 'audio/mpeg'"
                   :option="
@@ -92,19 +100,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { InformationCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { VueSpinnerAudio } from 'vue3-spinners'
+
 import AudioPlayer from 'vue3-audio-player'
 import 'vue3-audio-player/dist/style.css'
 
 import { fileStore } from '../stores/file'
 const fStore = fileStore()
-const { body, title, show, mimeType, mediaUrl, catalog, description } = storeToRefs(fStore)
+const { body, title, show, loading, mimeType, mediaUrl, catalog, description } = storeToRefs(fStore)
 
 function close() {
-  console.log('reset')
+  console.log('closing file view')
   fStore.reset()
 }
 
@@ -126,8 +136,12 @@ function getAudioOptions(inSrc, inTitle, inCover) {
 watch(mediaUrl, (newVal, oldVal) => {
   if (!!newVal) {
     setTimeout(() => {
-      // document.querySelector('video').play() // HACK
-    }, 100)
+      document.querySelector('video').addEventListener('play', (event) => {
+        if (fStore.loading) {
+          fStore.loading = false
+        }
+      })
+    }, 50)
   }
 })
 </script>
@@ -138,5 +152,10 @@ watch(mediaUrl, (newVal, oldVal) => {
   margin-left: auto;
   margin-right: auto;
   width: 55%;
+}
+
+.loading-spinner {
+  color: #45c320;
+  margin: 50px auto;
 }
 </style>
