@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -16,14 +17,11 @@ import (
 
 type Client struct {
 	nc *nats.Conn
-
-	dlResponses chan models.TypedApiResult[models.DownloadResponse]
 }
 
 func NewClient(nc *nats.Conn) *Client {
 	return &Client{
-		nc:          nc,
-		dlResponses: make(chan models.TypedApiResult[models.DownloadResponse]),
+		nc: nc,
 	}
 }
 
@@ -75,28 +73,45 @@ func (c *Client) DownloadFile(catalog string, hash string, targetPath string) er
 
 	ch := make(chan []byte)
 
-	chunkCount := 0
+	sub, err := c.nc.Subscribe(subscribeSubject, func(m *nats.Msg) {
+		senderXKey := m.Header.Get("x-natster-sender-xkey")
 
-	// subscribe refers to data that doesn't exist yet, so we can't use a closure of
-	// a local var...so we have to use a *sob* global
-	c.nc.Subscribe(subscribeSubject, func(m *nats.Msg) {
-		lastResponse := <-c.dlResponses
-		decrypted, err := targetKp.Open(m.Data, lastResponse.Data.SenderXKey)
+		chunkIdx, err := strconv.Atoi(m.Header.Get("x-natster-chunk-idx"))
 		if err != nil {
-			fmt.Printf("(%+v)\n", lastResponse)
-			slog.Error("Failed to decrypt chunk", err,
-				slog.String("sender_key", lastResponse.Data.SenderXKey),
+			slog.Error("Failed to parse x-natster-chunk-idx header", err,
+				slog.String("sender_key", senderXKey),
 			)
 		}
-		//_, _ = writer.Write(decrypted)
+
+		totalChunks, err := strconv.Atoi(m.Header.Get("x-natster-total-chunks"))
+		if err != nil {
+			slog.Error("Failed to parse x-natster-chunk-idx header", err,
+				slog.String("sender_key", senderXKey),
+			)
+		}
+
+		decrypted, err := targetKp.Open(m.Data, senderXKey)
+		if err != nil {
+			slog.Error("Failed to decrypt chunk", err,
+				slog.Int("chunk_idx", chunkIdx),
+				slog.String("sender_key", senderXKey),
+			)
+		}
+
 		ch <- decrypted
 
-		fmt.Printf("Received chunk %d (%d bytes)\n", chunkCount, len(decrypted))
-		chunkCount := chunkCount + 1
-		if chunkCount == int(lastResponse.Data.TotalChunks) {
+		fmt.Printf("Received chunk %d (%d bytes)\n", chunkIdx, len(decrypted))
+		if chunkIdx == totalChunks-1 {
 			close(ch)
 		}
 	})
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = sub.Unsubscribe()
+	}()
 
 	dlRequest := models.DownloadRequest{
 		Hash:       hash,
@@ -113,7 +128,6 @@ func (c *Client) DownloadFile(catalog string, hash string, targetPath string) er
 	if err != nil {
 		return err
 	}
-	c.dlResponses <- newResponse
 
 	fmt.Printf("File download request acknowledged: %d bytes (%d chunks of %d bytes each.) from %s\n",
 		newResponse.Data.TotalBytes,
