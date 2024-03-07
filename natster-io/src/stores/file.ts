@@ -20,7 +20,9 @@ export const fileStore = defineStore('file', {
 
     appendCount: 0,
     appendInterval: null,
-    streamEndInterval: null
+    streamEndInterval: null,
+
+    onReset: null,
   }),
   actions: {
     endStream() {
@@ -30,18 +32,27 @@ export const fileStore = defineStore('file', {
             clearInterval(this.streamEndInterval)
             this.streamEndInterval = null
 
-            this.mediaSource.endOfStream()
+            this.mediaSource?.endOfStream()
             console.log('stream ended')
           }
         }, 100)
       }
     },
-    render(title, description, mimeType, data, catalog) {
+    load(title, description, mimeType, catalog, onReset) {
       this.title = title
-      this.show = true
+      this.description = description
       this.mimeType = mimeType
       this.catalog = catalog
+      this.loading = true
+      this.show = true
+      this.onReset = onReset
+    },
+    render(title, description, mimeType, data, catalog) {
+      this.title = title
       this.description = description
+      this.mimeType = mimeType
+      this.catalog = catalog
+      this.show = true
 
       if (mimeType.toLowerCase().indexOf('video/') === 0) {
         if (!this.mediaSource && !this.mediaUrl && !this.videoSourceBuffer) {
@@ -171,6 +182,11 @@ export const fileStore = defineStore('file', {
         this.streamEndInterval = null
       }
 
+      if (this.onReset && typeof(this.onReset) === 'function') {
+        this.onReset()
+        this.onReset = null
+      }
+
       this.body = null
       this.buffer = []
       this.codec = null
@@ -184,6 +200,7 @@ export const fileStore = defineStore('file', {
 
       this.show = false
       this.title = ''
+      this.description = ''
 
       console.log('reset!')
     }
