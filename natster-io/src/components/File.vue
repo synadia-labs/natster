@@ -137,17 +137,21 @@ function getAudioOptions(inSrc, inTitle, inCover) {
 watch(mediaUrl, (newVal, oldVal) => {
   if (!!newVal) {
     setTimeout(() => {
-      document.querySelector('audio').addEventListener('play', (event) => {
-        if (fStore.loading) {
-          fStore.loading = false
-        }
-      })
+      try {
+        document.querySelector('audio').addEventListener('play', (event) => {
+          if (fStore.loading) {
+            fStore.loading = false
+          }
+        })
+      } catch (e) {}
 
-      document.querySelector('video').addEventListener('play', (event) => {
-        if (fStore.loading) {
-          fStore.loading = false
-        }
-      })
+      try {
+        document.querySelector('video').addEventListener('play', (event) => {
+          if (fStore.loading) {
+            fStore.loading = false
+          }
+        })
+      } catch (e) {}
     }, 50)
   }
 })
