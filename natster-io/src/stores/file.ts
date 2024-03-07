@@ -169,6 +169,7 @@ export const fileStore = defineStore('file', {
         this.buffer.push(data)
       } else {
         this.body = data
+        this.loading = false
       }
     },
     reset() {
