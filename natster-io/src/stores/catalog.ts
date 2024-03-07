@@ -267,7 +267,9 @@ export const catalogStore = defineStore('catalog', {
           fileArray = new Array()
         })
         .catch((err) => {
-          console.error('nats requestCatalogFiles err: ', err)
+          console.error('nats download request err: ', err)
+          notificationStore().setNotification('NATS request failed', err)
+          sub.unsubscribe()
         })
     },
     async viewFile(fileName, fileDescription, catalog, hash, mimeType) {
@@ -361,7 +363,10 @@ export const catalogStore = defineStore('catalog', {
           fileArray = new Array(data.data.total_bytes)
         })
         .catch((err) => {
-          console.error('nats requestCatalogFiles err: ', err)
+          console.error('nats download request err: ', err)
+          notificationStore().setNotification('NATS request failed', err)
+          sub.unsubscribe()
+          fStore.reset()
         })
     }
   },
