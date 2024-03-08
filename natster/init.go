@@ -211,7 +211,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	}
 
 	fmt.Printf("Your account (%s) has all prerequisites required to serve Natster catalogs.\n", accountName)
-	fmt.Println("Check the docs and more at https://github.com/synadia-labs/natster for more details.")
+	fmt.Println("Check the docs and more at https://docs.natster.io for more details.")
 
 	return nil
 }
