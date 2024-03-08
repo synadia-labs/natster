@@ -218,8 +218,6 @@ func InitNatster(ctx *fisk.ParseContext) error {
 }
 
 func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accountId string) error {
-	jwt := syncp.Export{}
-
 	resp, _, err := client.AccountAPI.ListSubjectExports(ctxx, accountId).Execute()
 	if err != nil {
 		return err
@@ -238,43 +236,45 @@ func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accoun
 	}
 
 	if !catFound {
+		cjwt := syncp.Export{}
 		// token position is 1-based since 0 means none
-		jwt.AccountTokenPosition = syncp.Ptr(int32(1))
-		jwt.Advertise = syncp.Ptr(true)
-		jwt.Subject = syncp.Ptr("*.natster.catalog.>")
-		jwt.Description = syncp.Ptr("Natster Catalog Service")
-		jwt.Name = syncp.Ptr("natster_catalog")
-		jwt.InfoUrl = syncp.Ptr("https://natster.io")
-		jwt.ResponseType = syncp.Ptr(syncp.RESPONSETYPE_SINGLETON)
-		jwt.Type = syncp.Ptr(syncp.EXPORTTYPE_SERVICE)
-		req := syncp.SubjectExportCreateRequest{
-			JwtSettings:               jwt,
+		cjwt.AccountTokenPosition = syncp.Ptr(int32(1))
+		cjwt.Advertise = syncp.Ptr(true)
+		cjwt.Subject = syncp.Ptr("*.natster.catalog.>")
+		cjwt.Description = syncp.Ptr("Natster Catalog Service")
+		cjwt.Name = syncp.Ptr("natster_catalog")
+		cjwt.InfoUrl = syncp.Ptr("https://natster.io")
+		cjwt.ResponseType = syncp.Ptr(syncp.RESPONSETYPE_SINGLETON)
+		cjwt.Type = syncp.Ptr(syncp.EXPORTTYPE_SERVICE)
+		creq := syncp.SubjectExportCreateRequest{
+			JwtSettings:               cjwt,
 			MetricsEnabled:            false,
 			MetricsSamplingPercentage: 0,
 		}
-		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(creq).Execute()
 		if err != nil {
-			return hRespToError(hResp, fmt.Errorf("failed to create subject export '%s' - %s", *jwt.Name, err.Error()))
+			return hRespToError(hResp, fmt.Errorf("failed to create subject export '%s' - %s", *cjwt.Name, err.Error()))
 		}
 		fmt.Println("✅ Catalog service export is configured")
 	}
 	if !mediaFound {
+		mjwt := syncp.Export{}
 		// token position is 1-based since 0 means none
-		jwt.AccountTokenPosition = syncp.Ptr(int32(1))
-		jwt.Advertise = syncp.Ptr(true)
-		jwt.Subject = syncp.Ptr("*.natster.media.*.*")
-		jwt.Description = syncp.Ptr("Natster Media Stream")
-		jwt.Name = syncp.Ptr("natster_media")
-		jwt.InfoUrl = syncp.Ptr("https://natster.io")
-		jwt.Type = syncp.Ptr(syncp.EXPORTTYPE_STREAM)
-		req := syncp.SubjectExportCreateRequest{
-			JwtSettings:               jwt,
+		mjwt.AccountTokenPosition = syncp.Ptr(int32(1))
+		mjwt.Advertise = syncp.Ptr(true)
+		mjwt.Subject = syncp.Ptr("*.natster.media.*.*")
+		mjwt.Description = syncp.Ptr("Natster Media Stream")
+		mjwt.Name = syncp.Ptr("natster_media")
+		mjwt.InfoUrl = syncp.Ptr("https://natster.io")
+		mjwt.Type = syncp.Ptr(syncp.EXPORTTYPE_STREAM)
+		mreq := syncp.SubjectExportCreateRequest{
+			JwtSettings:               mjwt,
 			MetricsEnabled:            false,
 			MetricsSamplingPercentage: 0,
 		}
-		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(mreq).Execute()
 		if err != nil {
-			return hRespToError(hResp, fmt.Errorf("failed to create subject export '%s' - %s", *jwt.Name, err.Error()))
+			return hRespToError(hResp, fmt.Errorf("failed to create subject export '%s' - %s", *mjwt.Name, err.Error()))
 		}
 		fmt.Println("✅ Media stream export is configured")
 	}
