@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"time"
@@ -253,9 +254,7 @@ func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accoun
 		}
 		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
 		if err != nil {
-			defer hResp.Body.Close()
-			body, err := io.ReadAll(hResp.Body)
-			return fmt.Errorf("failed to create subject export '%s': %s\n%s", *jwt.Name, err.Error(), string(body))
+			return hRespToError(hResp, fmt.Errorf("failed to create subject export '%s' - %s", *jwt.Name, err.Error()))
 		}
 		fmt.Println("✅ Catalog service export is configured")
 	}
@@ -275,9 +274,7 @@ func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accoun
 		}
 		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
 		if err != nil {
-			defer hResp.Body.Close()
-			body, err := io.ReadAll(hResp.Body)
-			return fmt.Errorf("failed to create subject export '%s': %s\n%s", *jwt.Name, err.Error(), string(body))
+			return hRespToError(hResp, fmt.Errorf("failed to create subject export '%s' - %s", *jwt.Name, err.Error()))
 		}
 		fmt.Println("✅ Media stream export is configured")
 	}
@@ -316,9 +313,7 @@ func ensureGlobalImport(client *syncp.APIClient, ctxx context.Context, accountId
 		}
 		_, hResp, err := client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
 		if err != nil {
-			defer hResp.Body.Close()
-			body, err := io.ReadAll(hResp.Body)
-			return fmt.Errorf("failed to create natster global import:%s\n%s", err.Error(), string(body))
+			return hRespToError(hResp, fmt.Errorf("failed to create natster global import - %s", err.Error()))
 		}
 		fmt.Println("✅ Natster global service import is configured")
 	}
@@ -335,12 +330,25 @@ func ensureGlobalImport(client *syncp.APIClient, ctxx context.Context, accountId
 		}
 		_, hResp, err := client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
 		if err != nil {
-			defer hResp.Body.Close()
-			body, err := io.ReadAll(hResp.Body)
-			return fmt.Errorf("failed to create natster global events import:%s\n%s", err.Error(), string(body))
+			return hRespToError(hResp, fmt.Errorf("failed to create natster global events import - %s", err.Error()))
 		}
 		fmt.Println("✅ Natster global events import is configured")
 	}
 
 	return nil
+}
+
+func hRespToError(resp *http.Response, originalError error) error {
+	if resp.Body != nil {
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("%s - ?? couldn't read HTTP response body", originalError.Error())
+		}
+		if body != nil {
+			return fmt.Errorf("%s\n---\n%s", originalError.Error(), string(body))
+		}
+		return errors.New(originalError.Error())
+	}
+	return fmt.Errorf("%s - ?? HTTP response body was empty", originalError.Error())
 }
