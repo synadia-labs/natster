@@ -6,12 +6,25 @@ import GettingStartedView from '../views/GettingStartedView.vue'
 import AuthView from '../views/AuthView.vue'
 import Library from '../components/Library.vue'
 
+import { userStore } from '../stores/user'
+
+function isAuthAndHasLocal(to) {
+  const { isAuthenticated } = useAuth0()
+  const uStore = userStore()
+
+  if (isAuthenticated && uStore.hasJWT && uStore.hasNkey) {
+    return { name: 'library' }
+  }
+
+  return true
+}
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/:code?', name: 'home', component: HomeView },
-    { path: '/library', name: 'library', component: Library, beforeEnter: authGuard },
-    { path: '/getting-started', name: 'gettingstarted', component: GettingStartedView }
+    { path: '/:code?', name: 'home', component: HomeView, beforeEnter: [isAuthAndHasLocal] },
+    { path: '/getting-started', name: 'gettingstarted', component: GettingStartedView, beforeEnter: [isAuthAndHasLocal] },
+    { path: '/library', name: 'library', component: Library, beforeEnter: authGuard }
   ]
 })
 
