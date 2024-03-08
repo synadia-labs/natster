@@ -78,6 +78,21 @@ const { loginWithRedirect } = useAuth0()
 
 const codeProvided = computed(() => {
   const uStore = userStore()
+  const route = useRoute()
+
+  if (route.params.code === undefined || route.params.code === '') {
+    return false
+  } else {
+    loginWithRedirect({
+      appState: {
+        target: '/library',
+        nats_code: route.params.code
+      },
+      authorizationParams: {
+        nats_code: route.params.code
+      }
+    })
+  }
 
   if (
     uStore.getOauthId != null &&
@@ -97,21 +112,6 @@ const codeProvided = computed(() => {
 
     return true
   }
-
-  const route = useRoute()
-  if (route.params.code === undefined || route.params.code === '') {
-    return false
-  }
-
-  loginWithRedirect({
-    appState: {
-      target: '/library',
-      nats_code: route.params.code
-    },
-    authorizationParams: {
-      nats_code: route.params.code
-    }
-  })
 
   return true
 })
