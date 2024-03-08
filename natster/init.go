@@ -22,6 +22,7 @@ import (
 const (
 	baseUrl              = "https://cloud.synadia.com"
 	natsterGlobalAccount = "ABNZ6NGGOKLCNJOSETMDLT6KLXR5NHBFLIZKVUTXXBOZILRLTDRYH5VZ"
+	synadiaHubAccount    = "AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC"
 )
 
 // TODO: make the import and export creation idempotent. If they're already there, skip
@@ -209,9 +210,25 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	} else {
 		t := time.Unix(whoami.Initialized, 0)
 		fmt.Printf("Note: this account was previously initialized on %s\n", t.Format("2006-01-02 15:04:05"))
+		return nil
 	}
 
 	fmt.Printf("Your account (%s) has all prerequisites required to serve Natster catalogs.\n", accountName)
+
+	// TODO: get rid of these hacky global variables
+	ShareOpts.AccountKey = synadiaHubAccount
+	ShareOpts.Name = "synadiahub"
+	// Opts.ContextName should still be the same as what was specified during init, allowing importcatalog to read it
+	// such hack
+
+	// Try and import synadiahub
+	err = ImportCatalog(ctx)
+	if err != nil {
+		fmt.Printf("Failed to automatically import the `synadiahub` catalog. You may need to try this again manually: %s", err.Error())
+		return nil
+	}
+
+	fmt.Printf("If you want to use Natster to watch our videos and tutorials, use `natster catalog import` to import the `synadiahub` catalog from the %s account.\n", synadiaHubAccount)
 	fmt.Println("Check the docs and more at https://docs.natster.io for more details.")
 
 	return nil
