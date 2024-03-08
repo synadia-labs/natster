@@ -82,36 +82,17 @@ const codeProvided = computed(() => {
 
   if (route.params.code === undefined || route.params.code === '') {
     return false
-  } else {
-    loginWithRedirect({
-      appState: {
-        target: '/library',
-        nats_code: route.params.code
-      },
-      authorizationParams: {
-        nats_code: route.params.code
-      }
-    })
   }
 
-  if (
-    uStore.getOauthId != null &&
-    typeof uStore.getOauthId !== undefined &&
-    uStore.getOauthId !== ''
-  ) {
-    console.log('Logging in with oauthid', uStore.getOauthId)
-    loginWithRedirect({
-      appState: {
-        target: '/library',
-        in_oauthid: uStore.getOauthId
-      },
-      authorizationParams: {
-        in_oauthid: uStore.getOauthId
-      }
-    })
-
-    return true
-  }
+  loginWithRedirect({
+    appState: {
+      target: '/library',
+      nats_code: route.params.code
+    },
+    authorizationParams: {
+      nats_code: route.params.code
+    }
+  })
 
   return true
 })
