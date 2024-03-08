@@ -186,25 +186,23 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return err
 	}
 	globalClient := globalservice.NewClient(conn)
-	whoami, err := globalClient.Whoami()
-	if err != nil {
-		fmt.Println("There was a problem querying the global service. You may need to re-run `init`")
-	} else {
-		if whoami.Initialized == 0 {
-			data, _ := json.Marshal(models.NatsterInitializedEvent{
-				AccountId:   newCtx.AccountID,
-				AccountName: newCtx.AccountName,
-				AccountKey:  newCtx.AccountPublicKey,
-			})
-			err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none", data)
-			if err != nil {
-				fmt.Printf("Failed to contact Natster global service to post initialization event: %s", err)
-				return err
-			}
-		} else {
-			t := time.Unix(whoami.Initialized, 0)
-			fmt.Printf("Note: this account was previously initialized on %s\n", t.Format("2006-01-02 15:04:05"))
+	whoami, _ := globalClient.Whoami()
+	// if this is the first time initializing, the account projection should be empty,
+	// so we should emit the initialized event (which will then create the account projection)
+	if whoami == nil {
+		data, _ := json.Marshal(models.NatsterInitializedEvent{
+			AccountId:   newCtx.AccountID,
+			AccountName: newCtx.AccountName,
+			AccountKey:  newCtx.AccountPublicKey,
+		})
+		err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none", data)
+		if err != nil {
+			fmt.Printf("Failed to contact Natster global service to write account initialization event: %s", err)
+			return err
 		}
+	} else {
+		t := time.Unix(whoami.Initialized, 0)
+		fmt.Printf("Note: this account was previously initialized on %s\n", t.Format("2006-01-02 15:04:05"))
 	}
 
 	fmt.Printf("Congratulations! Your account (%s) is ready to serve Natster catalogs!\n", accountName)

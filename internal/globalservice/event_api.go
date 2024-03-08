@@ -187,6 +187,7 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 		err := json.Unmarshal(m.Data, &evt)
 		if err != nil {
 			slog.Error("Failed to deserialize Natster event", err)
+			_ = m.Respond(models.NewApiResultFail("Bad request", 400))
 			return
 		}
 
@@ -206,6 +207,7 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 		err = srv.nc.Publish(subject, raw)
 		if err != nil {
 			slog.Error("Failed to publish Natster event", err)
+			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
 			return
 		}
 
@@ -218,6 +220,7 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 				slog.Error("Failed to publish autoshare event for synadia hub", slog.Any("error", err))
 			}
 		}
+		_ = m.Respond(models.NewApiResultPass([]byte{}))
 	}
 }
 
