@@ -99,11 +99,11 @@ func main() {
 
 	auth := ncli.Command("auth", "Authenticate your local context for use with natster.io").Hidden()
 	weblogin := auth.Command("web", "Authenticate with one time code")
-	weblogin.Flag("qrcode", "Displays QR code in terminal of login link").Default("false").UnNegatableBoolVar(&WebLoginOpts.DisplayQR)
+	weblogin.Flag("qrcode", "Displays a QR code as well as the URL").Default("false").UnNegatableBoolVar(&WebLoginOpts.DisplayQR)
 	weblogin.Action(WebLogin)
 
 	login := ncli.Command("login", "Authenticate your local context for use with natster.io")
-	login.Flag("qrcode", "Displays QR code in terminal of login link").Default("false").UnNegatableBoolVar(&WebLoginOpts.DisplayQR)
+	login.Flag("qrcode", "Displays a QR code as well as the URL").Default("false").UnNegatableBoolVar(&WebLoginOpts.DisplayQR)
 	login.Action(WebLogin)
 
 	claim := ncli.Command("claim", "Claims an OTC code. For testing only - Can only be done from the natster.io account").Hidden()
