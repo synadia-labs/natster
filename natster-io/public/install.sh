@@ -12,7 +12,7 @@ get_version() {
 		command curl -L -s \
 			-H "Accept: application/vnd.github+json" \
 			-H "X-GitHub-Api-Version: 2022-11-28" \
-			https://api.github.com/repos/synadia-labs/natster/releases/latest |
+			https://natster.io/dl/latest |
 			command jq -r '.name'
 	)
 }
@@ -89,16 +89,20 @@ echo "
 os=$(get_os)
 arch=$(get_arch)
 binary_version=$(get_version)
-file_name="nex_${binary_version}_${os}_${arch}"
-asset_uri="https://github.com/synadia-labs/natster/releases/download/${binary_version}/${file_name}"
+# file_name="natster_${binary_version}_${os}_${arch}"
+# asset_uri="https://github.com/synadia-labs/natster/releases/download/${binary_version}/${file_name}"
+file_name="natster"
+asset_uri="https://natster.io/dl/natster_${os}_${arch}/${file_name}"
 
-downloadFolder="${TMPDIR:-/tmp}"
-mkdir -p ${downloadFolder}
+downloadFolder="${TMPDIR:-/tmp}/natster_installer"
+executable_folder="${HOME}/.natster/bin"
 downloaded_file="${downloadFolder}/natster"
-executable_folder="/usr/local/bin"
+
+mkdir -p ${downloadFolder}
+mkdir -p ${executable_folder}
 
 echo "[1/3] Download ${asset_uri} to ${downloadFolder}"
-rm -f ${downloaded_file}
+rm -f ${downloadedFolder}
 curl --silent --fail --location --output "${downloaded_file}" "${asset_uri}"
 
 echo "[2/3] Install natster to ${executable_folder}"
