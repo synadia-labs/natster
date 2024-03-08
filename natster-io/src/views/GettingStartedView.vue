@@ -25,18 +25,23 @@
           <div class="lg:max-w-lg">
             <img :src="natsterImg" class="h-20" />
             <p class="mt-6 text-xl leading-8 text-gray-700">
-              Natster is a secure peer-to-multipeer, decentralized media sharing platform</p>
+              Natster is a secure peer-to-multipeer, decentralized media sharing platform.</p>
           </div>
         </div>
       </div>
       <div class="-ml-12 -mt-12 p-12 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:overflow-hidden">
-        <VCodeBlock :code="code" highlightjs lang="bash" theme="tokyo-night-light" copyTab />
+        <h2 class="lg:pt-15 pb-2 mt-16 text-2xl font-bold tracking-tight text-gray-900">Getting Started with Natster
+        </h2>
+        <VCodeBlock :code="code_init" highlightjs lang="bash" theme="tokyo-night-light" copyTab />
+        <br />
+        <h2 class="pb-2 mt-10 text-2xl font-bold tracking-tight text-gray-900">Create your first Natster share</h2>
+        <VCodeBlock :code="code_share" highlightjs lang="bash" theme="tokyo-night-light" copyTab />
       </div>
       <div
         class="lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mx-auto lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8">
         <div class="lg:pr-4">
           <div class="max-w-xl text-base leading-7 text-gray-700 lg:max-w-lg">
-            <p>Natster is an example of the kind of application you can build quickly and easily using nothing but NATS
+            <p>Natster is an example of the kind of application you can build quickly and easily using nothing but NATS.
             </p>
             <ul role="list" class="mt-8 space-y-8 text-gray-600">
               <li class="flex gap-x-3">
@@ -49,12 +54,12 @@
               <li class="flex gap-x-3">
                 <LockClosedIcon class="mt-1 h-5 w-5 flex-none text-indigo-600" aria-hidden="true" />
                 <span><strong class="font-semibold text-gray-900">Always encrypted.</strong>
-                  Nothing you share can ever be read by anyone but the intended recipient. Synadia can't even read it.
+                  Nothing you share can ever be read by anyone but the intended recipient.
                 </span>
               </li>
               <li class="flex gap-x-3">
                 <CogIcon class="mt-1 h-5 w-5 flex-none text-indigo-600" aria-hidden="true" />
-                <span><strong class="font-semibold text-gray-900">Nothing But NATs.</strong>
+                <span><strong class="font-semibold text-gray-900">Nothing But NATS.</strong>
                   NATS is more than a tool, it's a platform that gives us an easy button for building distributed apps.
                 </span>
               </li>
@@ -67,7 +72,8 @@
             </ul>
             <p class="mt-8"></p>
             <h2 class="mt-16 text-2xl font-bold tracking-tight text-gray-900">Need help? Slack us!</h2>
-            <p class="mt-6">The maintainers of Natster can be found hanging out in the NATs.io slack</p>
+            <p class="mt-6">The maintainers of Natster can be found hanging out in the <a href="https://slack.nats.io"
+                class="text-blue-500 underline">NATS.io slack</a>.</p>
           </div>
         </div>
       </div>
@@ -85,14 +91,27 @@ import { notificationStore } from '../stores/notification'
 import VCodeBlock from '@wdns/vue-code-block';
 const natsterImg = new URL('@/assets/natster-horizontal.svg', import.meta.url)
 
-const code = ref(`# Install the Natster CLI
+const code_init = ref(`# Install the Natster CLI
 curl -sSf https://natster.io/install.sh | sh
 
 # Initialize the Natster with your Synadia Cloud Token
 natster init --token <SYNADIA CLOUD TOKEN>
 
 # Bind your OAuth ID with your Natster Account
-natster auth web
+natster login
+
+# Verify your context was successfully bound
+natster whoami
+`);
+
+const code_share = ref(`# Create a new catalog
+natster catalog new
+
+# Serve your catalog
+natster catalog serve
+
+# Share with your friends
+natster catalog share
 `);
 const route = useRoute()
 
