@@ -24,7 +24,7 @@ const router = createRouter({
   routes: [
     { path: '/:code?', name: 'home', component: HomeView, beforeEnter: [isAuthAndHasLocal] },
     { path: '/getting-started', name: 'gettingstarted', component: GettingStartedView, beforeEnter: [isAuthAndHasLocal] },
-    { path: '/library', name: 'library', component: Library, beforeEnter: authGuard }
+    { path: '/library', name: 'library', component: Library, beforeEnter: [isAuthAndHasLocal] }
   ]
 })
 
