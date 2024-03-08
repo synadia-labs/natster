@@ -63,6 +63,10 @@ func (c *Client) Whoami() (*models.WhoamiResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	if apiResult.Code == 404 {
+		return nil, nil
+	}
+
 	if apiResult.Error != nil {
 		return nil, errors.New(*apiResult.Error)
 	}
