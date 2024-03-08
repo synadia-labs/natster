@@ -11,6 +11,10 @@ import (
 	"github.com/synadia-labs/natster/internal/models"
 )
 
+const (
+	defaultClientTimeout = 2 * time.Second
+)
+
 type Client struct {
 	nc *nats.Conn
 }
@@ -37,7 +41,7 @@ func NewClientWithCredsPath(credsPath string) (*Client, error) {
 }
 
 func (c *Client) ValidateCatalogName(catalog string) (*models.CatalogNameValidationResult, error) {
-	res, err := c.nc.Request("natster.global.catalogs.validatename", []byte(catalog), 2*time.Second)
+	res, err := c.nc.Request("natster.global.catalogs.validatename", []byte(catalog), defaultClientTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +54,7 @@ func (c *Client) ValidateCatalogName(catalog string) (*models.CatalogNameValidat
 }
 
 func (c *Client) Whoami() (*models.WhoamiResponse, error) {
-	res, err := c.nc.Request("natster.global.whoami", []byte{}, 1*time.Second)
+	res, err := c.nc.Request("natster.global.whoami", []byte{}, defaultClientTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +73,7 @@ func (c *Client) Whoami() (*models.WhoamiResponse, error) {
 // will provide an OAuth identifier. If this OAuth ID has been bound to a context, we
 // should be able to download that context and the corresponding credentials
 func (c *Client) GetBoundContextByOAuth(oauthId string) (*models.ContextQueryResponse, error) {
-	res, err := c.nc.Request("natster.global.context.get", []byte(oauthId), 1*time.Second)
+	res, err := c.nc.Request("natster.global.context.get", []byte(oauthId), defaultClientTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +94,7 @@ func (c *Client) GenerateOneTimeCode(context models.NatsterContext) (*models.Otc
 		return nil, err
 	}
 
-	res, err := c.nc.Request("natster.global.otc.generate", ctxBytes, 1*time.Second)
+	res, err := c.nc.Request("natster.global.otc.generate", ctxBytes, defaultClientTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +118,7 @@ func (c *Client) ClaimOneTimeCode(code string, oauthIdentifier string) (*models.
 	if err != nil {
 		return nil, err
 	}
-	res, err := c.nc.Request("natster.global.otc.claim", bytes, 2*time.Second)
+	res, err := c.nc.Request("natster.global.otc.claim", bytes, defaultClientTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +134,7 @@ func (c *Client) ClaimOneTimeCode(code string, oauthIdentifier string) (*models.
 }
 
 func (c *Client) GetMyCatalogs() ([]models.CatalogShareSummary, error) {
-	res, err := c.nc.Request("natster.global.my.shares", []byte{}, 1*time.Second)
+	res, err := c.nc.Request("natster.global.my.shares", []byte{}, defaultClientTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -153,11 +157,19 @@ func (c *Client) PublishEvent(eventType string, catalog string, target string, r
 	if err != nil {
 		return err
 	}
-	err = c.nc.Publish("natster.global.events.put", bytes)
+	resp, err := c.nc.Request("natster.global.events.put", bytes, defaultClientTimeout)
 	if err != nil {
 		return err
 	}
-	return c.nc.Flush()
+	var apiResponse models.ApiResult
+	err = json.Unmarshal(resp.Data, &apiResponse)
+	if err != nil {
+		return err
+	}
+	if apiResponse.Error != nil {
+		return errors.New(*apiResponse.Error)
+	}
+	return nil
 }
 
 func (c *Client) PublishHeartbeat(nctx *models.NatsterContext, library *medialibrary.MediaLibrary) error {

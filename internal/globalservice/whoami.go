@@ -15,12 +15,6 @@ import (
 func handleWhoAmi(srv *GlobalService) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
 		accountKey := extractAccountKey(m.Subject)
-		oauth, err := srv.GetOAuthIdForAccount(accountKey)
-		if err != nil {
-			slog.Error("Failed to query OAuth ID for account", err)
-			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
-			return
-		}
 		js, _ := jetstream.New(srv.nc)
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -31,18 +25,25 @@ func handleWhoAmi(srv *GlobalService) func(m *nats.Msg) {
 			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
 			return
 		}
-		initialized := int64(0)
-		act, err := loadAccount(kv, accountKey)
-		if err == nil {
-			initialized = act.InitializedAt
+		act, _ := loadAccount(kv, accountKey)
+		if act == nil {
+			_ = m.Respond(models.NewApiResultFail("Not found", 404))
+			return
 		}
+
 		// Note: a non-error but nil oauth is valid - just means it hasn't been context
 		// bound yet
+		oauth, err := srv.GetOAuthIdForAccount(accountKey)
+		if err != nil {
+			slog.Error("Failed to query OAuth ID for account", err)
+			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
+			return
+		}
 
 		resp := models.WhoamiResponse{
 			AccountKey:    accountKey,
 			OAuthIdentity: oauth,
-			Initialized:   initialized,
+			Initialized:   act.InitializedAt,
 		}
 		_ = m.Respond(models.NewApiResultPass(resp))
 	}

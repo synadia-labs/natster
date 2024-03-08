@@ -3,6 +3,7 @@ package globalservice
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"slices"
 	"strings"
@@ -143,6 +144,11 @@ func recordContextBinding(msg jetstream.Msg, account string, kv jetstream.KeyVal
 		_ = msg.Nak()
 		return
 	}
+	if existingAccount == nil {
+		slog.Error("Attempted to bind context to an account that hasn't been initialized")
+		_ = msg.Nak()
+		return
+	}
 	var bindingEvent models.ContextBoundEvent
 	err = json.Unmarshal(msg.Data(), &bindingEvent)
 	if err != nil {
@@ -162,18 +168,16 @@ func recordContextBinding(msg jetstream.Msg, account string, kv jetstream.KeyVal
 }
 
 func initAccount(msg jetstream.Msg, account string, kv jetstream.KeyValue) {
-	newAccount, err := loadAccount(kv, account)
-	if err != nil {
+	newAccount, _ := loadAccount(kv, account)
+	if newAccount == nil {
 		newAccount = &accountProjection{
-			OutShares:     []shareEntry{},
-			InShares:      []shareEntry{},
-			InitializedAt: time.Now().UTC().Unix(),
+			OutShares: []shareEntry{},
+			InShares:  []shareEntry{},
 		}
-	} else {
-		newAccount.InitializedAt = time.Now().UTC().Unix()
 	}
+	newAccount.InitializedAt = time.Now().UTC().Unix()
 
-	err = writeAccount(kv, account, *newAccount)
+	err := writeAccount(kv, account, *newAccount)
 	if err != nil {
 		slog.Error("Failed to write new account projection", slog.Any("error", err))
 		_ = msg.Nak()
@@ -191,13 +195,13 @@ func addShare(msg jetstream.Msg, from string, to string, catalog string, kv jets
 	}
 
 	fromAccount, err := loadAccount(kv, from)
-	if err != nil {
+	if fromAccount == nil {
 		slog.Error("Failed to load source account", slog.Any("error", err))
 		_ = msg.Nak()
 		return
 	}
 	toAccount, err := loadAccount(kv, to)
-	if err != nil {
+	if toAccount == nil {
 		slog.Error("Failed to load target account", slog.Any("error", err))
 		_ = msg.Nak()
 		return
@@ -242,13 +246,13 @@ func removeShare(msg jetstream.Msg, from string, to string, catalog string, kv j
 	}
 
 	fromAccount, err := loadAccount(kv, from)
-	if err != nil {
+	if fromAccount == nil {
 		slog.Error("Failed to load source account", slog.Any("error", err))
 		_ = msg.Nak()
 		return
 	}
 	toAccount, err := loadAccount(kv, to)
-	if err != nil {
+	if toAccount == nil {
 		slog.Error("Failed to load target account", slog.Any("error", err))
 		_ = msg.Nak()
 		return
@@ -278,7 +282,10 @@ func loadAccount(kv jetstream.KeyValue, key string) (*accountProjection, error) 
 	entry, err := kv.Get(ctx, key)
 
 	if err != nil {
-		projection = accountProjection{}
+		if errors.Is(err, jetstream.ErrKeyNotFound) {
+			return nil, nil
+		}
+		return nil, err
 	} else {
 		err = json.Unmarshal(entry.Value(), &projection)
 		if err != nil {
