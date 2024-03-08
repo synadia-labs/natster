@@ -98,7 +98,7 @@ curl -sSf https://natster.io/install.sh | sh
 natster init --token <SYNADIA CLOUD TOKEN>
 
 # Bind your OAuth ID with your Natster Account
-natster auth web
+natster login
 
 # Verify your context was successfully bound
 natster whoami
