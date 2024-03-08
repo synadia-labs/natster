@@ -248,7 +248,7 @@ func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accoun
 			MetricsEnabled:            false,
 			MetricsSamplingPercentage: 0,
 		}
-		_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
 		if err != nil {
 			return hRespToError(hResp, fmt.Errorf("failed to create subject export '%s' - %s", *jwt.Name, err.Error()))
 		}
@@ -268,7 +268,7 @@ func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accoun
 			MetricsEnabled:            false,
 			MetricsSamplingPercentage: 0,
 		}
-		_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
 		if err != nil {
 			return hRespToError(hResp, fmt.Errorf("failed to create subject export '%s' - %s", *jwt.Name, err.Error()))
 		}
@@ -307,7 +307,7 @@ func ensureGlobalImport(client *syncp.APIClient, ctxx context.Context, accountId
 				Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
 			},
 		}
-		_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
 		if err != nil {
 			return hRespToError(hResp, fmt.Errorf("failed to create natster global import - %s", err.Error()))
 		}
@@ -324,7 +324,7 @@ func ensureGlobalImport(client *syncp.APIClient, ctxx context.Context, accountId
 				Type:         syncp.Ptr(syncp.EXPORTTYPE_STREAM),
 			},
 		}
-		_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
 		if err != nil {
 			return hRespToError(hResp, fmt.Errorf("failed to create natster global events import - %s", err.Error()))
 		}
