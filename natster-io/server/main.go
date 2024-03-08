@@ -73,13 +73,13 @@ func RunServer() error {
 
 	fmt.Printf("Server started %s:%d\n", Opts.serveHost, Opts.servePort)
 	if Opts.logging {
-		return http.ListenAndServe(fmt.Sprintf("%s:%d", Opts.serveHost, Opts.servePort), logger(muxer))
+		return http.ListenAndServe(fmt.Sprintf("%s:%d", Opts.serveHost, Opts.servePort), logz(muxer))
 	} else {
 		return http.ListenAndServe(fmt.Sprintf("%s:%d", Opts.serveHost, Opts.servePort), muxer)
 	}
 }
 
-func logger(handler http.Handler) http.Handler {
+func logz(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Host: %s | Path: %s | Query: %s\n", r.Host, r.URL.Path, r.URL.RawQuery)
 		handler.ServeHTTP(w, r)
