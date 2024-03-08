@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"time"
@@ -122,7 +123,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	}
 	if len(users.Items) == 0 {
 		// TODO: we should offer to create one here
-		return errors.New("a user context is required for natster to operate properly. No users found")
+		return errors.New("🛑 a user context is required for natster to operate properly. No users found")
 	}
 
 	usernames := make([]string, len(users.Items))
@@ -186,7 +187,11 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return err
 	}
 	globalClient := globalservice.NewClient(conn)
-	whoami, _ := globalClient.Whoami()
+	whoami, err := globalClient.Whoami()
+	if err != nil {
+		fmt.Printf("🛑 There was an error querying the global service for your context: %s\n", err.Error())
+		return nil
+	}
 	// if this is the first time initializing, the account projection should be empty,
 	// so we should emit the initialized event (which will then create the account projection)
 	if whoami == nil {
@@ -197,7 +202,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		})
 		err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none", data)
 		if err != nil {
-			fmt.Printf("Failed to contact Natster global service to write account initialization event: %s", err)
+			fmt.Printf("🛑 Failed to contact Natster global service to write account initialization event: %s", err)
 			return err
 		}
 	} else {
@@ -205,8 +210,8 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		fmt.Printf("Note: this account was previously initialized on %s\n", t.Format("2006-01-02 15:04:05"))
 	}
 
-	fmt.Printf("Congratulations! Your account (%s) is ready to serve Natster catalogs!\n", accountName)
-	fmt.Println("To get started, you'll want to do the following:\n1. `natster catalog new` to create a catalog\n2. `natster catalog serve` to host the media catalog\n3. `natster catalog share` to share with friends.")
+	fmt.Printf("Your account (%s) has all prerequisites required to serve Natster catalogs.\n", accountName)
+	fmt.Println("Check the docs and more at https://github.com/synadia-labs/natster for more details.")
 
 	return nil
 }
@@ -246,9 +251,11 @@ func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accoun
 			MetricsEnabled:            false,
 			MetricsSamplingPercentage: 0,
 		}
-		_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
 		if err != nil {
-			return err
+			defer hResp.Body.Close()
+			body, err := io.ReadAll(hResp.Body)
+			return fmt.Errorf("failed to create subject export '%s': %s\n%s", *jwt.Name, err.Error(), string(body))
 		}
 		fmt.Println("✅ Catalog service export is configured")
 	}
@@ -266,9 +273,11 @@ func ensureSubjectExported(client *syncp.APIClient, ctxx context.Context, accoun
 			MetricsEnabled:            false,
 			MetricsSamplingPercentage: 0,
 		}
-		_, _, err = client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectExport(ctxx, accountId).SubjectExportCreateRequest(req).Execute()
 		if err != nil {
-			return err
+			defer hResp.Body.Close()
+			body, err := io.ReadAll(hResp.Body)
+			return fmt.Errorf("failed to create subject export '%s': %s\n%s", *jwt.Name, err.Error(), string(body))
 		}
 		fmt.Println("✅ Media stream export is configured")
 	}
@@ -305,10 +314,11 @@ func ensureGlobalImport(client *syncp.APIClient, ctxx context.Context, accountId
 				Type:         syncp.Ptr(syncp.EXPORTTYPE_SERVICE),
 			},
 		}
-		_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
 		if err != nil {
-			fmt.Printf("Failed to create natster global import: %s\n", err)
-			return err
+			defer hResp.Body.Close()
+			body, err := io.ReadAll(hResp.Body)
+			return fmt.Errorf("failed to create natster global import:%s\n%s", err.Error(), string(body))
 		}
 		fmt.Println("✅ Natster global service import is configured")
 	}
@@ -323,10 +333,11 @@ func ensureGlobalImport(client *syncp.APIClient, ctxx context.Context, accountId
 				Type:         syncp.Ptr(syncp.EXPORTTYPE_STREAM),
 			},
 		}
-		_, _, err = client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
+		_, hResp, err := client.AccountAPI.CreateSubjectImport(ctxx, accountId).SubjectImportCreateRequest(importReq).Execute()
 		if err != nil {
-			fmt.Printf("Failed to create natster global events import: %s\n", err)
-			return err
+			defer hResp.Body.Close()
+			body, err := io.ReadAll(hResp.Body)
+			return fmt.Errorf("failed to create natster global events import:%s\n%s", err.Error(), string(body))
 		}
 		fmt.Println("✅ Natster global events import is configured")
 	}
