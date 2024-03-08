@@ -124,7 +124,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 	}
 	if len(users.Items) == 0 {
 		// TODO: we should offer to create one here
-		return errors.New("a user context is required for natster to operate properly. No users found")
+		return errors.New("🛑 a user context is required for natster to operate properly. No users found")
 	}
 
 	usernames := make([]string, len(users.Items))
@@ -188,7 +188,11 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		return err
 	}
 	globalClient := globalservice.NewClient(conn)
-	whoami, _ := globalClient.Whoami()
+	whoami, err := globalClient.Whoami()
+	if err != nil {
+		fmt.Printf("🛑 There was an error querying the global service for your context: %s\n", err.Error())
+		return nil
+	}
 	// if this is the first time initializing, the account projection should be empty,
 	// so we should emit the initialized event (which will then create the account projection)
 	if whoami == nil {
@@ -199,7 +203,7 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		})
 		err = globalClient.PublishEvent(models.NatsterInitializedEventType, "none", "none", data)
 		if err != nil {
-			fmt.Printf("Failed to contact Natster global service to write account initialization event: %s", err)
+			fmt.Printf("🛑 Failed to contact Natster global service to write account initialization event: %s", err)
 			return err
 		}
 	} else {
@@ -207,8 +211,8 @@ func InitNatster(ctx *fisk.ParseContext) error {
 		fmt.Printf("Note: this account was previously initialized on %s\n", t.Format("2006-01-02 15:04:05"))
 	}
 
-	fmt.Printf("Congratulations! Your account (%s) is ready to serve Natster catalogs!\n", accountName)
-	fmt.Println("To get started, you'll want to do the following:\n1. `natster catalog new` to create a catalog\n2. `natster catalog serve` to host the media catalog\n3. `natster catalog share` to share with friends.")
+	fmt.Printf("Your account (%s) has all prerequisites required to serve Natster catalogs.\n", accountName)
+	fmt.Println("Check the docs and more at https://docs.natster.io for more details.")
 
 	return nil
 }

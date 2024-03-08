@@ -45,6 +45,12 @@ export const userStore = defineStore('user', {
     }
   },
   getters: {
+    hasJWT(state) {
+      return state.jwt !== '' || localStorage.getItem('natster_jwt') !== null
+    },
+    hasNkey(state) {
+      return state.nkey !== '' || localStorage.getItem('natster_nkey') !== null
+    },
     getLastSeen(state) {
       return state.last_seen_ts
     },
