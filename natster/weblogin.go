@@ -38,6 +38,7 @@ func WebLogin(ctx *fisk.ParseContext) error {
 	)
 
 	if WebLoginOpts.DisplayQR {
+		fmt.Printf("\n\nAlternatively, you can scan this QR code to claim your login code\n")
 		qrterminal.Generate(response.ClaimUrl, qrterminal.L, os.Stdout)
 	} else {
 		switch runtime.GOOS {
