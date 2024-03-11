@@ -7,7 +7,6 @@ on:
       - reopened
       - synchronize
       - closed
-  workflow_dispatch:
 
 permissions: write-all
 
@@ -53,7 +52,7 @@ jobs:
           hugo \
             --gc \
             --minify \
-            --baseURL "https://docs.natster.io/pr-preview/pr-86" 
+            --baseURL "https://docs.natster.io/pr-preview/pr-${{ github.event.number }}" 
       - 
         name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
