@@ -53,10 +53,10 @@ jobs:
           hugo \
             --gc \
             --minify \
-            --baseURL "https://docs.natster.io" 
+            --baseURL "docs.natster.io" 
       - 
         name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./docs/public/
-          custom-url: 'https://docs.natster.io'
+          custom-url: "docs.natster.io"
