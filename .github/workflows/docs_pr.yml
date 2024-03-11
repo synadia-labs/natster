@@ -60,4 +60,4 @@ jobs:
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./public/
-          token: ${{ secret.GHA_RELEASE }}
+          token: ${{ secrets.GHA_RELEASE }}
