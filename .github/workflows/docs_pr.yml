@@ -53,9 +53,10 @@ jobs:
           hugo \
             --gc \
             --minify \
-            --baseURL "https://synadia-labs.github.io/natster/pr-preview/pr-86" 
+            --baseURL "https://docs.natster.io" 
       - 
         name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./docs/public/
+          custom-url: 'https://docs.natster.io'
