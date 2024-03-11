@@ -55,8 +55,6 @@ jobs:
             --minify 
       - 
         name: Deploy preview
-        working-directory: ./docs
         uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: ./public/
-          token: ${{ secrets.GHA_RELEASE }}
+          source-dir: ./docs/public/
