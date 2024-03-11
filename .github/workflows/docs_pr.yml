@@ -52,10 +52,11 @@ jobs:
         run: |
           hugo \
             --gc \
-            --minify
+            --minify \
+            --baseURL "pr-preview/pr-86" 
       - 
         name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./docs/public/
-          custom-url: "docs.natster.io/pr-preview/pr-86"
+          custom-url: "docs.natster.io"
