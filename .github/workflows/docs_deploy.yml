@@ -1,25 +1,14 @@
-name: Deploy PR previews
-
+name: Deploy Docs
+permissions:
+  contents: write
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - closed
-
-permissions: write-all
-
-concurrency: preview-${{ github.ref }}
-defaults:
-  run:
-    shell: bash
-
+  push:
+    branches:
+      - main
 jobs:
-  deploy-preview:
-    runs-on: ubuntu-20.04
-    env:
-      HUGO_VERSION: 0.123.8
+  deploy:
+    concurrency: ci-${{ github.ref }}
+    runs-on: ubuntu-latest
     steps:
       - 
         name: Install Hugo CLI
@@ -42,7 +31,6 @@ jobs:
       - 
         name: Build with Hugo
         working-directory: ./docs
-        if: github.event.action != 'closed' # skip the build if the PR has been closed
         env:
           HUGO_ENVIRONMENT: production
           HUGO_ENV: production
@@ -50,10 +38,9 @@ jobs:
           hugo \
             --gc \
             --minify \
-            --baseURL "https://docs.natster.io/pr-preview/pr-${{ github.event.number }}" 
+            --baseURL "https://docs.natster.io" 
       - 
-        name: Deploy preview
-        uses: rossjrw/pr-preview-action@v1
+        name: Deploy Docs
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          source-dir: ./docs/public/
-          custom-url: "docs.natster.io"
+          folder: ./docs/public/
