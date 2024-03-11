@@ -22,9 +22,9 @@ defaults:
 jobs:
   deploy-preview:
     runs-on: ubuntu-20.04
-    defaults:
-      run:
-        working-directory: ./docs
+    # defaults:
+    #   run:
+    #     working-directory: ./docs
     env:
       HUGO_VERSION: 0.123.8
     steps:
