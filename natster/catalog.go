@@ -274,6 +274,9 @@ func ImportCatalog(ctx *fisk.ParseContext) error {
 			ShareOpts.Name, ShareOpts.AccountKey,
 		)
 	}
+	if !catFound && !mediaFound {
+		publishCatalogImported()
+	}
 	return nil
 }
 
@@ -411,6 +414,29 @@ func publishCatalogUnshared() error {
 		return err
 	}
 	err = client.PublishEvent(models.CatalogUnsharedEventType, ShareOpts.Name, ShareOpts.AccountKey, nil)
+	if err != nil {
+		slog.Error(
+			"Failed to publish catalog unshared event",
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+	client.Drain()
+
+	return nil
+}
+
+func publishCatalogImported() error {
+	ctx, _ := loadContext()
+	client, err := globalservice.NewClientWithCredsPath(ctx.CredsPath)
+	if err != nil {
+		slog.Error(
+			"Failed to connect to NGS",
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+	err = client.PublishEvent(models.CatalogImportedEventType, ShareOpts.Name, ShareOpts.AccountKey, nil)
 	if err != nil {
 		slog.Error(
 			"Failed to publish catalog unshared event",
