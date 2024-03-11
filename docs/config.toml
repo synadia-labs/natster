@@ -3,6 +3,23 @@ languageCode = 'en-us'
 title = 'Natster by Synadia'
 theme = ["hugo-geekdoc"]
 
+
+geekdocRepo = "https://github.com/synadia-labs/natster"
+geekdocEditPath = "edit/main/docs/"
+
+# Needed for mermaid shortcodes
+[markup]
+  [markup.goldmark.renderer]
+    # Needed for mermaid shortcode or when nesting shortcodes (e.g. img within
+    # columns or tabs)
+    unsafe = true
+  [markup.tableOfContents]
+    startLevel = 1
+    endLevel = 9
+
+[taxonomies]
+   tag = "tags"
+
 [module]
   [[module.imports]]
     path = "github.com/thegeeklab/hugo-geekdoc"
