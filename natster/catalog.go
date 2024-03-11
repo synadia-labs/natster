@@ -439,7 +439,7 @@ func publishCatalogImported() error {
 	err = client.PublishEvent(models.CatalogImportedEventType, ShareOpts.Name, ShareOpts.AccountKey, nil)
 	if err != nil {
 		slog.Error(
-			"Failed to publish catalog unshared event",
+			"Failed to publish catalog imported event",
 			slog.String("error", err.Error()),
 		)
 		return err
