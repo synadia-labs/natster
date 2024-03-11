@@ -5,6 +5,7 @@ const (
 	CatalogSharedEventType      = "catalog_shared"
 	CatalogUnsharedEventType    = "catalog_unshared"
 	ContextBoundEventType       = "context_bound"
+	CatalogImportedEventType    = "catalog_imported"
 )
 
 // Heartbeats are emitted to the global service periodically by running natster
