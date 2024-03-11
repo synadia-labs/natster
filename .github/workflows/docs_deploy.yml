@@ -10,7 +10,9 @@ on:
 jobs:
   deploy:
     concurrency: ci-${{ github.ref }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    env:
+      HUGO_VERSION: 0.123.8
     steps:
       - 
         name: Install Hugo CLI
