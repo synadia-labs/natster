@@ -21,7 +21,6 @@ jobs:
     runs-on: ubuntu-20.04
     # defaults:
     #   run:
-    #     working-directory: ./docs
     env:
       HUGO_VERSION: 0.123.8
     steps:
@@ -41,9 +40,11 @@ jobs:
           fetch-depth: 0
       - 
         name: Install Node.js dependencies
-        run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
+        working-directory: ./docs
+        run: "ls -lah && pwd && [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
       - 
         name: Build with Hugo
+        working-directory: ./docs
         if: github.event.action != 'closed' # skip the build if the PR has been closed
         env:
           HUGO_ENVIRONMENT: production
@@ -54,6 +55,7 @@ jobs:
             --minify 
       - 
         name: Deploy preview
+        working-directory: ./docs
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./public/
