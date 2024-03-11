@@ -9,10 +9,7 @@ on:
       - closed
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: write-all
 
 concurrency: preview-${{ github.ref }}
 defaults:
