@@ -69,10 +69,23 @@
                   All backend services are managed by the NATS execution engine.
                 </span>
               </li>
+              <li class="flex gap-x-3">
+                <RocketLaunchIcon class="mt-1 h-5 w-5 flex-none text-indigo-600" aria-hidden="true" />
+                <span><strong class="font-semibold text-gray-900">Built on Synadia Cloud.</strong>
+                  Synadia Cloud is a global, extensible, multi-cloud NATS.io platform. Run you application and
+                  access it from anywhere.
+                </span>
+              </li>
             </ul>
             <p class="mt-8"></p>
-            <h2 class="mt-16 text-2xl font-bold tracking-tight text-gray-900">Need help? Slack us!</h2>
-            <p class="mt-6">The maintainers of Natster can be found hanging out in the <a href="https://slack.nats.io"
+            <h2 class="mt-16 text-2xl font-bold tracking-tight text-gray-900">Create your Synadia Cloud account.</h2>
+            <p class="mt-2">Natster is built on Synadia Cloud. You will need to <a href="https://cloud.synadia.com"
+                class="text-blue-500 underline">create a free account</a> for the application to work.
+              Synadia Cloud is what allows Natster to run on your laptop and be accessed anywhere by anyone (that you
+              give permission)
+              .</p>
+            <h2 class="mt-8 text-2xl font-bold tracking-tight text-gray-900">Need help? Slack us!</h2>
+            <p class="mt-2">The maintainers of Natster can be found hanging out in the <a href="https://slack.nats.io"
                 class="text-blue-500 underline">NATS.io slack</a>.</p>
           </div>
         </div>
@@ -82,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { CloudArrowUpIcon, LockClosedIcon, CogIcon, ServerIcon } from '@heroicons/vue/20/solid'
+import { CloudArrowUpIcon, LockClosedIcon, CogIcon, ServerIcon, RocketLaunchIcon } from '@heroicons/vue/20/solid'
 import { onMounted } from 'vue'
 import { ref } from 'vue'
 import Notification from '../components/Notification.vue'
