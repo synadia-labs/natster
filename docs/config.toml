@@ -1,0 +1,9 @@
+baseURL = 'https://docs.natster.io'
+languageCode = 'en-us'
+title = 'Natster by Synadia'
+theme = ["hugo-geekdoc"]
+
+[module]
+  [[module.imports]]
+    path = "github.com/thegeeklab/hugo-geekdoc"
+    disable=false
