@@ -52,7 +52,8 @@ jobs:
         run: |
           hugo \
             --gc \
-            --minify 
+            --minify \
+            --baseURL "https://synadia-labs.github.io/natster/pr-preview/pr-86" 
       - 
         name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
