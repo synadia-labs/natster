@@ -53,7 +53,7 @@ jobs:
           hugo \
             --gc \
             --minify \
-            --baseURL "docs.natster.io" 
+            --baseURL "docs.natster.io/pr-preview/pr-86" 
       - 
         name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
