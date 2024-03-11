@@ -274,6 +274,8 @@ func removeShare(msg jetstream.Msg, from string, to string, catalog string, kv j
 	_ = msg.Ack()
 }
 
+// Retrieves the account projection corresponding to the key. If the projection/key
+// does not exist, (nil, nil) will be returned as this does not indicate an error
 func loadAccount(kv jetstream.KeyValue, key string) (*accountProjection, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()

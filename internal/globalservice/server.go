@@ -8,6 +8,7 @@ import (
 
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/synadia-labs/natster/internal/models"
 )
 
@@ -86,4 +87,16 @@ func (srv *GlobalService) Start(version, commit, date string) error {
 func (srv *GlobalService) Stop() error {
 	srv.nc.Drain()
 	return nil
+}
+
+func (srv *GlobalService) CreateKeyValueContext() (jetstream.KeyValue, error) {
+	js, _ := jetstream.New(srv.nc)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	kv, err := js.KeyValue(ctx, accountProjectionBucketName)
+	if err != nil {
+		slog.Error("Failed to locate key value bucket", slog.Any("error", err), slog.String("bucket", accountProjectionBucketName))
+		return nil, err
+	}
+	return kv, nil
 }

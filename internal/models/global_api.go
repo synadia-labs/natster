@@ -8,6 +8,16 @@ const (
 	CatalogImportedEventType    = "catalog_imported"
 )
 
+var (
+	ValidEventTypes = []string{
+		NatsterInitializedEventType,
+		CatalogSharedEventType,
+		CatalogUnsharedEventType,
+		ContextBoundEventType,
+		CatalogImportedEventType,
+	}
+)
+
 // Heartbeats are emitted to the global service periodically by running natster
 // catalog servers
 type Heartbeat struct {

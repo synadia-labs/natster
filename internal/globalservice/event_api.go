@@ -3,8 +3,10 @@ package globalservice
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -191,6 +193,12 @@ func handleEventPut(srv *GlobalService) func(m *nats.Msg) {
 			return
 		}
 
+		if err = srv.validateIncomingEvent(key, evt); err != nil {
+			slog.Error("Invalid event", slog.Any("error", err))
+			_ = m.Respond(models.NewApiResultFail(fmt.Sprintf("Bad request: %s", err), 400))
+			return
+		}
+
 		// write the event to the stream
 		subject := fmt.Sprintf("natster.events.%s.%s.%s.%s", key, evt.Target, evt.Catalog, evt.EventType)
 		raw, err := json.Marshal(evt.Data)
@@ -239,5 +247,111 @@ func (srv *GlobalService) publishSynadiaHubAutoShare(targetKey string) error {
 		return err
 	}
 
+	return nil
+}
+
+// NOTE to event sourcing purists: if this was a fully event sourced application rather than the demo hybrid
+// that it is, we would be using command submissions where aggregates would validate the commands based
+// on their state and then, if successful, emit the corresponding events.
+// This app is "event sourcey" rather than purely "event sourced"
+func (srv *GlobalService) validateIncomingEvent(accountKey string, evt models.NatsterEvent) error {
+	if evt.Catalog == "" || evt.EventType == "" || evt.Target == "" {
+		return fmt.Errorf("the event is missing one or more required fields, rejecting")
+	}
+	if !slices.Contains(models.ValidEventTypes, evt.EventType) {
+		return fmt.Errorf("the event type %s is not valid", evt.EventType)
+	}
+
+	if !isAlpha(evt.Catalog) {
+		return fmt.Errorf("catalog name must only contain numbers and letters. Rejecting %s event", evt.EventType)
+	}
+
+	switch evt.EventType {
+	case models.CatalogImportedEventType:
+		return srv.validateCatalogImportedEvent(accountKey, evt)
+	case models.CatalogSharedEventType:
+		return srv.validateCatalogSharedEvent(accountKey, evt)
+	case models.NatsterInitializedEventType:
+		return srv.validateNatsterInitializedEvent(accountKey, evt)
+	case models.CatalogUnsharedEventType:
+		return srv.validateCatalogUnsharedEvent(accountKey, evt)
+	}
+	return nil
+}
+
+func (srv *GlobalService) validateCatalogImportedEvent(accountKey string, evt models.NatsterEvent) error {
+	kv, err := srv.CreateKeyValueContext()
+	if err != nil {
+		return err
+	}
+	acct, err := loadAccount(kv, accountKey)
+	if err != nil {
+		return err
+	}
+	if acct == nil {
+		return errors.New("rejecting catalog_imported event, source account doesn't exist")
+	}
+	if slices.ContainsFunc(acct.InShares, func(cat shareEntry) bool {
+		return cat.Account == accountKey && cat.Catalog == evt.Catalog
+	}) {
+		return errors.New("rejecting catalog_imported event, this catalog has already been imported")
+	}
+
+	return nil
+}
+
+func (srv *GlobalService) validateNatsterInitializedEvent(accountKey string, _ models.NatsterEvent) error {
+	kv, err := srv.CreateKeyValueContext()
+	if err != nil {
+		return err
+	}
+	acct, err := loadAccount(kv, accountKey)
+	if err != nil {
+		return err
+	}
+	if acct == nil {
+		return nil
+	}
+	if acct.InitializedAt > 0 {
+		return errors.New("rejecting natster_initialized event, this account is already initialized")
+	}
+	return nil
+}
+
+func (srv *GlobalService) validateCatalogSharedEvent(accountKey string, evt models.NatsterEvent) error {
+	kv, err := srv.CreateKeyValueContext()
+	if err != nil {
+		return err
+	}
+	acct, err := loadAccount(kv, accountKey)
+	if err != nil {
+		return err
+	}
+	if acct == nil {
+		return errors.New("rejecting catalog_shared event, can't share from a nonexistent account")
+	}
+	if slices.ContainsFunc(acct.OutShares, func(cat shareEntry) bool {
+		return cat.Account == accountKey && cat.Catalog == evt.Catalog
+	}) {
+		return errors.New("rejecting catalog_shared event, this catalog has already been shared from this account")
+	}
+
+	return nil
+}
+
+func (srv *GlobalService) validateCatalogUnsharedEvent(accountKey string, _ models.NatsterEvent) error {
+	kv, err := srv.CreateKeyValueContext()
+	if err != nil {
+		return err
+	}
+	acct, err := loadAccount(kv, accountKey)
+	if err != nil {
+		return err
+	}
+	if acct == nil {
+		return errors.New("rejecting catalog_unshared event, can't unshare from a nonexistent account")
+	}
+
+	// duplicate unshare events are fine to have, the projection will remain the same
 	return nil
 }
