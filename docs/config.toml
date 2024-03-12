@@ -1,6 +1,6 @@
 baseURL = 'https://docs.natster.io'
 languageCode = 'en-us'
-title = 'Natster by Synadia'
+title = 'Natster'
 theme = ["hugo-geekdoc"]
 
 
