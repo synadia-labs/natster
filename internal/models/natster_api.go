@@ -47,10 +47,10 @@ type ApiResult struct {
 type TypedApiResult[T any] struct {
 	Error *string `json:"error,omitempty"`
 	Code  int     `json:"code"`
-	Data  T       `json:"data"`
+	Data  *T      `json:"data,omitempty"`
 }
 
-func NewTypedApiResult[T any](data T, code int, err *string) []byte {
+func NewTypedApiResult[T any](data *T, code int, err *string) []byte {
 	res := TypedApiResult[T]{
 		Error: err,
 		Code:  code,

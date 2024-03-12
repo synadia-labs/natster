@@ -3,4 +3,4 @@ title: Developer Guide
 weight: -10
 ---
 
-TBD
+The developer's guide is currently under construction

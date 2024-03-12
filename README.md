@@ -1,4 +1,4 @@
-<img src="./docs/images/natster-horizontal.svg" width="175"/>
+<img src="./docs/static/natster-horizontal.svg" width="250"/>
 
 ## _Connect your media_
 Natster leverages [Synadia Cloud](https://cloud.synadia.com)’s global reach and NATS connectivity to create a secure, peer-to-multipeer media sharing ecosystem: all without uploading anything to the cloud or opening a single firewall port. Core pieces of the Natster application wouldn't be possible w/out NATS, and aspects of this architecture saved us weeks, if not months, of development time simply by leveraging features that come with NATS out of the box.
