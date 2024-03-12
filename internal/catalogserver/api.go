@@ -78,10 +78,13 @@ func (srv *CatalogServer) isClientAllowed(accountKey string) bool {
 	if err != nil {
 		return false
 	}
+	if cats == nil {
+		return false
+	}
 	// Is there a sharing record from me to the calling account
 	// for the catalog in question?
 	allowed := false
-	for _, cat := range cats {
+	for _, cat := range *cats {
 		if cat.Catalog == srv.library.Name &&
 			cat.ToAccount == accountKey {
 			allowed = true

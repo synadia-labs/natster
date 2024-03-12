@@ -49,6 +49,14 @@ func (srv *CatalogServer) getInbox(scpClient *syncp.APIClient, scpContext contex
 	if err != nil {
 		return nil, err
 	}
+	if cats == nil {
+		return &inboxResponse{
+			Catalog:          srv.library.Name,
+			AccountKey:       srv.nctx.AccountPublicKey,
+			Revision:         srv.library.LastModified,
+			UnimportedShares: []models.CatalogShareSummary{},
+		}, nil
+	}
 
 	resp, _, err := scpClient.AccountAPI.ListSubjectImports(scpContext, srv.nctx.AccountID).Execute()
 	if err != nil {
@@ -60,7 +68,7 @@ func (srv *CatalogServer) getInbox(scpClient *syncp.APIClient, scpContext contex
 	}
 
 	inboxCatalogs := make([]models.CatalogShareSummary, 0)
-	for _, catalog := range cats {
+	for _, catalog := range *cats {
 		target := fmt.Sprintf("natster_%s", strings.ToLower(catalog.Catalog))
 		if !slices.Contains(importedSubjects, target) &&
 			catalog.FromAccount != srv.nctx.AccountPublicKey {

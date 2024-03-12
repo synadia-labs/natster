@@ -50,7 +50,13 @@ func (c *Client) ValidateCatalogName(catalog string) (*models.CatalogNameValidat
 	if err != nil {
 		return nil, err
 	}
-	return &apiResult.Data, nil
+	if apiResult.Error != nil {
+		return &models.CatalogNameValidationResult{
+			Valid:   false,
+			Message: *apiResult.Error,
+		}, nil
+	}
+	return apiResult.Data, nil
 }
 
 func (c *Client) Whoami() (*models.WhoamiResponse, error) {
@@ -70,7 +76,7 @@ func (c *Client) Whoami() (*models.WhoamiResponse, error) {
 	if apiResult.Error != nil {
 		return nil, errors.New(*apiResult.Error)
 	}
-	return &apiResult.Data, nil
+	return apiResult.Data, nil
 }
 
 // This is to be called by the natster.io site when someone logs into the site, which
@@ -89,7 +95,7 @@ func (c *Client) GetBoundContextByOAuth(oauthId string) (*models.ContextQueryRes
 	if apiResult.Error != nil {
 		return nil, errors.New(*apiResult.Error)
 	}
-	return &apiResult.Data, nil
+	return apiResult.Data, nil
 }
 
 func (c *Client) GenerateOneTimeCode(context models.NatsterContext) (*models.OtcGenerateResponse, error) {
@@ -110,7 +116,7 @@ func (c *Client) GenerateOneTimeCode(context models.NatsterContext) (*models.Otc
 	if apiResult.Error != nil {
 		return nil, errors.New(*apiResult.Error)
 	}
-	return &apiResult.Data, nil
+	return apiResult.Data, nil
 }
 
 func (c *Client) ClaimOneTimeCode(code string, oauthIdentifier string) (*models.NatsterContext, error) {
@@ -134,10 +140,10 @@ func (c *Client) ClaimOneTimeCode(code string, oauthIdentifier string) (*models.
 	if apiResult.Code != 200 {
 		return nil, errors.New(*apiResult.Error)
 	}
-	return &apiResult.Data, nil
+	return apiResult.Data, nil
 }
 
-func (c *Client) GetMyCatalogs() ([]models.CatalogShareSummary, error) {
+func (c *Client) GetMyCatalogs() (*[]models.CatalogShareSummary, error) {
 	res, err := c.nc.Request("natster.global.my.shares", []byte{}, defaultClientTimeout)
 	if err != nil {
 		return nil, err

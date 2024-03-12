@@ -178,7 +178,7 @@ func (srv *GlobalService) GetCatalog(catalog string) (*catalogProjection, error)
 	var projection catalogProjection
 	entry, err := kv.Get(ctx, catalog)
 	if err != nil {
-		if errors.Is(err, nats.ErrKeyNotFound) {
+		if errors.Is(err, jetstream.ErrKeyNotFound) {
 			return nil, nil
 		}
 		return nil, err

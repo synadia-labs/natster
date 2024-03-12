@@ -85,9 +85,13 @@ func ListCatalogs(ctx *fisk.ParseContext) error {
 	if err != nil {
 		return err
 	}
+	if catshares == nil {
+		fmt.Println("No catalogs found")
+		return nil
+	}
 
 	catalogs := make(map[string][]models.CatalogShareSummary)
-	for _, share := range catshares {
+	for _, share := range *catshares {
 		cat, ok := catalogs[share.Catalog]
 		var catshares []models.CatalogShareSummary
 		if !ok {
