@@ -46,7 +46,7 @@
   )
     " v-else-if="!!mediaUrl && mimeType.toLowerCase() == 'audio/mpeg'" v-show="!loading" @loadedmetadata="playAudio(e)"
                   :title="title" />
-                <img v-else-if="blob != null && mimeType.toLowerCase() === 'image/png'" :src="blobData"
+                <img v-else-if="blob != null && mimeType.toLowerCase().indexOf('image/') === 0" :src="blobData"
                   v-show="!loading" :alt="title" />
                 <p v-else-if="blob != null && mimeType.toLowerCase() === 'text/plain'" v-show="!loading">
                   {{ blobData }}
@@ -92,7 +92,7 @@ function close() {
 watch(blob, async (newVal, oldVal) => {
   console.log('blob changed', newVal, mimeType.value)
 
-  if (newVal != null && mimeType.value == 'image/png') {
+  if (newVal != null && mimeType.value.toLowerCase().indexOf('image/') === 0) {
     var urlCreator = window.URL || window.webkitURL;
     blobData.value = urlCreator.createObjectURL(newVal);
   } else if (newVal != null && mimeType.value == 'text/plain') {

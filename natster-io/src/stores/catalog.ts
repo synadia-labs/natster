@@ -10,7 +10,7 @@ import { saveAs } from 'file-saver'
 
 export const catalogStore = defineStore('catalog', {
   state: () => ({
-    supportedMimeType: ['image/png', 'video/mp4', 'text/plain', 'audio/mpeg'],
+    supportedMimeType: ['image/png', 'image/jpeg', 'video/mp4', 'text/plain', 'audio/mpeg'],
     numSelected: 0,
     catalogs: [] as Catalog[],
     pending_catalogs: [] as Catalog[],
