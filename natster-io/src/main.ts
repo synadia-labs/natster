@@ -13,7 +13,7 @@ app.use(createPinia())
 app.use(router)
 app.use(
   createAuth0({
-    domain: 'natster.us.auth0.com',
+    domain: 'login.natster.io',
     clientId: 'veI5fgi7qKMaYc4SRs1CTgpNL2RfgRFK',
     authorizationParams: {
       redirect_uri: window.location.origin + '/#/library'

@@ -8,23 +8,23 @@ import Library from '../components/Library.vue'
 
 import { userStore } from '../stores/user'
 
-function isAuthAndHasLocal(to) {
-  const { isAuthenticated } = useAuth0()
+function isNotLoggedIn(to, from, next) {
   const uStore = userStore()
 
-  if (isAuthenticated && uStore.hasJWT && uStore.hasNkey) {
-    return { name: 'library' }
+  if (!uStore.hasJWT && !uStore.hasNkey) {
+    next()
+    return
   }
 
-  return true
+  next('library')
 }
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/:code?', name: 'home', component: HomeView, beforeEnter: [isAuthAndHasLocal] },
-    { path: '/getting-started', name: 'gettingstarted', component: GettingStartedView, beforeEnter: [isAuthAndHasLocal] },
-    { path: '/library', name: 'library', component: Library, beforeEnter: [isAuthAndHasLocal] }
+    { path: '/:code?', name: 'home', component: HomeView, beforeEnter: isNotLoggedIn },
+    { path: '/getting-started', name: 'gettingstarted', component: GettingStartedView, beforeEnter: isNotLoggedIn },
+    { path: '/library', name: 'library', component: Library, beforeEnter: authGuard }
   ]
 })
 
