@@ -10,6 +10,7 @@ import { saveAs } from 'file-saver'
 
 export const catalogStore = defineStore('catalog', {
   state: () => ({
+    supportedMimeType: ['image/png', 'video/mp4', 'text/plain', 'audio/mpeg'],
     numSelected: 0,
     catalogs: [] as Catalog[],
     pending_catalogs: [] as Catalog[],
@@ -368,7 +369,10 @@ export const catalogStore = defineStore('catalog', {
           sub.unsubscribe()
           fStore.reset()
         })
-    }
+    },
+    isMimeTypeSupported(inMime: string) {
+      return this.supportedMimeType.includes(inMime)
+    },
   },
   getters: {
     getNumCatalogsSelected(state) {
