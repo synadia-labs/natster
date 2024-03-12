@@ -369,7 +369,10 @@ export const catalogStore = defineStore('catalog', {
           sub.unsubscribe()
           fStore.reset()
         })
-    }
+    },
+    isMimeTypeSupported(inMime: string) {
+      return this.supportedMimeType.includes(inMime)
+    },
   },
   getters: {
     getNumCatalogsSelected(state) {
