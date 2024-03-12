@@ -136,6 +136,4 @@ onMounted(() => {
     )
   }
 })
-
-console.log(route)
 </script>
