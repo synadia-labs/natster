@@ -13,11 +13,11 @@ interface Catalog {
 }
 
 interface File {
-  byte_size: int
+  byte_size: number
   description: string
   hash: string
   mime_type: string
   path: string
 }
 
-export { Catalog, File }
+export type { Catalog, File }

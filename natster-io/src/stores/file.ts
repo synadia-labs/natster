@@ -4,6 +4,7 @@ export const fileStore = defineStore('file', {
   state: () => ({
     body: null,
     buffer: [],
+    blob: null,
     loading: true,
     catalog: null,
     title: '',
@@ -70,10 +71,10 @@ export const fileStore = defineStore('file', {
               console.log(e)
             })
 
-            this.videoSourceBuffer.addEventListener('abort', (e) => {})
-            this.videoSourceBuffer.addEventListener('updatestart', (e) => {})
-            this.videoSourceBuffer.addEventListener('update', (e) => {})
-            this.videoSourceBuffer.addEventListener('updateend', (e) => {})
+            this.videoSourceBuffer.addEventListener('abort', (e) => { })
+            this.videoSourceBuffer.addEventListener('updatestart', (e) => { })
+            this.videoSourceBuffer.addEventListener('update', (e) => { })
+            this.videoSourceBuffer.addEventListener('updateend', (e) => { })
           })
 
           this.mediaSource.addEventListener('sourceended', (e) => {
@@ -89,8 +90,8 @@ export const fileStore = defineStore('file', {
             this.buffer = []
           })
 
-          this.mediaSource.addEventListener('sourceclose', (e) => {})
-          this.mediaSource.addEventListener('error', (e) => {})
+          this.mediaSource.addEventListener('sourceclose', (e) => { })
+          this.mediaSource.addEventListener('error', (e) => { })
 
           this.appendInterval = setInterval(() => {
             if (
@@ -168,7 +169,7 @@ export const fileStore = defineStore('file', {
 
         this.buffer.push(data)
       } else {
-        this.body = data
+        this.blob = data
         this.loading = false
       }
     },
@@ -183,7 +184,7 @@ export const fileStore = defineStore('file', {
         this.streamEndInterval = null
       }
 
-      if (this.onReset && typeof(this.onReset) === 'function') {
+      if (this.onReset && typeof (this.onReset) === 'function') {
         this.onReset()
         this.onReset = null
       }
@@ -195,6 +196,7 @@ export const fileStore = defineStore('file', {
       this.mediaSource = null
       this.mediaUrl = null
       this.mimeType = null
+      this.blob = null
 
       this.audioSourceBuffer = null
       this.videoSourceBuffer = null

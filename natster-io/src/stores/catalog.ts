@@ -10,7 +10,7 @@ import { saveAs } from 'file-saver'
 
 export const catalogStore = defineStore('catalog', {
   state: () => ({
-    supportedMimeType: ['image/png', 'video/mp4', 'text/plain', 'audio/mpeg'],
+    supportedMimeType: ['image/png', 'image/jpeg', 'video/mp4', 'text/plain', 'audio/mpeg'],
     numSelected: 0,
     catalogs: [] as Catalog[],
     pending_catalogs: [] as Catalog[],
@@ -62,14 +62,14 @@ export const catalogStore = defineStore('catalog', {
       const uStore = userStore()
 
       const sub = nStore.connection.subscribe('natster.local-events.heartbeat')
-      ; (async () => {
-        for await (const m of sub) {
-          let msg = JSONCodec().decode(m.data)
-          uStore.setLastSeenTS(new Date(Date.now()))
-          this.setOnlineAndCatalogRevision(msg.catalog, msg.revision)
-        }
-        console.log('subscription closed')
-      })()
+        ; (async () => {
+          for await (const m of sub) {
+            let msg = JSONCodec().decode(m.data)
+            uStore.setLastSeenTS(new Date(Date.now()))
+            this.setOnlineAndCatalogRevision(msg.catalog, msg.revision)
+          }
+          console.log('subscription closed')
+        })()
     },
     setOnlineAndCatalogRevision(inCat, rev) {
       const nStore = notificationStore()
@@ -236,23 +236,25 @@ export const catalogStore = defineStore('catalog', {
       var fileArray
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
-      ; (async () => {
-        for await (const m of sub) {
-          const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
-          const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
-          const senderXKey = m.headers.get('x-natster-sender-xkey')
+        ; (async () => {
+          for await (const m of sub) {
+            const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
+            const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+            const senderXKey = m.headers.get('x-natster-sender-xkey')
 
-          let decrypted = xkey.open(m.data, senderXKey)
-          fileArray.push(decrypted)
+            let decrypted = xkey.open(m.data, senderXKey)
+            fileArray.push(decrypted)
 
-          if (chunkIdx === totalChunks - 1) {
-            sub.unsubscribe()
+            if (chunkIdx === totalChunks - 1) {
+              sub.unsubscribe()
+            }
           }
-        }
 
-        var blob = new Blob(fileArray, { type: mimeType })
-        saveAs(blob, fileName)
-      })()
+          console.log('DOWNLOAD FILE', fileArray)
+          var blob = new Blob(fileArray, { type: mimeType })
+          console.log('DOWNLOAD FILE', blob)
+          saveAs(blob, fileName)
+        })()
 
       const dl_request = {
         hash: hash,
@@ -284,71 +286,74 @@ export const catalogStore = defineStore('catalog', {
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
 
-      ; (async () => {
-        let timeout
-        let lastChunkReceivedTimestamp: number
+        ; (async () => {
+          let timeout
+          let lastChunkReceivedTimestamp: number
 
-        fStore.load(fileName, fileDescription, mimeType, catalog, () => {
-          if (timeout) {
-            clearTimeout(timeout)
-            timeout = null
+          if (mimeType.toLowerCase().indexOf('video/') !== 0 || mimeType.toLowerCase().indexOf('audio/') !== 0) {
+            fStore.load(fileName, fileDescription, mimeType, catalog, () => {
+              if (timeout) {
+                clearTimeout(timeout)
+                timeout = null
+              }
+
+              fStore.endStream()
+              sub.unsubscribe()
+            })
           }
 
-          fStore.endStream()
-          sub.unsubscribe()
-        })
+          for await (const m of sub) {
+            const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
+            const senderXKey = m.headers.get('x-natster-sender-xkey')
+            const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+            const transcoding = m.headers.get('x-natster-transcoding') && m.headers.get('x-natster-transcoding') === 'true'
+            const decrypted = xkey.open(m.data, senderXKey)
+            lastChunkReceivedTimestamp = Date.now()
 
-        for await (const m of sub) {
-          const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
-          const senderXKey = m.headers.get('x-natster-sender-xkey')
-          const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
-          const transcoding = m.headers.get('x-natster-transcoding') && m.headers.get('x-natster-transcoding') === 'true'
-          const decrypted = xkey.open(m.data, senderXKey)
-          lastChunkReceivedTimestamp = Date.now()
+            if (mimeType.toLowerCase().indexOf('video/') === 0) {
+              if (timeout) {
+                clearTimeout(timeout)
+                timeout = null
+              }
 
-          if (mimeType.toLowerCase().indexOf('video/') === 0) {
-            if (timeout) {
-              clearTimeout(timeout)
-              timeout = null
+              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
+
+              if (transcoding) {
+                timeout = setTimeout(() => {
+                  if (chunkIdx >= totalChunks - 1) {
+                    // HACK-- x-natster-total-chunks is lower than the actual number of chunks when transcoding video/mp4 on-the-fly
+                    // HACK-- this branch prevents slow streams from being canceled early while we are still transcoding
+                    fStore.endStream()
+                    timeout = null
+
+                    sub.unsubscribe()
+                  } else {
+                    // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
+                    // TODO-- navigator.connection.addEventListener('change', () => { // prevent/cancel streams })
+                    console.log(`WARNING-- no packet received since ${lastChunkReceivedTimestamp}`)
+                  }
+                }, 5000)
+              }
+            } else if (mimeType.toLowerCase() === 'audio/mpeg') {
+              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
+            } else {
+              fileArray.push(decrypted)
+
+              if (chunkIdx === totalChunks - 1) {
+                console.log('VIEW FILE', fileArray)
+                let blob = new Blob(fileArray, { type: mimeType })
+                console.log('VIEW FILE', blob)
+                fStore.render(fileName, fileDescription, mimeType, blob, catalog)
+              }
             }
 
-            fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
-
-            if (transcoding) {
-              timeout = setTimeout(() => {
-                if (chunkIdx >= totalChunks - 1) {
-                  // HACK-- x-natster-total-chunks is lower than the actual number of chunks when transcoding video/mp4 on-the-fly
-                  // HACK-- this branch prevents slow streams from being canceled early while we are still transcoding
-                  fStore.endStream()
-                  timeout = null
-
-                  sub.unsubscribe()
-                } else {
-                  // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
-                  // TODO-- navigator.connection.addEventListener('change', () => { // prevent/cancel streams })
-                  console.log(`WARNING-- no packet received since ${lastChunkReceivedTimestamp}`)
-                }
-              }, 5000)
+            if (!transcoding && chunkIdx === totalChunks - 1) {
+              fStore.endStream()
+              sub.unsubscribe()
             }
-          } else if (mimeType.toLowerCase() === 'audio/mpeg') {
-            fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
-          } else {
-            fStore.render(
-              fileName,
-              fileDescription,
-              mimeType,
-              new TextDecoder().decode(decrypted),
-              catalog
-            )
           }
-
-          if (!transcoding && chunkIdx === totalChunks - 1) {
-            fStore.endStream()
-            sub.unsubscribe()
-          }
-        }
-        console.log('subscription closed')
-      })()
+          console.log('subscription closed')
+        })()
 
       const dl_request = {
         hash: hash,
@@ -361,7 +366,7 @@ export const catalogStore = defineStore('catalog', {
         })
         .then((m) => {
           let data = JSONCodec().decode(m.data)
-          fileArray = new Array(data.data.total_bytes)
+          fileArray = new Array()
         })
         .catch((err) => {
           console.error('nats download request err: ', err)
