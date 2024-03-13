@@ -140,7 +140,9 @@ function getAudioOptions(inSrc, inTitle, inCover) {
 }
 
 function playAudio() {
-  document.querySelector('audio').play()
+  setTimeout(() => {
+    document.querySelector('audio').play()
+  }, 100)
 }
 
 watch(mediaUrl, (newVal, oldVal) => {

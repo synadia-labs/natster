@@ -39,6 +39,13 @@ export const fileStore = defineStore('file', {
         }, 100)
       }
     },
+    initMediaSource() {
+      const re = /ipad|iphone/i
+      if (navigator.userAgent.match(re) && typeof(ManagedMediaSource) !== 'undefined') {
+        return new ManagedMediaSource()
+      }
+      return new MediaSource()
+    },
     load(title, description, mimeType, catalog, onReset) {
       this.title = title
       this.description = description
@@ -57,7 +64,7 @@ export const fileStore = defineStore('file', {
 
       if (mimeType.toLowerCase().indexOf('video/') === 0) {
         if (!this.mediaSource && !this.mediaUrl && !this.videoSourceBuffer) {
-          this.mediaSource = new MediaSource()
+          this.mediaSource = this.initMediaSource()
           this.mediaUrl = URL.createObjectURL(this.mediaSource)
 
           this.codec = 'avc1.640028,mp4a.40.2' //'avc1.42C028,mp4a.40.2' // FIXME-- read this from headers and pass it in to render()
@@ -108,7 +115,7 @@ export const fileStore = defineStore('file', {
         this.buffer.push(data)
       } else if (mimeType.toLowerCase() === 'audio/mpeg') {
         if (!this.mediaSource && !this.mediaUrl && !this.audioSourceBuffer) {
-          this.mediaSource = new MediaSource()
+          this.mediaSource = this.initMediaSource()
           this.mediaUrl = URL.createObjectURL(this.mediaSource)
           console.log(MediaSource.isTypeSupported(`audio/mpeg`))
 
