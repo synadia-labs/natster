@@ -21,7 +21,7 @@ jobs:
           files: natster-io/**
   check-formatter:
     runs-on: ubuntu-latest
-    name: Builds UI if edits found
+    name: Checks to see if UI code is formatted
     needs: check-ui
     if: needs.check-ui.outputs.status
     steps:
