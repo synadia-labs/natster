@@ -23,7 +23,7 @@ export const fileStore = defineStore('file', {
     appendInterval: null,
     streamEndInterval: null,
 
-    onReset: null,
+    onReset: null
   }),
   actions: {
     endStream() {
@@ -41,7 +41,7 @@ export const fileStore = defineStore('file', {
     },
     initMediaSource() {
       const re = /ipad|iphone/i
-      if (navigator.userAgent.match(re) && typeof(ManagedMediaSource) !== 'undefined') {
+      if (navigator.userAgent.match(re) && typeof ManagedMediaSource !== 'undefined') {
         return new ManagedMediaSource()
       }
       return new MediaSource()
@@ -78,10 +78,10 @@ export const fileStore = defineStore('file', {
               console.log(e)
             })
 
-            this.videoSourceBuffer.addEventListener('abort', (e) => { })
-            this.videoSourceBuffer.addEventListener('updatestart', (e) => { })
-            this.videoSourceBuffer.addEventListener('update', (e) => { })
-            this.videoSourceBuffer.addEventListener('updateend', (e) => { })
+            this.videoSourceBuffer.addEventListener('abort', (e) => {})
+            this.videoSourceBuffer.addEventListener('updatestart', (e) => {})
+            this.videoSourceBuffer.addEventListener('update', (e) => {})
+            this.videoSourceBuffer.addEventListener('updateend', (e) => {})
           })
 
           this.mediaSource.addEventListener('sourceended', (e) => {
@@ -97,8 +97,8 @@ export const fileStore = defineStore('file', {
             this.buffer = []
           })
 
-          this.mediaSource.addEventListener('sourceclose', (e) => { })
-          this.mediaSource.addEventListener('error', (e) => { })
+          this.mediaSource.addEventListener('sourceclose', (e) => {})
+          this.mediaSource.addEventListener('error', (e) => {})
 
           this.appendInterval = setInterval(() => {
             if (
@@ -184,7 +184,7 @@ export const fileStore = defineStore('file', {
         this.streamEndInterval = null
       }
 
-      if (this.onReset && typeof (this.onReset) === 'function') {
+      if (this.onReset && typeof this.onReset === 'function') {
         this.onReset()
         this.onReset = null
       }

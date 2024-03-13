@@ -23,29 +23,34 @@ export const catalogStore = defineStore('catalog', {
       const uStore = userStore()
 
       const sub = nStore.connection.subscribe('natster.global-events.>')
-        ; (async () => {
-          for await (const msg of sub) {
-            let m = JSONCodec().decode(msg.data)
-            this.setOnlineAndCatalogRevision(m.catalog, m.revision)
-            uStore.togglePing()
+      ;(async () => {
+        for await (const msg of sub) {
+          let m = JSONCodec().decode(msg.data)
+          this.setOnlineAndCatalogRevision(m.catalog, m.revision)
+          uStore.togglePing()
 
-            this.scrubCatalogs()
-          }
-          console.log('subscription closed')
-        })()
+          this.scrubCatalogs()
+        }
+        console.log('subscription closed')
+      })()
     },
     scrubCatalogs() {
       const disableCat = (catalog) => {
         this.setCatalogSelected(catalog)
       }
 
-      this.catalogs.forEach(function(tCatalog) {
-
+      this.catalogs.forEach(function (tCatalog) {
         // Toggles catalogs avaialability
-        if (!tCatalog.online && Date.now() - new Date(tCatalog.lastSeen).getTime() < 1 * 60 * 1000) {
+        if (
+          !tCatalog.online &&
+          Date.now() - new Date(tCatalog.lastSeen).getTime() < 1 * 60 * 1000
+        ) {
           tCatalog.online = true
           notificationStore().setNotification('Catalog Online', tCatalog.name + ' has come online')
-        } else if (tCatalog.online && Date.now() - new Date(tCatalog.lastSeen).getTime() > 1 * 60 * 1000) {
+        } else if (
+          tCatalog.online &&
+          Date.now() - new Date(tCatalog.lastSeen).getTime() > 1 * 60 * 1000
+        ) {
           tCatalog.online = false
           notificationStore().setNotification(
             'Catalog Offline',
@@ -62,20 +67,20 @@ export const catalogStore = defineStore('catalog', {
       const uStore = userStore()
 
       const sub = nStore.connection.subscribe('natster.local-events.heartbeat')
-        ; (async () => {
-          for await (const m of sub) {
-            let msg = JSONCodec().decode(m.data)
-            uStore.setLastSeenTS(new Date(Date.now()))
-            this.setOnlineAndCatalogRevision(msg.catalog, msg.revision)
-          }
-          console.log('subscription closed')
-        })()
+      ;(async () => {
+        for await (const m of sub) {
+          let msg = JSONCodec().decode(m.data)
+          uStore.setLastSeenTS(new Date(Date.now()))
+          this.setOnlineAndCatalogRevision(msg.catalog, msg.revision)
+        }
+        console.log('subscription closed')
+      })()
     },
     setOnlineAndCatalogRevision(inCat, rev) {
       const nStore = notificationStore()
       var d = new Date(0)
       d.setUTCSeconds(rev)
-      this.catalogs.forEach(async function(c, i) {
+      this.catalogs.forEach(async function (c, i) {
         if (c.name == inCat) {
           c.pending_invite = false
           c.lastSeen = Date.now()
@@ -95,7 +100,9 @@ export const catalogStore = defineStore('catalog', {
                 .catch((err) => {
                   nStore.setNotification(
                     'Catalog failed to respond',
-                    'The catalog ' + c.name + ' failed to respond. Moving offline until it heartbeats.'
+                    'The catalog ' +
+                      c.name +
+                      ' failed to respond. Moving offline until it heartbeats.'
                   )
                   if (c.selected) {
                     this.setCatalogSelected(c)
@@ -113,7 +120,7 @@ export const catalogStore = defineStore('catalog', {
       }
 
       const nStore = notificationStore()
-      this.catalogs.forEach(async function(item) {
+      this.catalogs.forEach(async function (item) {
         if (cat.name == item.name) {
           if (item.selected) {
             item.files = [] as File[]
@@ -135,7 +142,9 @@ export const catalogStore = defineStore('catalog', {
               .catch((err) => {
                 nStore.setNotification(
                   'Catalog failed to respond',
-                  'The catalog ' + item.name + ' failed to respond. Moving offline until it heartbeats.'
+                  'The catalog ' +
+                    item.name +
+                    ' failed to respond. Moving offline until it heartbeats.'
                 )
                 item.selected = false
                 item.files = [] as File[]
@@ -237,27 +246,26 @@ export const catalogStore = defineStore('catalog', {
       var fileArray
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
-        ; (async () => {
-          for await (const m of sub) {
-            const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
-            const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
-            const senderXKey = m.headers.get('x-natster-sender-xkey')
+      ;(async () => {
+        for await (const m of sub) {
+          const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
+          const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+          const senderXKey = m.headers.get('x-natster-sender-xkey')
 
-            let decrypted = xkey.open(m.data, senderXKey)
-            fileArray.push(decrypted)
+          let decrypted = xkey.open(m.data, senderXKey)
+          fileArray.push(decrypted)
 
-            if (chunkIdx === totalChunks - 1) {
-              this.activeDownload = false
-              sub.unsubscribe()
-            }
+          if (chunkIdx === totalChunks - 1) {
+            this.activeDownload = false
+            sub.unsubscribe()
           }
+        }
 
-          console.log('DOWNLOAD FILE', fileArray)
-          var blob = new Blob(fileArray, { type: mimeType })
-          console.log('DOWNLOAD FILE', blob)
-          saveAs(blob, fileName)
-        })()
-
+        console.log('DOWNLOAD FILE', fileArray)
+        var blob = new Blob(fileArray, { type: mimeType })
+        console.log('DOWNLOAD FILE', blob)
+        saveAs(blob, fileName)
+      })()
 
       const dl_request = {
         hash: hash,
@@ -289,65 +297,86 @@ export const catalogStore = defineStore('catalog', {
       const nStore = natsStore()
       const sub = nStore.connection.subscribe('natster.media.' + catalog.name + '.' + hash)
 
-        ; (async () => {
-          let timeout
-          let lastChunkReceivedTimestamp: number
+      ;(async () => {
+        let timeout
+        let lastChunkReceivedTimestamp: number
 
-          if (mimeType.toLowerCase().indexOf('video/') !== 0 || mimeType.toLowerCase().indexOf('audio/') !== 0) {
-            fStore.load(fileName, fileDescription, mimeType, catalog, () => {
-              if (timeout) {
-                clearTimeout(timeout)
-                timeout = null
-              }
-
-              fStore.endStream()
-              sub.unsubscribe()
-            })
-          }
-
-          for await (const m of sub) {
-            const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
-            const senderXKey = m.headers.get('x-natster-sender-xkey')
-            const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
-            const transcoding = m.headers.get('x-natster-transcoding') && m.headers.get('x-natster-transcoding') === 'true'
-            const decrypted = xkey.open(m.data, senderXKey)
-            lastChunkReceivedTimestamp = Date.now()
-
-            if (mimeType.toLowerCase().indexOf('video/') === 0) {
-              if (timeout) {
-                clearTimeout(timeout)
-                timeout = null
-              }
-
-              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog, chunkIdx, totalChunks)
-
-              if (transcoding) {
-                timeout = setTimeout(() => {
-                  if (chunkIdx >= totalChunks - 1) {
-                    // HACK-- x-natster-total-chunks is lower than the actual number of chunks when transcoding video/mp4 on-the-fly
-                    // HACK-- this branch prevents slow streams from being canceled early while we are still transcoding
-                    fStore.endStream()
-                    timeout = null
-
-                    sub.unsubscribe()
-                  } else {
-                    // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
-                    // TODO-- navigator.connection.addEventListener('change', () => { // prevent/cancel streams })
-                    console.log(`WARNING-- no packet received since ${lastChunkReceivedTimestamp}`)
-                  }
-                }, 5000)
-              }
-            } else {
-              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog, chunkIdx, totalChunks)
+        if (
+          mimeType.toLowerCase().indexOf('video/') !== 0 ||
+          mimeType.toLowerCase().indexOf('audio/') !== 0
+        ) {
+          fStore.load(fileName, fileDescription, mimeType, catalog, () => {
+            if (timeout) {
+              clearTimeout(timeout)
+              timeout = null
             }
 
-            if (!transcoding && chunkIdx === totalChunks - 1) {
-              fStore.endStream()
-              sub.unsubscribe()
+            fStore.endStream()
+            sub.unsubscribe()
+          })
+        }
+
+        for await (const m of sub) {
+          const chunkIdx = parseInt(m.headers.get('x-natster-chunk-idx'))
+          const senderXKey = m.headers.get('x-natster-sender-xkey')
+          const totalChunks = parseInt(m.headers.get('x-natster-total-chunks'))
+          const transcoding =
+            m.headers.get('x-natster-transcoding') &&
+            m.headers.get('x-natster-transcoding') === 'true'
+          const decrypted = xkey.open(m.data, senderXKey)
+          lastChunkReceivedTimestamp = Date.now()
+
+          if (mimeType.toLowerCase().indexOf('video/') === 0) {
+            if (timeout) {
+              clearTimeout(timeout)
+              timeout = null
             }
+
+            fStore.render(
+              fileName,
+              fileDescription,
+              mimeType,
+              decrypted,
+              catalog,
+              chunkIdx,
+              totalChunks
+            )
+
+            if (transcoding) {
+              timeout = setTimeout(() => {
+                if (chunkIdx >= totalChunks - 1) {
+                  // HACK-- x-natster-total-chunks is lower than the actual number of chunks when transcoding video/mp4 on-the-fly
+                  // HACK-- this branch prevents slow streams from being canceled early while we are still transcoding
+                  fStore.endStream()
+                  timeout = null
+
+                  sub.unsubscribe()
+                } else {
+                  // TODO-- maintain a tolerance for max time we will wait for the next packet-- this can eventually replace the above HACK
+                  // TODO-- navigator.connection.addEventListener('change', () => { // prevent/cancel streams })
+                  console.log(`WARNING-- no packet received since ${lastChunkReceivedTimestamp}`)
+                }
+              }, 5000)
+            }
+          } else {
+            fStore.render(
+              fileName,
+              fileDescription,
+              mimeType,
+              decrypted,
+              catalog,
+              chunkIdx,
+              totalChunks
+            )
           }
-          console.log('subscription closed')
-        })()
+
+          if (!transcoding && chunkIdx === totalChunks - 1) {
+            fStore.endStream()
+            sub.unsubscribe()
+          }
+        }
+        console.log('subscription closed')
+      })()
 
       const dl_request = {
         hash: hash,
@@ -368,7 +397,7 @@ export const catalogStore = defineStore('catalog', {
           sub.unsubscribe()
           fStore.reset()
         })
-    },
+    }
   },
   getters: {
     getNumCatalogsSelected(state) {
@@ -384,17 +413,16 @@ export const catalogStore = defineStore('catalog', {
       return state.shares_init && state.pending_init
     },
     getImportedCatalogs(state) {
-      state.catalogs.forEach(function(tCatalog) {
+      state.catalogs.forEach(function (tCatalog) {
         if (tCatalog.from == 'AC5V4OC2POUAX4W4H7CKN5TQ5AKVJJ4AJ7XZKNER6P6DHKBYGVGJHSNC') {
           tCatalog.pending_invite = false // synadiahub is never pending
           return
         }
-        state.pending_catalogs.forEach(function(tPending) {
+        state.pending_catalogs.forEach(function (tPending) {
           if (tCatalog.name === tPending.name) {
             tCatalog.pending_invite = true
           }
         })
-
       })
 
       return state.catalogs.filter((c) => !c.pending_invite)

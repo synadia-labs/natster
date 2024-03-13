@@ -19,6 +19,26 @@ jobs:
         uses: tj-actions/changed-files@v42
         with:
           files: natster-io/**
+  check-formatter:
+    runs-on: ubuntu-latest
+    name: Checks to see if UI code is formatted
+    needs: check-ui
+    if: needs.check-ui.outputs.status
+    steps:
+      - 
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - 
+        name: Install UI deps
+        working-directory: ./natster-io
+        run: |
+          curl -fsSL https://get.pnpm.io/install.sh | SHELL=bash sh -
+          ~/.local/share/pnpm/pnpm install
+      - 
+        name: Check formatting
+        working-directory: ./natster-io
+        run: ~/.local/share/pnpm/pnpm run check-formatting
   build-ui:
     runs-on: ubuntu-latest
     name: Builds UI if edits found
