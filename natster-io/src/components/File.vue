@@ -51,9 +51,8 @@
                   </div>
                 </div>
               </div>
-              <div class="relative">
+              <div class="relative max-h-screen">
                 <VueSpinnerAudio v-if="loading" size="80" class="loading-spinner" />
-
                 <video
                   v-if="!!mediaUrl && mimeType && mimeType.toLowerCase() == 'video/mp4'"
                   v-show="!loading"
@@ -94,6 +93,7 @@
                     blob != null && mimeType && mimeType.toLowerCase() === 'application/pdf'
                   "
                   :src="blobData"
+                  class="max-h-96"
                   v-show="!loading"
                 />
                 <p
