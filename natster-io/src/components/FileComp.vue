@@ -164,6 +164,13 @@ function catalogImage(cat) {
 }
 
 function isMimeTypeSupported(mimeType: string) {
-  return ['image/png', 'image/jpeg', 'video/mp4', 'text/plain', 'audio/mpeg'].includes(mimeType)
+  return [
+    'image/png',
+    'image/jpeg',
+    'video/mp4',
+    'text/plain',
+    'audio/mpeg',
+    'application/pdf'
+  ].includes(mimeType)
 }
 </script>

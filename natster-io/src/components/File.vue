@@ -51,9 +51,8 @@
                   </div>
                 </div>
               </div>
-              <div class="relative">
+              <div class="relative max-h-screen">
                 <VueSpinnerAudio v-if="loading" size="80" class="loading-spinner" />
-
                 <video
                   v-if="!!mediaUrl && mimeType && mimeType.toLowerCase() == 'video/mp4'"
                   v-show="!loading"
@@ -89,13 +88,20 @@
                   :alt="title"
                 />
 
+                <PDF
+                  v-else-if="
+                    blob != null && mimeType && mimeType.toLowerCase() === 'application/pdf'
+                  "
+                  :src="blobData"
+                  class="max-h-96"
+                  v-show="!loading"
+                />
                 <p
                   v-else-if="blob != null && mimeType && mimeType.toLowerCase() === 'text/plain'"
                   v-show="!loading"
                 >
                   {{ blobData }}
                 </p>
-
                 <p v-else v-show="!loading">Error displaying media</p>
               </div>
               <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
@@ -121,6 +127,7 @@ import { storeToRefs } from 'pinia'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { VueSpinnerAudio } from 'vue3-spinners'
+import PDF from 'pdf-vue3'
 
 import AudioPlayer from 'vue3-audio-player'
 import 'vue3-audio-player/dist/style.css'
@@ -143,6 +150,9 @@ watch(blob, async (newVal, oldVal) => {
   if (newVal != null && mimeType.value.toLowerCase().indexOf('image/') === 0) {
     var urlCreator = window.URL || window.webkitURL
     blobData.value = urlCreator.createObjectURL(newVal)
+  } else if (newVal != null && mimeType.value == 'application/pdf') {
+    const buffer = await new Response(newVal).arrayBuffer()
+    blobData.value = new Uint8Array(buffer)
   } else if (newVal != null && mimeType.value == 'text/plain') {
     await newVal.text().then((text) => {
       blobData.value = text
