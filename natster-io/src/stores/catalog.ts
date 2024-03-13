@@ -11,7 +11,6 @@ import { saveAs } from 'file-saver'
 export const catalogStore = defineStore('catalog', {
   state: () => ({
     activeDownload: false,
-    supportedMimeType: ['image/png', 'image/jpeg', 'video/mp4', 'text/plain', 'audio/mpeg'],
     numSelected: 0,
     catalogs: [] as Catalog[],
     pending_catalogs: [] as Catalog[],
@@ -320,7 +319,7 @@ export const catalogStore = defineStore('catalog', {
                 timeout = null
               }
 
-              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
+              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog, chunkIdx, totalChunks)
 
               if (transcoding) {
                 timeout = setTimeout(() => {
@@ -338,17 +337,8 @@ export const catalogStore = defineStore('catalog', {
                   }
                 }, 5000)
               }
-            } else if (mimeType.toLowerCase() === 'audio/mpeg') {
-              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog)
             } else {
-              fileArray.push(decrypted)
-
-              if (chunkIdx === totalChunks - 1) {
-                console.log('VIEW FILE', fileArray)
-                let blob = new Blob(fileArray, { type: mimeType })
-                console.log('VIEW FILE', blob)
-                fStore.render(fileName, fileDescription, mimeType, blob, catalog)
-              }
+              fStore.render(fileName, fileDescription, mimeType, decrypted, catalog, chunkIdx, totalChunks)
             }
 
             if (!transcoding && chunkIdx === totalChunks - 1) {
@@ -369,8 +359,8 @@ export const catalogStore = defineStore('catalog', {
           timeout: 5000
         })
         .then((m) => {
-          let data = JSONCodec().decode(m.data)
-          fileArray = new Array()
+          // let data = JSONCodec().decode(m.data)
+          // fileArray = new Array()
         })
         .catch((err) => {
           console.error('nats download request err: ', err)
@@ -378,9 +368,6 @@ export const catalogStore = defineStore('catalog', {
           sub.unsubscribe()
           fStore.reset()
         })
-    },
-    isMimeTypeSupported(inMime: string) {
-      return this.supportedMimeType.includes(inMime)
     },
   },
   getters: {

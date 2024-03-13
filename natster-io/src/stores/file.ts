@@ -2,9 +2,9 @@ import { defineStore } from 'pinia'
 
 export const fileStore = defineStore('file', {
   state: () => ({
+    blob: null,
     body: null,
     buffer: [],
-    blob: null,
     loading: true,
     catalog: null,
     title: '',
@@ -48,7 +48,7 @@ export const fileStore = defineStore('file', {
       this.show = true
       this.onReset = onReset
     },
-    render(title, description, mimeType, data, catalog) {
+    render(title, description, mimeType, data, catalog, chunkIdx, totalChunks) {
       this.title = title
       this.description = description
       this.mimeType = mimeType
@@ -114,22 +114,11 @@ export const fileStore = defineStore('file', {
 
           this.mediaSource.addEventListener('sourceopen', () => {
             this.audioSourceBuffer = this.mediaSource.addSourceBuffer(`audio/mpeg`)
-            this.audioSourceBuffer.addEventListener('error', (e) => {
-              console.log(e)
-            })
-
-            this.audioSourceBuffer.addEventListener('abort', (e) => {
-              console.log(e)
-            })
-            this.audioSourceBuffer.addEventListener('updatestart', (e) => {
-              console.log(e)
-            })
-            this.audioSourceBuffer.addEventListener('update', (e) => {
-              console.log(e)
-            })
-            this.audioSourceBuffer.addEventListener('updateend', (e) => {
-              console.log(e)
-            })
+            this.audioSourceBuffer.addEventListener('error', (e) => {})
+            this.audioSourceBuffer.addEventListener('abort', (e) => {})
+            this.audioSourceBuffer.addEventListener('updatestart', (e) => {})
+            this.audioSourceBuffer.addEventListener('update', (e) => {})
+            this.audioSourceBuffer.addEventListener('updateend', (e) => {})
           })
 
           this.mediaSource.addEventListener('sourceended', (e) => {
@@ -169,8 +158,12 @@ export const fileStore = defineStore('file', {
 
         this.buffer.push(data)
       } else {
-        this.blob = data
-        this.loading = false
+        this.buffer.push(data)
+
+        if (chunkIdx == totalChunks - 1) {
+          this.blob = new Blob(this.buffer, { type: mimeType })
+          this.loading = false
+        }
       }
     },
     reset() {
@@ -196,7 +189,6 @@ export const fileStore = defineStore('file', {
       this.mediaSource = null
       this.mediaUrl = null
       this.mimeType = null
-      this.blob = null
 
       this.audioSourceBuffer = null
       this.videoSourceBuffer = null
