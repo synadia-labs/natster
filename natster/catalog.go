@@ -344,7 +344,7 @@ func ShareCatalog(ctx *fisk.ParseContext) error {
 		return err
 	}
 
-	fmt.Printf("Shared catalog '%s' with target '%s'. Note: Natster makes no guarantees that the target account exists.\n",
+	fmt.Printf("Shared catalog '%s' with target '%s'.\nNote: Natster's backend makes no guarantees that the target account exists.\n",
 		ShareOpts.Name,
 		ShareOpts.AccountKey,
 	)
