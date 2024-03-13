@@ -11,6 +11,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"github.com/nats-io/nkeys"
 	"github.com/synadia-labs/natster/internal/models"
 )
 
@@ -329,6 +330,10 @@ func (srv *GlobalService) validateCatalogSharedEvent(accountKey string, evt mode
 	}
 	if acct == nil {
 		return errors.New("rejecting catalog_shared event, can't share from a nonexistent account")
+	}
+	if !nkeys.IsValidPublicAccountKey(evt.Target) {
+		// sadly this will prevent us from sharing to ABOB or AALICE
+		return errors.New("target account is not a valid public key")
 	}
 	if slices.ContainsFunc(acct.OutShares, func(cat shareEntry) bool {
 		return cat.Account == accountKey && cat.Catalog == evt.Catalog

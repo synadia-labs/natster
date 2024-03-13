@@ -63,7 +63,7 @@
                 Download
               </button>
               </MenuItem>
-              <MenuItem v-slot="{ active, disabled }" :disabled="!cStore.isMimeTypeSupported(file.mime_type)">
+              <MenuItem v-slot="{ active, disabled }" :disabled="!isMimeTypeSupported(file.mime_type)">
               <button @click.prevent="
     cStore.viewFile(
       getFileName(file.path),
@@ -131,5 +131,9 @@ function catalogImage(cat) {
   } else {
     return cat.image
   }
+}
+
+function isMimeTypeSupported(mimeType: string) {
+  return  ['image/png', 'image/jpeg', 'video/mp4', 'text/plain', 'audio/mpeg'].includes(mimeType)
 }
 </script>

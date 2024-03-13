@@ -37,20 +37,39 @@
               <div class="relative">
                 <VueSpinnerAudio v-if="loading" size="80" class="loading-spinner" />
 
-                <video v-if="!!mediaUrl && mimeType.toLowerCase() == 'video/mp4'" v-show="!loading" id="video"
-                  :type="mimeType" :src="mediaUrl" width="640" height="360" autoplay controls></video>
-                <AudioPlayer :option="getAudioOptions(
-    mediaUrl,
-    description == '' ? title : description,
-    catalog.image
-  )
-    " v-else-if="!!mediaUrl && mimeType.toLowerCase() == 'audio/mpeg'" v-show="!loading" @loadedmetadata="playAudio(e)"
-                  :title="title" />
-                <img v-else-if="blob != null && mimeType.toLowerCase().indexOf('image/') === 0" :src="blobData"
-                  v-show="!loading" :alt="title" />
-                <p v-else-if="blob != null && mimeType.toLowerCase() === 'text/plain'" v-show="!loading">
-                  {{ blobData }}
+                <video
+                  v-if="!!mediaUrl && mimeType && mimeType.toLowerCase() == 'video/mp4'"
+                  v-show="!loading"
+                  id="video"
+                  :type="mimeType"
+                  :src="mediaUrl"
+                  width="640"
+                  height="360"
+                  autoplay
+                  controls>
+                </video>
+
+                <AudioPlayer
+                  :option="getAudioOptions(mediaUrl, description == '' ? title : description, catalog.image)"
+                  v-else-if="!!mediaUrl && mimeType && mimeType.toLowerCase() == 'audio/mpeg'"
+                  v-show="!loading"
+                  @loadedmetadata="playAudio(e)"
+                  :title="title"
+                />
+
+                <img
+                  v-else-if="blob != null && mimeType && mimeType.toLowerCase().indexOf('image/') === 0"
+                  :src="blobData"
+                  v-show="!loading"
+                  :alt="title"
+                />
+
+                <p
+                  v-else-if="blob != null && mimeType && mimeType.toLowerCase() === 'text/plain'"
+                  v-show="!loading">
+                    {{ blobData }}
                 </p>
+
                 <p v-else v-show="!loading">Error displaying media</p>
               </div>
               <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
