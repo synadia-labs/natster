@@ -38,7 +38,7 @@ jobs:
       - 
         name: Check formatting
         working-directory: ./natster-io
-        run: ~/.local/share/pnpm/pnpm run check-formatter
+        run: ~/.local/share/pnpm/pnpm run check-formatting
   build-ui:
     runs-on: ubuntu-latest
     name: Builds UI if edits found
