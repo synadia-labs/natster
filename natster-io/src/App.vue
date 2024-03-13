@@ -17,10 +17,8 @@ import AuthView from './views/AuthView.vue'
 import { catalogStore } from './stores/catalog'
 const { activeDownload } = storeToRefs(catalogStore())
 
-
 import { VueSpinnerAudio, VueSpinnerTail } from 'vue3-spinners'
 const { isAuthenticated, isLoading } = useAuth0()
-
 </script>
 
 <style>

@@ -2,10 +2,26 @@
   <SelectLibrary v-if="getNumCatalogsSelected == 0" />
   <div v-else>
     <div v-for="catalog in getImportedCatalogs" role="list" class="divide-y divide-gray-100">
-      <div v-for="(files, directory) in getFilesByDirectory(catalog.files)" :key="directory"
-        :id="'accordion-' + normalizeString(catalog.name + directory)" data-accordion="collapse">
-        <Directory v-if="directory != 'root'" :catalog="catalog" :directory="directory" :files="files" />
-        <FileComp v-else v-for="file in files" :key="file.hash" :catalog="catalog" :file="file" :image="true" />
+      <div
+        v-for="(files, directory) in getFilesByDirectory(catalog.files)"
+        :key="directory"
+        :id="'accordion-' + normalizeString(catalog.name + directory)"
+        data-accordion="collapse"
+      >
+        <Directory
+          v-if="directory != 'root'"
+          :catalog="catalog"
+          :directory="directory"
+          :files="files"
+        />
+        <FileComp
+          v-else
+          v-for="file in files"
+          :key="file.hash"
+          :catalog="catalog"
+          :file="file"
+          :image="true"
+        />
       </div>
     </div>
   </div>

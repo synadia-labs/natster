@@ -56,7 +56,7 @@ export const userStore = defineStore('user', {
     },
     getCatalogOnline(state) {
       state.ping
-      return (Date.now() - new Date(state.last_seen_ts).getTime() < (1 * 60 * 1000))
+      return Date.now() - new Date(state.last_seen_ts).getTime() < 1 * 60 * 1000
     },
     getJWT(state) {
       return state.jwt !== '' ? state.jwt : localStorage.getItem('natster_jwt')

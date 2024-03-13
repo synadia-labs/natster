@@ -23,7 +23,12 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/:code?', name: 'home', component: HomeView, beforeEnter: isNotLoggedIn },
-    { path: '/getting-started', name: 'gettingstarted', component: GettingStartedView, beforeEnter: isNotLoggedIn },
+    {
+      path: '/getting-started',
+      name: 'gettingstarted',
+      component: GettingStartedView,
+      beforeEnter: isNotLoggedIn
+    },
     { path: '/library', name: 'library', component: Library, beforeEnter: authGuard }
   ]
 })
