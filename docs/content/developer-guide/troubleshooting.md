@@ -1,10 +1,6 @@
 ---
 title: Troubleshooting
-weight: 90
+weight: 200
 ---
 
-troubleshooting
-
-<!--more-->
-
-TBD
+Coming soon!
