@@ -10,6 +10,7 @@ import { saveAs } from 'file-saver'
 
 export const catalogStore = defineStore('catalog', {
   state: () => ({
+    activeDownload: false,
     supportedMimeType: ['image/png', 'image/jpeg', 'video/mp4', 'text/plain', 'audio/mpeg'],
     numSelected: 0,
     catalogs: [] as Catalog[],
@@ -229,6 +230,7 @@ export const catalogStore = defineStore('catalog', {
         })
     },
     async downloadFile(fileName, catalog, hash, mimeType) {
+      this.activeDownload = true
       let xkey = createCurve()
       this.xkey_seed = new TextDecoder().decode(xkey.getSeed())
       this.xkey_pub = xkey.getPublicKey()
@@ -246,6 +248,7 @@ export const catalogStore = defineStore('catalog', {
             fileArray.push(decrypted)
 
             if (chunkIdx === totalChunks - 1) {
+              this.activeDownload = false
               sub.unsubscribe()
             }
           }
@@ -255,6 +258,7 @@ export const catalogStore = defineStore('catalog', {
           console.log('DOWNLOAD FILE', blob)
           saveAs(blob, fileName)
         })()
+
 
       const dl_request = {
         hash: hash,
