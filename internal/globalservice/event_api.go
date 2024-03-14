@@ -47,7 +47,7 @@ func (srv *GlobalService) GetTotalSharedCatalogs() (uint64, error) {
 	return srv.countFilteredEvents(subject)
 }
 
-// Retrieves the most recent bound context by loading the account projection
+// Retrieves the most recent bound context by loading the account projection, if any
 func (srv *GlobalService) GetBoundContext(myAccountKey string) (*models.ContextBoundEvent, error) {
 	js, _ := jetstream.New(srv.nc)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -62,6 +62,9 @@ func (srv *GlobalService) GetBoundContext(myAccountKey string) (*models.ContextB
 		slog.Error("Failed to load source account for catalog query", slog.Any("error", err))
 		return nil, err
 	}
+	if myAccount == nil {
+		return nil, nil
+	}
 
 	return myAccount.BoundContext, nil
 }
@@ -70,6 +73,9 @@ func (srv *GlobalService) GetOAuthIdForAccount(accountKey string) (*string, erro
 	discoveredContext, err := srv.GetBoundContext(accountKey)
 	if err != nil {
 		return nil, err
+	}
+	if discoveredContext == nil {
+		return nil, nil
 	}
 
 	return &discoveredContext.OAuthIdentity, nil

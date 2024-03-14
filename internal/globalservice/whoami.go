@@ -31,13 +31,9 @@ func handleWhoAmi(srv *GlobalService) func(m *nats.Msg) {
 			return
 		}
 
-		// Note: a non-error but nil oauth is valid - just means it hasn't been context
-		// bound yet
-		oauth, err := srv.GetOAuthIdForAccount(accountKey)
-		if err != nil {
-			slog.Error("Failed to query OAuth ID for account", err)
-			_ = m.Respond(models.NewApiResultFail("Internal server error", 500))
-			return
+		var oauth *string
+		if act.BoundContext != nil && len(act.BoundContext.OAuthIdentity) > 0 {
+			oauth = &act.BoundContext.OAuthIdentity
 		}
 
 		resp := models.WhoamiResponse{

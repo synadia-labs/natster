@@ -13,7 +13,7 @@ import (
 func handleHeartbeat(srv *GlobalService) func(m *nats.Msg) {
 	return func(m *nats.Msg) {
 		accountKey := extractAccountKey(m.Subject)
-		slog.Info("Receiving heartbeat", slog.String("account", accountKey))
+		slog.Debug("Receiving heartbeat", slog.String("account", accountKey))
 		var hb models.Heartbeat
 		err := json.Unmarshal(m.Data, &hb)
 		if err != nil {
