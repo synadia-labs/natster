@@ -53,6 +53,7 @@
               </div>
               <div class="relative max-h-screen">
                 <VueSpinnerAudio v-if="loading" size="80" class="loading-spinner" />
+
                 <video
                   v-if="!!mediaUrl && mimeType && mimeType.toLowerCase() == 'video/mp4'"
                   v-show="!loading"
@@ -63,6 +64,7 @@
                   height="360"
                   autoplay
                   controls
+                  disableRemotePlayback
                 ></video>
 
                 <AudioPlayer
