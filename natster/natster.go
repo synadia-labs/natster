@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/choria-io/fisk"
 	"github.com/fatih/color"
@@ -13,7 +12,7 @@ import (
 var (
 	VERSION = "dev"
 	COMMIT  = "none"
-	DATE    = time.Now().Format(time.RFC822)
+	DATE    = ""
 
 	Opts         = &models.Options{}
 	HubOpts      = &models.HubOptions{}

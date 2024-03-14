@@ -36,6 +36,8 @@ builds:
       - arm64
     goarm:
       - 7
+    ignore:
+      - goos: windows
     ldflags:
       - -s -w --X main.VERSION={{.Version}} -X main.COMMIT={{.Commit}} -X main.DATE={{.Date}}
 
