@@ -197,6 +197,7 @@ watch(mediaUrl, (newVal, oldVal) => {
       } catch (e) {}
 
       try {
+        document.querySelector('video').style = '' // HACK for safari
         document.querySelector('video').addEventListener('play', (event) => {
           if (fStore.loading) {
             fStore.loading = false
