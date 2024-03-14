@@ -134,7 +134,28 @@ func (srv *GlobalService) updateAccountProjection(msg jetstream.Msg) {
 		initAccount(msg, from, kv)
 	case models.ContextBoundEventType:
 		recordContextBinding(msg, from, kv)
+	case models.CatalogImportedEventType:
+		recordCatalogImported(msg, from, kv)
 	}
+}
+
+func recordCatalogImported(msg jetstream.Msg, account string, kv jetstream.KeyValue) {
+	existingAccount, err := loadAccount(kv, account)
+	if err != nil {
+		slog.Error("Failed to load account corresponding to catalog import event", slog.Any("error", err))
+		_ = msg.Nak()
+		return
+	}
+	if existingAccount == nil {
+		slog.Error("A non-existent account attempted to record a catalog imported event")
+		_ = msg.Nak()
+		return
+	}
+
+	// At the moment, catalog imported does not affect the value of the projection
+	// NOOP
+
+	_ = msg.Ack()
 }
 
 func recordContextBinding(msg jetstream.Msg, account string, kv jetstream.KeyValue) {
