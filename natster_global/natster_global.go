@@ -15,7 +15,7 @@ import (
 var (
 	VERSION = "dev"
 	COMMIT  = ""
-	DATE    = time.Now().Format(time.RFC822)
+	DATE    = ""
 )
 
 func main() {

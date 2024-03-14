@@ -79,7 +79,7 @@ func (srv *GlobalService) Start(version, commit, date string) error {
 	slog.Info("Natster Global Service Started",
 		slog.String("version", version),
 		slog.String("commit", commit),
-		slog.String("date", date),
+		slog.String("build_date", date),
 	)
 	return nil
 }
