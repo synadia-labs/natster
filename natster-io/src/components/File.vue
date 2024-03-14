@@ -197,7 +197,12 @@ watch(mediaUrl, (newVal, oldVal) => {
       } catch (e) {}
 
       try {
-        document.querySelector('video').style = '' // HACK for safari
+        const re = /ipad|iphone/i
+        if (navigator.userAgent.match(re)) {
+          fStore.loading = false
+          document.querySelector('video').style = '' // HACK for safari
+        }
+
         document.querySelector('video').addEventListener('play', (event) => {
           if (fStore.loading) {
             fStore.loading = false
