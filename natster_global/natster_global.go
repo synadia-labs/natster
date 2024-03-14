@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/synadia-labs/natster/internal/globalservice"
