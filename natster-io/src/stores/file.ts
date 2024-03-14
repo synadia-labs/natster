@@ -46,6 +46,13 @@ export const fileStore = defineStore('file', {
       }
       return new MediaSource()
     },
+    isTypeSupported(type) {
+      const re = /ipad|iphone/i
+      if (navigator.userAgent.match(re) && typeof ManagedMediaSource !== 'undefined') {
+        return ManagedMediaSource.isTypeSupported(type)
+      }
+      return MediaSource.isTypeSupported(type)
+    },
     load(title, description, mimeType, catalog, onReset) {
       this.title = title
       this.description = description
@@ -66,9 +73,8 @@ export const fileStore = defineStore('file', {
         if (!this.mediaSource && !this.mediaUrl && !this.videoSourceBuffer) {
           this.mediaSource = this.initMediaSource()
           this.mediaUrl = URL.createObjectURL(this.mediaSource)
-
           this.codec = 'avc1.640028,mp4a.40.2' //'avc1.42C028,mp4a.40.2' // FIXME-- read this from headers and pass it in to render()
-          console.log(MediaSource.isTypeSupported(`video/mp4; codecs="${this.codec}"`))
+          console.log(this.isTypeSupported(`video/mp4; codecs="${this.codec}"`))
 
           this.mediaSource.addEventListener('sourceopen', () => {
             this.videoSourceBuffer = this.mediaSource.addSourceBuffer(
@@ -117,7 +123,7 @@ export const fileStore = defineStore('file', {
         if (!this.mediaSource && !this.mediaUrl && !this.audioSourceBuffer) {
           this.mediaSource = this.initMediaSource()
           this.mediaUrl = URL.createObjectURL(this.mediaSource)
-          console.log(MediaSource.isTypeSupported(`audio/mpeg`))
+          console.log(this.isTypeSupported(`audio/mpeg`))
 
           this.mediaSource.addEventListener('sourceopen', () => {
             this.audioSourceBuffer = this.mediaSource.addSourceBuffer(`audio/mpeg`)
