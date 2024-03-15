@@ -27,7 +27,7 @@
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
             <DialogPanel
-              class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6"
+              class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all max-w-screen-xl sm:my-8 sm:w-full sm:max-w-screen-lg sm:p-6"
             >
               <div class="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                 <button
@@ -98,12 +98,13 @@
                   class="max-h-96"
                   v-show="!loading"
                 />
-                <p
+                <pre
                   v-else-if="blob != null && mimeType && mimeType.toLowerCase() === 'text/plain'"
                   v-show="!loading"
+                  class="whitespace-pre-wrap"
                 >
                   {{ blobData }}
-                </p>
+                </pre>
                 <p v-else v-show="!loading">Error displaying media</p>
               </div>
               <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
