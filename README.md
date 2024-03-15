@@ -21,4 +21,4 @@ The following is a list of the features that make Natster both powerful and uniq
 * Global Service - We host a service in a well-known account that is available to everyone with a Synadia Cloud account, running on top of [nex](https://github.com/synadia-io/nex). We don't need to worry about setting up, deploying, and securing a RESTful API. With Synadia Cloud/NATS, we can just export a service and we get security and availability for free.
 * Natster Hub - We host a catalog pre-filled with useful videos and informative content on NATS, Natster, and Nex. We didn't need to do anything special to make this happen, the hub is just another Synadia Cloud account running a secure catalog server.
 
-More documentation will be forthcoming.
+For more detailed information, please check out the documentation at [docs.natster.io](https://docs.natster.io)
