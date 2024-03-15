@@ -161,7 +161,7 @@ const natsterImg = new URL('@/assets/natster-horizontal.svg', import.meta.url)
 const code_init = ref(`# Install the Natster CLI
 curl -sSf https://natster.io/install.sh | sh
 
-# Initialize the Natster with your Synadia Cloud Token
+# Initialize Natster with your Synadia Cloud Token
 natster init --token <SYNADIA CLOUD TOKEN>
 
 # Bind your OAuth ID with your Natster Account
