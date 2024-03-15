@@ -1,5 +1,5 @@
 <template>
-  <Notification />
+  <Notification class="z-50" />
   <File class="z-50" />
   <TransitionRoot as="template" :show="sidebarOpen">
     <Dialog as="div" class="relative z-50 lg:hidden" @close="sidebarOpen = false">
