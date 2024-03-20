@@ -34,6 +34,11 @@ The Natster CLI, both for ad hoc commands and for running a catalog server, need
 
 With the new user created, you're able to initialize the Natster CLI. Don't worry about copying the credentials, the Natster initialization process will take care of that for you.
 
+## Editing your Exports
+The free version of Synadia cloud is more than enough to run Natster, but you will need to edit the number of exports the default account uses from 1 to 2. In order to do this, first select the `default` account > Settings > Exports (in the Limits section).  Edit this from 1 to 2 > Click Save.
+
+![edit exports](/userguide/edit_exports.jpg)
+
 ## Initializing the CLI
 With your Synadia Cloud token read on the clipboard and a NATS user ready, you can run the `init` command of the Natster CLI
 
