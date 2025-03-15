@@ -16,7 +16,7 @@ jobs:
 
       - name: Get changes to UI directory
         id: ui-edited
-        uses: tj-actions/changed-files@v34
+        uses: tj-actions/changed-files@ce4b8e3cba2220de8132ac9721ff754efd6bb7d7  ## @v34 reiified by pdp 2025-03-14 in repo compromised tags incident
         with:
           files: natster-io/**
 
