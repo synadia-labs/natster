@@ -6,10 +6,7 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}  # future-proof, preemptively move permissions into jobs level
 
 concurrency:
   group: "release"
@@ -22,23 +19,32 @@ jobs:
     concurrency:
       group: release-installer-${{ github.ref }}
       cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
     steps:
       -
         name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       -
         name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.22.0'
+          go-version: '1.24.1'
+          # Caching: we are making release artifacts, and unfortunately we need
+          # to ensure that the cache is not poisonable.
+          cache: false
       -
         name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: latest
+          version: '~> v2'
           args: release --verbose --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GHA_RELEASE }}

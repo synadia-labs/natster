@@ -1,11 +1,11 @@
-version: 1
+version: 2
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - 
+  -
     id: "natster"
     main: "./natster"
     binary: "natster"
@@ -21,11 +21,11 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
-      - goos: windows 
+      - goos: windows
         goarch: arm
     ldflags:
       - -s -w --X main.VERSION={{.Version}} -X main.COMMIT={{.Commit}} -X main.DATE={{.Date}}
-  - 
+  -
     id: "natster_global"
     main: "./natster_global"
     binary: "natster_global"
@@ -43,7 +43,7 @@ builds:
 
 archives:
   - id: binaries
-    format: binary
+    formats: ['binary']
     name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     allow_different_binary_count: true
 
@@ -55,7 +55,7 @@ nfpms:
       Natster - A peer-to-multipeer media sharing application built with nothing but NATS
     license: Apache 2.0
     formats:
-      - deb 
+      - deb
       - rpm
 
 changelog:

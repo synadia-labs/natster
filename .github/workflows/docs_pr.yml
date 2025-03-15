@@ -8,41 +8,53 @@ on:
       - synchronize
       - closed
 
-permissions: write-all
-
 concurrency: preview-${{ github.ref }}
 defaults:
   run:
     shell: bash
+
+permissions: {}  # future-proof, preemptively move permissions into jobs level
 
 jobs:
   deploy-preview:
     runs-on: ubuntu-20.04
     env:
       HUGO_VERSION: 0.123.8
+    permissions:
+      # the preview step writes to the gh-pages branch and pushes;
+      # it updates deployments and leaves comments on issues
+      contents: write
+      deployments: write
+      issues: write
+      # TBD: might we also need `pages: write` for a new deploy?
+      # I (pdp 2025-03) don't see that; rossjrw/pr-preview-action uses JamesIves/github-pages-deploy-action
+      # under the covers and that's all git force-pushing of deployment branches.
+
     steps:
-      - 
+      -
         name: Install Hugo CLI
         run: |
           wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb \
           && sudo dpkg -i ${{ runner.temp }}/hugo.deb
-      - 
+      -
         name: Install Dart Sass
         run: sudo snap install dart-sass
-      - 
+      -
         name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
-      - 
+          persist-credentials: true  # for step 'preview'
+      -
         name: Install Node.js dependencies
         working-directory: ./docs
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
-      - 
+      -
         name: Build with Hugo
-        working-directory: ./docs
+        id: build
         if: github.event.action != 'closed' # skip the build if the PR has been closed
+        working-directory: ./docs
         env:
           HUGO_ENVIRONMENT: production
           HUGO_ENV: production
@@ -50,9 +62,11 @@ jobs:
           hugo \
             --gc \
             --minify \
-            --baseURL "https://docs.natster.io/pr-preview/pr-${{ github.event.number }}" 
-      - 
+            --baseURL "https://docs.natster.io/pr-preview/pr-${{ github.event.number }}"
+      -
         name: Deploy preview
+        id: preview
+        if: github.event.action != 'closed' # skip the build if the PR has been closed
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./docs/public/
