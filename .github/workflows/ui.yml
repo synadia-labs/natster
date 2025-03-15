@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           : "${GITHUB_BASE_REF:?missing GITHUB_BASE_REF on push, fixme}"
-          changes="$(git diff-tree -r --name-only "$GITHUB_BASE_REF" HEAD -- natster-io)"
+          changes="$(git diff-tree -r --name-only "origin/$GITHUB_BASE_REF" HEAD -- natster-io)"
           if [[ -n "$changes" ]]; then
             echo >> "$GITHUB_OUTPUT" "any_changed=true"
           else
