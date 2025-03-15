@@ -70,4 +70,4 @@ jobs:
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./docs/public/
-          custom-url: "docs.natster.io"
+          pages-base-url: "docs.natster.io"
