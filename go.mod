@@ -1,6 +1,8 @@
 module github.com/synadia-labs/natster
 
-go 1.21
+go 1.23.0
+
+toolchain go1.24.1
 
 require (
 	dagger.io/dagger v0.9.7
@@ -37,13 +39,13 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/u2takey/go-utils v0.3.1 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.6 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.23 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
-	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
-	golang.org/x/term v0.17.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
 )

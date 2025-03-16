@@ -4,51 +4,44 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
 
+# For tag pushes, we always build and deploy
+
+permissions: {}
+
 jobs:
-  check-ui:
-    runs-on: ubuntu-latest
-    name: Check UI for edits
-    outputs:
-      status: ${{ steps.ui-edited.outputs.any_changed }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get changes to UI directory
-        id: ui-edited
-        uses: tj-actions/changed-files@aa08304bd477b800d468db44fe10f6c61f7f7b11  ## @v42 reiified by pdp 2025-03-14 in repo compromised tags incident
-        with:
-          files: natster-io/**
-
   build-ui:
     runs-on: ubuntu-latest
     name: Builds UI if edits found
-    needs: check-ui
-    if: needs.check-ui.outputs.status
+    permissions:
+      contents: read   # clone repo
+      actions: write   # upload artifacts
     steps:
-      - 
+      -
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - 
+          persist-credentials: false
+      -
         name: Build ui
         working-directory: ./natster-io
         run: |
-          curl -fsSL https://get.pnpm.io/install.sh | SHELL=bash sh -
+          curl -fsSL https://get.pnpm.io/install.sh | SHELL=bash bash -
           ~/.local/share/pnpm/pnpm install
           ~/.local/share/pnpm/pnpm build-only --outDir server/dist
       -
         name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.22.0'
+          go-version: '1.24.1'
+          # Caching: we are making release artifacts, and unfortunately we need
+          # to ensure that the cache is not poisonable.
+          cache: false
       -
         name: Build server
         working-directory: ./natster-io/server
         run: |
           go build -o natster-ui-server
-      - 
+      -
         name: Archive server binaries
         uses: actions/upload-artifact@v4
         with:
@@ -64,19 +57,23 @@ jobs:
     environment:
       name: Prod
       url: https://natster.io
+    permissions:
+      actions: read    # download artifacts
+      id-token: write  # OIDC exchange for tailscale
     steps:
       -
         name: Download server artifact
         uses: actions/download-artifact@v4
         with:
           name: web_server
-      - 
+      -
         name: Tailscale
-        uses: tailscale/github-action@v2
+        uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:natster
+      # No SSH keys needed for SSH below, it's using Tailscale connection ambient identity
       -
         name: Stop Prod Server
         run: |
@@ -89,4 +86,4 @@ jobs:
         name: Restart Prod Server
         run: |
           ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@natster-ui.pig-bee.ts.net systemctl start natster-ui-prod.service
-      
+

@@ -3,34 +3,50 @@ on:
   push:
     branches:
       - main
+
+permissions: {}
+
 jobs:
+
   check-ui:
     runs-on: ubuntu-latest
     name: Check UI for edits
     outputs:
       status: ${{ steps.ui-edited.outputs.any_changed }}
+    permissions:
+      contents: read   # clone repo
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Get changes to UI directory
+          persist-credentials: false
+      - name: Determine if changes to UI directory
         id: ui-edited
-        uses: tj-actions/changed-files@ce4b8e3cba2220de8132ac9721ff754efd6bb7d7  ## @v34 reiified by pdp 2025-03-14 in repo compromised tags incident
-        with:
-          files: natster-io/**
+        shell: bash
+        run: |
+          : "${GITHUB_BASE_REF:?missing GITHUB_BASE_REF on push, fixme}"
+          changes="$(git diff-tree -r --name-only "origin/$GITHUB_BASE_REF" HEAD -- natster-io)"
+          if [[ -n "$changes" ]]; then
+            echo >> "$GITHUB_OUTPUT" "any_changed=true"
+          else
+            echo >> "$GITHUB_OUTPUT" "any_changed=false"
+          fi
 
   build-ui:
     runs-on: ubuntu-latest
     name: Builds UI if edits found
     needs: check-ui
     if: needs.check-ui.outputs.status
+    permissions:
+      contents: read   # clone repo
+      actions: write   # upload artifacts
     steps:
-      - 
+      -
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - 
+          persist-credentials: false
+      -
         name: Build ui
         working-directory: ./natster-io
         run: |
@@ -41,13 +57,13 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.22.0'
+          go-version: '1.24.1'
       -
         name: Build server
         working-directory: ./natster-io/server
         run: |
           go build -o natster-ui-server-qa
-      - 
+      -
         name: Archive server binaries
         uses: actions/upload-artifact@v4
         with:
@@ -63,19 +79,23 @@ jobs:
     environment:
       name: QA
       url: https://natster-ui.pig-bee.ts.net
+    permissions:
+      actions: read    # download artifacts
+      id-token: write  # OIDC exchange for tailscale
     steps:
       -
         name: Download server artifact
         uses: actions/download-artifact@v4
         with:
           name: tailscale_server
-      - 
+      -
         name: Tailscale
-        uses: tailscale/github-action@v2
+        uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:natster
+      # No SSH keys needed for SSH below, it's using Tailscale connection ambient identity
       -
         name: Stop QA Server
         run: |
@@ -88,4 +108,4 @@ jobs:
         name: Restart QA Server
         run: |
           ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@natster-ui.pig-bee.ts.net systemctl start natster-ui-qa.service
-      
+
